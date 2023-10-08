@@ -1,14 +1,14 @@
 import { ThemeProvider } from 'styled-components'
 import { GlobalStyle } from './components/layout/GlobalStyle'
-import { ExamplePage } from './components/pages/exmaple'
 import { theme } from './themes'
+import { Outlet } from 'react-router-dom'
 
 function App() {
   return (
     <>
       <GlobalStyle />
       <ThemeProvider theme={theme}>
-        <ExamplePage />
+        <Outlet />
       </ThemeProvider>
     </>
   )
