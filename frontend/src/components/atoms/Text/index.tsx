@@ -48,6 +48,8 @@ export const Text = styled.text<{
   ${({ letterSpacing, theme }) =>
     toResponsiveValue('letter-spacing', letterSpacing, theme)}
   ${({ color, theme }) => toResponsiveValue('color', color, theme)}
+  ${({ fontWeight, theme }) =>
+    toResponsiveValue('font-weight', fontWeight, theme)}
   `
 
 Text.defaultProps = {
