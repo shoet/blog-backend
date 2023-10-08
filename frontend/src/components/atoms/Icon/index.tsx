@@ -7,6 +7,7 @@ import {
   faTwitter,
 } from '@fortawesome/free-brands-svg-icons'
 import { Link } from 'react-router-dom'
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
 
 type IconProps = {
   size?: number
@@ -34,3 +35,6 @@ const withIconStyle = (Icon: React.ReactNode) => {
 export const IconGitHub = withIconStyle(<FontAwesomeIcon icon={faGithub} />)
 export const IconYoutube = withIconStyle(<FontAwesomeIcon icon={faYoutube} />)
 export const IconTwitter = withIconStyle(<FontAwesomeIcon icon={faTwitter} />)
+export const IconSearch = withIconStyle(
+  <FontAwesomeIcon icon={faMagnifyingGlass} />,
+)
