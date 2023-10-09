@@ -27,12 +27,11 @@ ARG LITESTREAM_SECRET_ACCESS_KEY
 RUN apk update
 
 COPY --from=build /app/litestream /usr/local/bin/litestream
-COPY --from=build /app/restore.sh ./restore.sh
-RUN chmod +x ./restore.sh
-RUN ./restore.sh
-
-COPY --from=build /app/litestream /usr/local/bin/litestream
 COPY --from=build /app/app ./app
+
+RUN go install github.com/rubenv/sql-migrate/...@latest
+COPY --from=build /app/migrations ./migrations
+RUN sql-migrate up
 
 CMD ["litestream", "replicate", "-exec", "./app", "./database.sqlite", "${DB_REPLICA_REMOTE_PATH}"]
 
