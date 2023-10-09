@@ -1,3 +1,5 @@
+
+-- +migrate Up
 CREATE TABLE `blogs` (
   `id`          INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
   `author_id`   INTEGER NOT NULL,
@@ -31,3 +33,5 @@ CREATE TABLE users (
   `created`     DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
   `modified`    DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
+
+-- +migrate Down

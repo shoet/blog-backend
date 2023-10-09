@@ -27,6 +27,12 @@ generate: ## Generate codes
 create-db: ## Create database
 	bash ./init_db.sh
 
+create-migrate: ## Create migrate file
+	sql-migrate new
+
+do-migrate: ## Execute migrate
+	sql-migrate up
+
 help: ## Show options
 	@grep -E '^[a-zA-Z_]+:.*?## .*$$' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'

@@ -19,6 +19,21 @@ func RespondJSON(w http.ResponseWriter, statusCode int, body interface{}) error 
 	return nil
 }
 
+func JsonToStruct(r *http.Request, v interface{}) error {
+	defer r.Body.Close()
+	if err := json.NewDecoder(r.Body).Decode(v); err != nil {
+		return fmt.Errorf("failed to decode json in JsonToStruct(): %w", err)
+	}
+	return nil
+}
+
 type ErrorResponse struct {
 	Message string `json:"message"`
 }
+
+var (
+	ErrMessageBadRequest          = "BadRequest"
+	ErrMessageNotFound            = "BadRequest"
+	ErrMessageInternalServerError = "InternalServerError"
+	ErrMessageUnauthorized        = "Unauthorized"
+)
