@@ -3,7 +3,7 @@
 .DEFAULT_GOAL := help
 
 DOCKER_TAG := latest
-build: ## Build docker image to deploy
+build_api: ## Build docker image to deploy
 	docker build -t blog-backend:${DOCKER_TAG} --target deploy ./dockerfiles/api
 
 build: ## Build docker image to local development
@@ -23,6 +23,9 @@ ps: ## Check container status
 
 generate: ## Generate codes
 	go generate ./...
+
+create-db: ## Create database
+	bash ./init_db.sh
 
 help: ## Show options
 	@grep -E '^[a-zA-Z_]+:.*?## .*$$' $(MAKEFILE_LIST) | \
