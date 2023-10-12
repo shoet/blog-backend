@@ -12,6 +12,11 @@ func NewMux() *chi.Mux {
 			hh := &HealthCheckHandler{}
 			r.Get("/", hh.ServeHTTP)
 		})
+
+		r.Route("/tags", func(r chi.Router) {
+			th := &TagListHandler{}
+			r.Get("/", th.ServeHTTP)
+		})
 	})
 	return router
 }
