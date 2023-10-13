@@ -14,17 +14,28 @@ type BlogListHandler struct {
 }
 
 func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	resp, err := l.Service.ListBlog(nil)
-	if err != nil {
-		resp := ErrorResponse{Message: ErrMessageInternalServerError}
-		if err := RespondJSON(w, http.StatusInternalServerError, resp); err != nil {
-			log.Printf("failed to respond json error: %v", err)
-		}
-		return
-	}
-	if err := RespondJSON(w, http.StatusOK, resp); err != nil {
-		log.Printf("failed to respond json response: %v", err)
-	}
+	// TODO: paging
+	RespondMockJSON("blogs.json", &[]models.Blog{}, w, r)
+	// resp, err := l.Service.ListBlog(nil)
+	// if err != nil {
+	// 	resp := ErrorResponse{Message: ErrMessageInternalServerError}
+	// 	if err := RespondJSON(w, http.StatusInternalServerError, resp); err != nil {
+	// 		log.Printf("failed to respond json error: %v", err)
+	// 	}
+	// 	return
+	// }
+	// if err := RespondJSON(w, http.StatusOK, resp); err != nil {
+	// 	log.Printf("failed to respond json response: %v", err)
+	// }
+	return
+}
+
+type BlogGetHandler struct {
+	Service BlogService
+}
+
+func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	RespondMockJSON("blog.json", &models.Blog{}, w, r)
 	return
 }
 
@@ -39,7 +50,7 @@ func (a *BlogAddHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		AuthorId               models.UserId `json:"authorId"`
 		ThumbnailImageFileName string        `json:"thumbnailImage_file_name"`
 		IsPublic               bool          `json:"isPublic"`
-		Tags                   []models.Tag  `json:"tags"`
+		Tags                   []string      `json:"tags"`
 	}
 	defer r.Body.Close()
 	if err := JsonToStruct(r, reqBody); err != nil {
@@ -120,11 +131,11 @@ type BlogPutHandler struct {
 
 func (p *BlogPutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var reqBody struct {
-		Title                  string       `json:"title"`
-		Content                string       `json:"content"`
-		ThumbnailImageFileName string       `json:"thumbnailImage_file_name"`
-		IsPublic               bool         `json:"isPublic"`
-		Tags                   []models.Tag `json:"tags"`
+		Title                  string   `json:"title"`
+		Content                string   `json:"content"`
+		ThumbnailImageFileName string   `json:"thumbnailImage_file_name"`
+		IsPublic               bool     `json:"isPublic"`
+		Tags                   []string `json:"tags"`
 	}
 	defer r.Body.Close()
 	if err := JsonToStruct(r, reqBody); err != nil {

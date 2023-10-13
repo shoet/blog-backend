@@ -7,11 +7,12 @@ type BlogId int64
 type Blog struct {
 	Id                     BlogId    `json:"id" db:"id"`
 	Title                  string    `json:"title" db:"title"`
+	Description            string    `json:"description" db:"description"`
 	Content                string    `json:"content" db:"content"`
 	AuthorId               UserId    `json:"authorId" db:"author_id"`
-	ThumbnailImageFileName string    `json:"thumbnailImage_file_name" db:"thumbnail_image_file_name"`
+	ThumbnailImageFileName string    `json:"thumbnailImageFileName" db:"thumbnail_image_file_name"`
 	IsPublic               bool      `json:"isPublic" db:"is_public"`
-	Tags                   []Tag     `json:"tags" db:"tags"`
+	Tags                   []string  `json:"tags" db:"tags"`
 	Created                time.Time `json:"created" db:"created"`
 	Modified               time.Time `json:"modified" db:"modified"`
 }

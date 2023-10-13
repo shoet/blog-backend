@@ -5,6 +5,8 @@ import { theme } from '../src/themes'
 import { withConsole } from '@storybook/addon-console'
 import { BrowserRouter } from 'react-router-dom'
 import { GlobalStyle } from '../src/components/layout/GlobalStyle'
+import { SWRConfig } from 'swr'
+import { fetcher } from '../src/utils/fetcher'
 
 const preview: Preview = {
   parameters: {
@@ -21,9 +23,11 @@ const preview: Preview = {
       <>
         <GlobalStyle />
         <ThemeProvider theme={theme}>
-          <BrowserRouter>
-            <Story />
-          </BrowserRouter>
+          <SWRConfig value={{ fetcher }}>
+            <BrowserRouter>
+              <Story />
+            </BrowserRouter>
+          </SWRConfig>
         </ThemeProvider>
       </>
     ),
