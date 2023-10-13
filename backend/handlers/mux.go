@@ -17,6 +17,14 @@ func NewMux() *chi.Mux {
 			th := &TagListHandler{}
 			r.Get("/", th.ServeHTTP)
 		})
+
+		r.Route("/blogs", func(r chi.Router) {
+			blh := &BlogListHandler{}
+			r.Get("/", blh.ServeHTTP)
+
+			bgh := &BlogGetHandler{}
+			r.Get("/{id}", bgh.ServeHTTP)
+		})
 	})
 	return router
 }

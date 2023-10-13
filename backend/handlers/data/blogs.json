@@ -1,0 +1,122 @@
+[
+  {
+    "id": 1,
+    "title": "My First Blog",
+    "description": "A brief overview of my journey into blogging.",
+    "content": "This is the content of my first blog post.",
+    "authorId": 12345,
+    "thumbnailImageFileName": "thumbnail1.jpg",
+    "isPublic": true,
+    "tags": ["tech", "go"],
+    "created": "2023-10-13T10:00:00Z",
+    "modified": "2023-10-13T11:00:00Z"
+  },
+  {
+    "id": 2,
+    "title": "Exploring the Outdoors",
+    "description": "Adventures and beauty in nature.",
+    "content": "I love hiking and exploring nature.",
+    "authorId": 12346,
+    "thumbnailImageFileName": "thumbnail2.jpg",
+    "isPublic": true,
+    "tags": ["nature", "adventure"],
+    "created": "2023-10-12T09:00:00Z",
+    "modified": "2023-10-12T10:30:00Z"
+  },
+  {
+    "id": 3,
+    "title": "Cooking Delicious Meals",
+    "description": "The art and science of culinary delights.",
+    "content": "Cooking has always been my passion.",
+    "authorId": 12347,
+    "thumbnailImageFileName": "thumbnail3.jpg",
+    "isPublic": false,
+    "tags": ["cooking", "food"],
+    "created": "2023-10-11T08:00:00Z",
+    "modified": "2023-10-11T09:20:00Z"
+  },
+  {
+    "id": 4,
+    "title": "Introduction to Machine Learning",
+    "description": "A beginner's guide to AI and machine learning.",
+    "content": "Machine learning is revolutionizing industries.",
+    "authorId": 12348,
+    "thumbnailImageFileName": "thumbnail4.jpg",
+    "isPublic": true,
+    "tags": ["tech", "machine learning"],
+    "created": "2023-10-10T07:00:00Z",
+    "modified": "2023-10-10T08:15:00Z"
+  },
+  {
+    "id": 5,
+    "title": "Traveling the World",
+    "description": "Discovering cultures and places globally.",
+    "content": "Traveling provides a fresh perspective on life.",
+    "authorId": 12349,
+    "thumbnailImageFileName": "thumbnail5.jpg",
+    "isPublic": false,
+    "tags": ["travel", "culture"],
+    "created": "2023-10-09T06:00:00Z",
+    "modified": "2023-10-09T07:10:00Z"
+  },
+  {
+    "id": 6,
+    "title": "Digital Art Techniques",
+    "description": "Harnessing technology for artistic expression.",
+    "content": "The world of digital art is vast and varied.",
+    "authorId": 12350,
+    "thumbnailImageFileName": "thumbnail6.jpg",
+    "isPublic": true,
+    "tags": ["art", "digital"],
+    "created": "2023-10-08T05:00:00Z",
+    "modified": "2023-10-08T06:05:00Z"
+  },
+  {
+    "id": 7,
+    "title": "Maintaining Physical Health",
+    "description": "Tips and advice for a healthier lifestyle.",
+    "content": "It's essential to prioritize our health.",
+    "authorId": 12351,
+    "thumbnailImageFileName": "thumbnail7.jpg",
+    "isPublic": true,
+    "tags": ["health", "wellness"],
+    "created": "2023-10-07T04:00:00Z",
+    "modified": "2023-10-07T05:00:00Z"
+  },
+  {
+    "id": 8,
+    "title": "Mysteries of the Deep Sea",
+    "description": "Unveiling the hidden world beneath the waves.",
+    "content": "The ocean holds many secrets.",
+    "authorId": 12352,
+    "thumbnailImageFileName": "thumbnail8.jpg",
+    "isPublic": false,
+    "tags": ["nature", "ocean"],
+    "created": "2023-10-06T03:00:00Z",
+    "modified": "2023-10-06T04:00:00Z"
+  },
+  {
+    "id": 9,
+    "title": "Astronomy and Stargazing",
+    "description": "Gazing into the universe's vast expanse.",
+    "content": "The night sky is full of wonders.",
+    "authorId": 12353,
+    "thumbnailImageFileName": "thumbnail9.jpg",
+    "isPublic": true,
+    "tags": ["science", "astronomy"],
+    "created": "2023-10-05T02:00:00Z",
+    "modified": "2023-10-05T03:00:00Z"
+  },
+  {
+    "id": 10,
+    "title": "The Magic of Music",
+    "description": "Exploring the emotional power of melodies.",
+    "content": "Music connects us in unique ways.",
+    "authorId": 12354,
+    "thumbnailImageFileName": "thumbnail10.jpg",
+    "isPublic": true,
+    "tags": ["music", "inspiration"],
+    "created": "2023-10-04T01:00:00Z",
+    "modified": "2023-10-04T02:00:00Z"
+  }
+]
