@@ -1,5 +1,5 @@
-import Box from '@/components/layout/Box'
+import { BlogCardList } from '@/components/organisms/BlogCardList'
 
 export const BlogListPage = () => {
-  return <Box>BlogListPage</Box>
+  return <BlogCardList />
 }

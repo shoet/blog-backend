@@ -4,9 +4,9 @@ export const GlobalStyle = createGlobalStyle`
   html,
   body,
   textarea {
+    font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
     padding: 0;
     margin: 0;
-    font-family: font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Heletica Neue, sans-serif;
   }
   * {
     box-sizing: border-box;
@@ -14,12 +14,12 @@ export const GlobalStyle = createGlobalStyle`
   a {
     cursor: pointer;
     text-decoration: none;
-    transition: .25s;
     color: #000;
   }
 
   ol, ul {
     margin: 0;
+    padding: 0;
     list-style: none;
   }
 `
