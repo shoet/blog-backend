@@ -1,5 +1,5 @@
-import { BadgeContainer } from '@/components/organisms/BadgeContainer'
+import { BlogCardList } from '@/components/organisms/BlogCardList'
 
 export const ExamplePage = () => {
-  return <BadgeContainer />
+  return <BlogCardList />
 }
