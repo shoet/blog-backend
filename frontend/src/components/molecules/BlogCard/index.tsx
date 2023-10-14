@@ -32,18 +32,10 @@ const ContentWrapper = styled(Box)`
   padding-left: 1rem;
 `
 
-const BadgeWrapper = styled.div`
+const TagsWrapper = styled(Box)`
   div:not(:last-child) {
     margin-right: 0.5rem;
   }
-`
-
-const DescriptionWrapper = styled.div`
-  margin-top: 1rem;
-`
-
-const DateWrapper = styled.div`
-  margin-top: 1rem;
 `
 
 export const BlogCard = (props: BlogCardProps) => {
@@ -70,19 +62,19 @@ export const BlogCard = (props: BlogCardProps) => {
                 <Text fontSize="extraExtraLarge" fontWeight="bold">
                   {blog.title}
                 </Text>
-                <BadgeWrapper>
+                <TagsWrapper marginTop={1}>
                   {blog.tags.map((tag) => (
                     <Badge>{tag}</Badge>
                   ))}
-                </BadgeWrapper>
-                <DescriptionWrapper>
+                </TagsWrapper>
+                <Box marginTop={2}>
                   <Text fontSize="medium">{blog.description}</Text>
-                </DescriptionWrapper>
-                <DateWrapper>
+                </Box>
+                <Box marginTop={2}>
                   <Text fontSize="small" fontWeight="bold" color="gray">
                     {blog.created}
                   </Text>
-                </DateWrapper>
+                </Box>
               </ContentWrapper>
             </Flex>
           </>
