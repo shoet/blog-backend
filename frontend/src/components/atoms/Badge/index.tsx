@@ -12,7 +12,7 @@ type BadgeProps = {
 const Container = styled.div<{ backgroundColor: Color; color: Color }>`
   border-radius: 3px;
   display: inline-flex;
-  padding: 4px 8px;
+  padding: 2px 6px;
   ${({ backgroundColor, theme }) =>
     toResponsiveValue('background-color', backgroundColor, theme)}
   ${({ color, theme }) => toResponsiveValue('color', color, theme)}
