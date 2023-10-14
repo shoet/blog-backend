@@ -1,5 +1,5 @@
-import { BlogCardList } from '@/components/organisms/BlogCardList'
+import { Profile } from '@/components/organisms/Profile'
 
 export const ExamplePage = () => {
-  return <BlogCardList />
+  return <Profile />
 }
