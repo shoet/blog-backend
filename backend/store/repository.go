@@ -81,6 +81,17 @@ func (r *BlogRepository) Get(
 }
 
 func (r *BlogRepository) Delete(ctx context.Context, db interfaces.Execer, id models.BlogId) error {
+	sql := `
+	DELETE FROM
+		blogs
+	WHERE 
+		id = ?
+	;
+	`
+	_, err := db.ExecContext(ctx, sql, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete blog: %w", err)
+	}
 	return nil
 }
 func (r *BlogRepository) Put(ctx context.Context, db interfaces.Execer, blog *models.Blog) error {

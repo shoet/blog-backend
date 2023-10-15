@@ -139,7 +139,7 @@ func (d *BlogDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Id models.BlogId `json:"id" validate:"required"`
 	}
 	defer r.Body.Close()
-	if err := JsonToStruct(r, reqBody); err != nil {
+	if err := JsonToStruct(r, &reqBody); err != nil {
 		logger.Error().Msgf("failed to validate request body: %v", err)
 		ResponsdBadRequest(w, r, err)
 		return
