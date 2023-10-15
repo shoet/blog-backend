@@ -7,7 +7,16 @@ export const Header = () => {
     <nav>
       <Flex flexDirection="row" alignItems="baseline">
         <Box>
-          <Text fontSize="display">shoet Blog</Text>
+          <Box display="inline-flex">
+            <Text fontSize="display" fontWeight="bold" letterSpacing="large">
+              shoet
+            </Text>
+          </Box>
+          <Box display="inline-flex" marginLeft={1}>
+            <Text fontSize="display" letterSpacing="large">
+              Blog
+            </Text>
+          </Box>
         </Box>
         <Box marginLeft={2}>
           <Text fontSize="small" color="gray">

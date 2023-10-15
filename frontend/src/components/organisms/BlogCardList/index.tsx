@@ -9,6 +9,8 @@ const Container = styled.div`
 `
 
 export const BlogCardList = () => {
+  // TODO: フォームにタグを入力する際、Enterでタグの決定するが、「,」でもタグ決定とみなす。
+  // TODO: backend側でタグをカンマ区切りでハンドリングするため
   const { blogs } = useBlogList(
     {
       apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
@@ -19,7 +21,7 @@ export const BlogCardList = () => {
   return (
     <>
       <Container>
-        {blogs && blogs.map((b) => <BlogCard key={b.id} blogId={b.id} />)}
+        {blogs && blogs.map((b, idx) => <BlogCard key={idx} blog={b} />)}
       </Container>
     </>
   )

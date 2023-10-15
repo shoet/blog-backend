@@ -15,7 +15,7 @@ export type Blog = {
   authorId: number
   thumbnailImageFileName: string
   isPublic: boolean
-  tags: string[]
+  tags?: string[]
   created: string
   modified: string
 }
