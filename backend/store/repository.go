@@ -45,7 +45,7 @@ func (r *BlogRepository) List(
 ) ([]*models.Blog, error) {
 	sql := `
 	SELECT
-		id, author_id, title, content, description,thumbnail_image_file_name, is_public, created, modified
+		id, author_id, title, description, thumbnail_image_file_name, is_public, created, modified
 	FROM
 		blogs
 	;
@@ -60,24 +60,40 @@ func (r *BlogRepository) List(
 func (r *BlogRepository) Get(
 	ctx context.Context, db interfaces.Queryer, id models.BlogId,
 ) (*models.Blog, error) {
-	sql := `
+	sqlBlog := `
 	SELECT
 		id, author_id, title, content, description,
 		thumbnail_image_file_name, is_public, created, modified
 	FROM
-		blogs
-	where
-		id = ?
+		blogs WHERE id = ?
 	;
 	`
-	var blog []*models.Blog
-	if err := db.SelectContext(ctx, &blog, sql, id); err != nil {
+	var blogs []*models.Blog
+	if err := db.SelectContext(ctx, &blogs, sqlBlog, id); err != nil {
 		return nil, fmt.Errorf("failed to select blog: %w", err)
 	}
-	if len(blog) == 0 {
+	if len(blogs) == 0 {
 		return nil, nil
 	}
-	return blog[0], nil
+
+	sqlTags := `
+	SELECT
+		tags.name
+	FROM (
+		SELECT
+			tag_id
+		FROM blogs_tags
+		WHERE blog_id = ?
+	) as b_t
+	LEFT OUTER JOIN tags
+		ON b_t.tag_id = tags.id
+	`
+	var tags []string
+	if err := db.SelectContext(ctx, &tags, sqlTags, id); err != nil {
+		return nil, fmt.Errorf("failed to select tag: %w", err)
+	}
+	blogs[0].Tags = tags
+	return blogs[0], nil
 }
 
 func (r *BlogRepository) Delete(ctx context.Context, db interfaces.Execer, id models.BlogId) error {
