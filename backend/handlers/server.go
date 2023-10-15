@@ -18,13 +18,16 @@ type Server struct {
 	l   net.Listener
 }
 
-func NewServer(port int) (*Server, error) {
+func NewServer(ctx context.Context, port int) (*Server, error) {
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create listener in NewServer(): %w", err)
 	}
 	log.Printf("server listening on %s", l.Addr().String())
-	mux := NewMux()
+	mux, err := NewMux(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create mux in NewServer(): %w", err)
+	}
 	srv := &http.Server{
 		Handler: mux,
 	}

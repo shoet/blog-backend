@@ -30,7 +30,7 @@ create-db: ## Create database
 create-migrate: ## Create migrate file
 	sql-migrate new
 
-do-migrate: ## Execute migrate
+db-migrate: ## Execute migrate
 	sql-migrate up
 
 help: ## Show options

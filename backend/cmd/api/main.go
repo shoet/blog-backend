@@ -8,11 +8,12 @@ import (
 )
 
 func main() {
-	server, err := handlers.NewServer(3000)
+	ctx := context.Background()
+	server, err := handlers.NewServer(ctx, 3000)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := server.Run(context.Background()); err != nil {
+	if err := server.Run(ctx); err != nil {
 		log.Fatal(err)
 	}
 }

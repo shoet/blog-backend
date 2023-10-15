@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func RespondJSON(w http.ResponseWriter, statusCode int, body interface{}) error {
+func RespondJSON(w http.ResponseWriter, statusCode int, body any) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	b, err := json.Marshal(body)
@@ -19,7 +19,7 @@ func RespondJSON(w http.ResponseWriter, statusCode int, body interface{}) error 
 	return nil
 }
 
-func JsonToStruct(r *http.Request, v interface{}) error {
+func JsonToStruct(r *http.Request, v any) error {
 	defer r.Body.Close()
 	if err := json.NewDecoder(r.Body).Decode(v); err != nil {
 		return fmt.Errorf("failed to decode json in JsonToStruct(): %w", err)
