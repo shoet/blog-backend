@@ -3,9 +3,11 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
+	"github.com/rs/zerolog"
 	"github.com/shoet/blog/clocker"
 	"github.com/shoet/blog/services"
 	"github.com/shoet/blog/store"
@@ -22,8 +24,15 @@ func NewMux(ctx context.Context) (*chi.Mux, error) {
 	blogService := services.NewBlogService(db, &repo)
 	validate := validator.New()
 
+	logger := zerolog.
+		New(os.Stdout).
+		With().
+		Timestamp().
+		Logger()
+
 	router := chi.NewRouter()
 	router.Route("/", func(r chi.Router) {
+		r.Use(WithLoggerMiddleware(logger))
 		r.Use(CORSMiddleWare)
 		r.Route("/health", func(r chi.Router) {
 			hh := &HealthCheckHandler{}

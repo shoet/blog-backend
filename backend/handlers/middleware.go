@@ -1,6 +1,10 @@
 package handlers
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/rs/zerolog"
+)
 
 var whiteList = []string{
 	"http://localhost:5173",
@@ -34,4 +38,13 @@ func originAllowed(origin string) bool {
 		}
 	}
 	return false
+}
+
+func WithLoggerMiddleware(logger zerolog.Logger) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			logger.Info().Msgf("request: %s %s", r.Method, r.URL.Path)
+			next.ServeHTTP(w, r)
+		})
+	}
 }
