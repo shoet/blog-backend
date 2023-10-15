@@ -3,7 +3,10 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/shoet/blog/models"
 	"github.com/shoet/blog/options"
@@ -45,7 +48,36 @@ type BlogGetHandler struct {
 }
 
 func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	RespondMockJSON("blog.json", &models.Blog{}, w, r)
+	ctx := r.Context()
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		log.Printf("failed to get id from url param")
+		resp := ErrorResponse{Message: ErrMessageBadRequest}
+		if err := RespondJSON(w, http.StatusBadRequest, resp); err != nil {
+			log.Printf("failed to respond json error: %v", err)
+		}
+		return
+	}
+	idInt, err := strconv.Atoi(strings.TrimSpace(id))
+	if err != nil {
+		log.Printf("failed to convert id to int: %v", err)
+		resp := ErrorResponse{Message: ErrMessageBadRequest}
+		if err := RespondJSON(w, http.StatusBadRequest, resp); err != nil {
+			log.Printf("failed to respond json error: %v", err)
+		}
+		return
+	}
+	blog, err := l.Service.GetBlog(ctx, models.BlogId(idInt))
+	if blog == nil {
+		resp := ErrorResponse{Message: ErrMessageNotFound}
+		if err := RespondJSON(w, http.StatusNotFound, resp); err != nil {
+			log.Printf("failed to respond json response: %v", err)
+		}
+		return
+	}
+	if err := RespondJSON(w, http.StatusOK, blog); err != nil {
+		log.Printf("failed to respond json response: %v", err)
+	}
 	return
 }
 

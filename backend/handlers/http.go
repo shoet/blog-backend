@@ -33,7 +33,7 @@ type ErrorResponse struct {
 
 var (
 	ErrMessageBadRequest          = "BadRequest"
-	ErrMessageNotFound            = "BadRequest"
+	ErrMessageNotFound            = "NotFound"
 	ErrMessageInternalServerError = "InternalServerError"
 	ErrMessageUnauthorized        = "Unauthorized"
 )

@@ -11,6 +11,7 @@ import (
 type BlogRepository interface {
 	Add(ctx context.Context, db *sqlx.DB, blog *models.Blog) (models.BlogId, error)
 	List(ctx context.Context, db *sqlx.DB, option options.ListBlogOptions) ([]*models.Blog, error)
+	Get(ctx context.Context, db *sqlx.DB, id models.BlogId) (*models.Blog, error)
 	Delete(ctx context.Context, db *sqlx.DB, id models.BlogId) error
 	Put(ctx context.Context, db *sqlx.DB, blog *models.Blog) error
 }

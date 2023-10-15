@@ -39,6 +39,14 @@ func (s *BlogService) ListBlog(ctx context.Context, option options.ListBlogOptio
 	return blogs, err
 }
 
+func (s *BlogService) GetBlog(ctx context.Context, id models.BlogId) (*models.Blog, error) {
+	blog, err := s.blog.Get(ctx, s.db, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get blog: %w", err)
+	}
+	return blog, nil
+}
+
 func (s *BlogService) DeleteBlog(ctx context.Context, id models.BlogId) error {
 	err := s.blog.Delete(ctx, s.db, id)
 	if err != nil {

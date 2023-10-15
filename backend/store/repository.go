@@ -56,6 +56,30 @@ func (r *BlogRepository) List(
 	}
 	return blogs, nil
 }
+
+func (r *BlogRepository) Get(
+	ctx context.Context, db *sqlx.DB, id models.BlogId,
+) (*models.Blog, error) {
+	sql := `
+	SELECT
+		id, author_id, title, content, description,
+		thumbnail_image_file_name, is_public, created, modified
+	FROM
+		blogs
+	where
+		id = ?
+	;
+	`
+	var blog []*models.Blog
+	if err := db.SelectContext(ctx, &blog, sql, id); err != nil {
+		return nil, fmt.Errorf("failed to select blog: %w", err)
+	}
+	if len(blog) == 0 {
+		return nil, nil
+	}
+	return blog[0], nil
+}
+
 func (r *BlogRepository) Delete(ctx context.Context, db *sqlx.DB, id models.BlogId) error {
 	return nil
 }
