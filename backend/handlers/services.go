@@ -1,16 +1,16 @@
 package handlers
 
-import "github.com/shoet/blog/models"
+import (
+	"context"
 
-type ListBlogOptions struct {
-	AuthorId models.UserId
-	Tags     []models.TagId
-	IsPublic bool
-}
+	"github.com/shoet/blog/models"
+	"github.com/shoet/blog/options"
+)
 
 type BlogService interface {
-	ListBlog(option *ListBlogOptions) ([]*models.Blog, error)
-	AddBlog(*models.Blog) error
-	DeleteBlog(models.BlogId) error
-	PutBlog(*models.Blog) error
+	ListBlog(ctx context.Context, option options.ListBlogOptions) ([]*models.Blog, error)
+	GetBlog(ctx context.Context, id models.BlogId) (*models.Blog, error)
+	AddBlog(ctx context.Context, blog *models.Blog) error
+	DeleteBlog(ctx context.Context, id models.BlogId) error
+	PutBlog(ctx context.Context, blog *models.Blog) error
 }

@@ -33,7 +33,7 @@ func RespondMockJSON(mockFileName string, buf any, w http.ResponseWriter, r *htt
 		resp := ErrorResponse{
 			Message: "failed to get current working directory",
 		}
-		RespondJSON(w, http.StatusInternalServerError, resp)
+		RespondJSON(w, r, http.StatusInternalServerError, resp)
 		return
 	}
 	projectRoot, err := util.GetProjectRoot(cwd)
@@ -41,7 +41,7 @@ func RespondMockJSON(mockFileName string, buf any, w http.ResponseWriter, r *htt
 		resp := ErrorResponse{
 			Message: "failed to get current working directory",
 		}
-		RespondJSON(w, http.StatusInternalServerError, resp)
+		RespondJSON(w, r, http.StatusInternalServerError, resp)
 		return
 	}
 	if err := LoadMockData(
@@ -51,10 +51,10 @@ func RespondMockJSON(mockFileName string, buf any, w http.ResponseWriter, r *htt
 		resp := ErrorResponse{
 			Message: fmt.Sprintf("failed to load mock data: %s", err.Error()),
 		}
-		RespondJSON(w, http.StatusInternalServerError, resp)
+		RespondJSON(w, r, http.StatusInternalServerError, resp)
 		return
 	}
 
-	RespondJSON(w, http.StatusOK, buf)
+	RespondJSON(w, r, http.StatusOK, buf)
 	return
 }

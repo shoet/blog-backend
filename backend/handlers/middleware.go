@@ -1,6 +1,11 @@
 package handlers
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/rs/zerolog"
+	"golang.org/x/net/context"
+)
 
 var whiteList = []string{
 	"http://localhost:5173",
@@ -34,4 +39,20 @@ func originAllowed(origin string) bool {
 		}
 	}
 	return false
+}
+
+const loggerKey = "log"
+
+func WithLoggerMiddleware(logger zerolog.Logger) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := context.WithValue(r.Context(), loggerKey, logger)
+			logger.Info().Msgf("request: %s %s", r.Method, r.URL.Path)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
+func GetLogger(ctx context.Context) zerolog.Logger {
+	return ctx.Value(loggerKey).(zerolog.Logger)
 }

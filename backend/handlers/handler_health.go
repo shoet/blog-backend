@@ -10,8 +10,8 @@ type ResponseHealthCheck struct {
 
 func (hh *HealthCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	resp := &ResponseHealthCheck{Message: "OK"}
-	if err := RespondJSON(w, http.StatusOK, resp); err != nil {
+	if err := RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		errResp := &ErrorResponse{Message: "NG"}
-		RespondJSON(w, http.StatusInternalServerError, errResp)
+		RespondJSON(w, r, http.StatusInternalServerError, errResp)
 	}
 }

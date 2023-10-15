@@ -5,6 +5,7 @@ CREATE TABLE `blogs` (
   `author_id`   INTEGER NOT NULL,
   `title`       TEXT NOT NULL,
   `content`     TEXT NOT NULL,
+  `description`     TEXT NOT NULL,
   `thumbnail_image_file_name` TEXT,
   `is_public`   BOOLEAN NOT NULL DEFAULT 1,
   `created`     DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,

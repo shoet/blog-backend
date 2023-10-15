@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func RespondJSON(w http.ResponseWriter, statusCode int, body interface{}) error {
+func RespondJSON(w http.ResponseWriter, r *http.Request, statusCode int, body any) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	b, err := json.Marshal(body)
@@ -19,7 +19,34 @@ func RespondJSON(w http.ResponseWriter, statusCode int, body interface{}) error 
 	return nil
 }
 
-func JsonToStruct(r *http.Request, v interface{}) error {
+func ResponsdBadRequest(w http.ResponseWriter, r *http.Request, err error) {
+	ctx := r.Context()
+	logger := GetLogger(ctx)
+	resp := ErrorResponse{Message: ErrMessageBadRequest}
+	if err := RespondJSON(w, r, http.StatusBadRequest, resp); err != nil {
+		logger.Error().Msgf("failed to respond json error: %v", err)
+	}
+}
+
+func ResponsdNotFound(w http.ResponseWriter, r *http.Request, err error) {
+	ctx := r.Context()
+	logger := GetLogger(ctx)
+	resp := ErrorResponse{Message: ErrMessageNotFound}
+	if err := RespondJSON(w, r, http.StatusNotFound, resp); err != nil {
+		logger.Error().Msgf("failed to respond json error: %v", err)
+	}
+}
+
+func ResponsdInternalServerError(w http.ResponseWriter, r *http.Request, err error) {
+	ctx := r.Context()
+	logger := GetLogger(ctx)
+	resp := ErrorResponse{Message: ErrMessageInternalServerError}
+	if err := RespondJSON(w, r, http.StatusInternalServerError, resp); err != nil {
+		logger.Error().Msgf("failed to respond json error: %v", err)
+	}
+}
+
+func JsonToStruct(r *http.Request, v any) error {
 	defer r.Body.Close()
 	if err := json.NewDecoder(r.Body).Decode(v); err != nil {
 		return fmt.Errorf("failed to decode json in JsonToStruct(): %w", err)
@@ -31,9 +58,9 @@ type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
-var (
+const (
 	ErrMessageBadRequest          = "BadRequest"
-	ErrMessageNotFound            = "BadRequest"
+	ErrMessageNotFound            = "NotFound"
 	ErrMessageInternalServerError = "InternalServerError"
 	ErrMessageUnauthorized        = "Unauthorized"
 )
