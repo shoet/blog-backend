@@ -3,6 +3,8 @@ package store
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/shoet/blog/clocker"
 	"github.com/shoet/blog/interfaces"
@@ -43,16 +45,76 @@ func (r *BlogRepository) Add(ctx context.Context, db interfaces.Execer, blog *mo
 func (r *BlogRepository) List(
 	ctx context.Context, db interfaces.Queryer, option options.ListBlogOptions,
 ) ([]*models.Blog, error) {
+
+	if option.AuthorId == nil {
+		return nil, fmt.Errorf("author id is required")
+	}
+	latest := 10
+	if option.Limit != nil {
+		latest = int(*option.Limit)
+	}
 	sql := `
 	SELECT
-		id, author_id, title, description, thumbnail_image_file_name, is_public, created, modified
-	FROM
-		blogs
+		id, author_id, title, description, thumbnail_image_file_name, 
+		tags.tags as tags, is_public, created, modified
+	FROM (
+		SELECT
+			id, author_id, title, description, thumbnail_image_file_name, is_public, created, modified
+		FROM
+			blogs
+		WHERE
+			author_id = ?
+		ORDER BY 
+			created DESC
+		LIMIT 
+			?
+	) AS blogs
+	LEFT OUTER JOIN (
+		SELECT
+			blogs_tags.blog_id
+			, GROUP_CONCAT(tags.name, ',') as tags
+		FROM blogs_tags
+		JOIN tags
+			ON blogs_tags.tag_id = tags.id
+		GROUP BY blogs_tags.blog_id
+	) AS tags
+		ON blogs.id = tags.blog_id
 	;
 	`
-	var blogs []*models.Blog
-	if err := db.SelectContext(ctx, &blogs, sql); err != nil {
+	type data struct {
+		Id                     models.BlogId `json:"id" db:"id"`
+		Title                  string        `json:"title" db:"title"`
+		Description            string        `json:"description" db:"description"`
+		Content                string        `json:"content,omitempty" db:"content"`
+		AuthorId               models.UserId `json:"authorId" db:"author_id"`
+		ThumbnailImageFileName string        `json:"thumbnailImageFileName" db:"thumbnail_image_file_name"`
+		IsPublic               bool          `json:"isPublic" db:"is_public"`
+		Tags                   *string       `json:"tags" db:"tags"`
+		Created                time.Time     `json:"created" db:"created"`
+		Modified               time.Time     `json:"modified" db:"modified"`
+	}
+	var temp []data
+	if err := db.SelectContext(ctx, &temp, sql, option.AuthorId, latest); err != nil {
 		return nil, fmt.Errorf("failed to select blogs: %w", err)
+	}
+	var blogs []*models.Blog
+	for _, t := range temp {
+		var tags []string
+		if t.Tags != nil {
+			tags = strings.Split(*t.Tags, ",")
+		}
+		blogs = append(blogs, &models.Blog{
+			Id:                     t.Id,
+			Title:                  t.Title,
+			Description:            t.Description,
+			Content:                t.Content,
+			AuthorId:               t.AuthorId,
+			ThumbnailImageFileName: t.ThumbnailImageFileName,
+			IsPublic:               t.IsPublic,
+			Tags:                   tags,
+			Created:                t.Created,
+			Modified:               t.Modified,
+		})
 	}
 	return blogs, nil
 }

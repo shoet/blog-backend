@@ -20,7 +20,7 @@ func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	logger := GetLogger(ctx)
 	authorId := models.UserId(1) // TODO
 	option := options.ListBlogOptions{
-		AuthorId: authorId,
+		AuthorId: &authorId,
 	}
 	resp, err := l.Service.ListBlog(ctx, option)
 	if err != nil {
