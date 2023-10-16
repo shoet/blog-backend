@@ -20,6 +20,7 @@ const router = createBrowserRouter(
       <Route path="/" element={<ExamplePage />} />
       <Route path="blog" element={<BlogListPage />} />
       <Route path="blog/:id" element={<BlogDetailPage />} />
+      <Route path="search" element={<SearchPage />} />
       <Route path="about" element={<AboutPage />} />
       <Route
         path="admin"
