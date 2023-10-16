@@ -15,13 +15,13 @@ export const Profile = () => {
         </Box>
         <Flex flexDirection="row" paddingLeft={1} alignItems="center">
           <Box>
-            <IconGitHub size={14} />
+            <IconGitHub size={14} focusColor="focusGreen" />
           </Box>
           <Box paddingLeft={1}>
-            <IconTwitter size={14} />
+            <IconTwitter size={14} focusColor="focusGreen" />
           </Box>
           <Box paddingLeft={1}>
-            <IconYoutube size={14} />
+            <IconYoutube size={14} focusColor="focusGreen" />
           </Box>
         </Flex>
       </Flex>

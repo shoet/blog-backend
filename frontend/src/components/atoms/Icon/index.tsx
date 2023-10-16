@@ -6,27 +6,36 @@ import {
   faYoutube,
   faTwitter,
 } from '@fortawesome/free-brands-svg-icons'
-import { Link } from 'react-router-dom'
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
+import { Color, Responsive, toResponsiveValue } from '@/utils/style'
 
 type IconProps = {
   size?: number
   href?: string
+  focusColor?: Responsive<Color>
 }
 
 const IconStyle = styled.div<IconProps>`
   display: 'inline-block';
   width: ${({ size }) => `${size}px`};
   height: ${({ size }) => `${size}px`};
+  cursor: pointer;
+  transition: all 0.1s ease-in-out;
+  ${({ focusColor, theme }) =>
+    focusColor &&
+    `
+    &:hover,
+    &:focus {
+      ${toResponsiveValue('color', focusColor, theme)}
+    }
+  `}
 `
 
 const withIconStyle = (Icon: React.ReactNode) => {
   return (props: IconProps) => {
     return (
-      <IconStyle size={props.size}>
-        <Link to={props.href ?? ''} target="_blank">
-          {Icon}
-        </Link>
+      <IconStyle size={props.size} focusColor={props.focusColor}>
+        {Icon}
       </IconStyle>
     )
   }

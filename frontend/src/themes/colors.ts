@@ -9,4 +9,6 @@ export const colors = {
   danger: '#7d0000',
   primaryHover: '#3D441E',
   white: '#FFFFFF',
+  focusGreen: '#7ccca4',
+  focusPurple: '#8c5ce6',
 } as const

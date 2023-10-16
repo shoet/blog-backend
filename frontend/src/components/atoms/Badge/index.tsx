@@ -1,25 +1,42 @@
-import { Color, toResponsiveValue } from '@/utils/style'
+import { Color, Responsive, toResponsiveValue } from '@/utils/style'
 import { PropsWithChildren } from 'react'
 import { Text } from '../Text'
 import styled from 'styled-components'
 
 type BadgeProps = {
-  backgroundColor: Color
-  color: Color
+  backgroundColor: Responsive<Color>
+  color: Responsive<Color>
+  focusColor?: Responsive<Color>
   onClicn?: () => void
 }
 
-const Container = styled.div<{ backgroundColor: Color; color: Color }>`
+const Container = styled.div<{
+  backgroundColor: Responsive<Color>
+  color: Responsive<Color>
+  focusColor?: Responsive<Color>
+}>`
   border-radius: 3px;
   display: inline-flex;
   padding: 2px 6px;
   ${({ backgroundColor, theme }) =>
     toResponsiveValue('background-color', backgroundColor, theme)}
   ${({ color, theme }) => toResponsiveValue('color', color, theme)}
+  ${({ focusColor, theme }) =>
+    focusColor &&
+    `
+    cursor: pointer;
+    transition: all 0.1s ease-in-out;
+    &:hover,
+    &:focus {
+      ${toResponsiveValue('background-color', focusColor, theme)}
+    }
+  `}
 `
 
-export const Badge = (props: PropsWithChildren<BadgeProps>) => {
-  const { backgroundColor, color, onClicn, children } = props
+export const Badge = (
+  props: PropsWithChildren<React.HTMLAttributes<HTMLDivElement> & BadgeProps>,
+) => {
+  const { backgroundColor, color, onClicn, focusColor, children } = props
 
   const handleClick = () => {
     onClicn && onClicn()
@@ -30,6 +47,7 @@ export const Badge = (props: PropsWithChildren<BadgeProps>) => {
       backgroundColor={backgroundColor}
       color={color}
       onClick={handleClick}
+      focusColor={focusColor}
     >
       <Text fontSize="small" fontWeight="bold" color={color}>
         {children}
