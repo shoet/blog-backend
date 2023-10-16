@@ -2,11 +2,12 @@ import { Badge } from '@/components/atoms/Badge'
 import { Text } from '@/components/atoms/Text'
 import Box from '@/components/layout/Box'
 import Flex from '@/components/layout/Flex'
-import { useBlog } from '@/services/blogs/use-blog'
+import { Blog } from '@/types/api'
+import { toStringYYYYMMDD_HHMMSS } from '@/utils/date'
 import styled from 'styled-components'
 
 type BlogCardProps = {
-  blogId: number
+  blog: Blog
 }
 
 const Container = styled.div`
@@ -19,6 +20,8 @@ const Container = styled.div`
 
 const ImageWrapper = styled(Box)`
   flex: 1;
+  min-width: 200px;
+  max-width: 200px;
   img {
     width: 100%;
     height: 100%;
@@ -33,52 +36,42 @@ const ContentWrapper = styled(Box)`
 `
 
 const TagsWrapper = styled(Box)`
-  div:not(:last-child) {
+  span:not(:last-child) {
     margin-right: 0.5rem;
   }
 `
 
 export const BlogCard = (props: BlogCardProps) => {
   // TODO: anchor link
-  const { blogId } = props
-  const { blog, isLoading } = useBlog(
-    {
-      apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
-    },
-    blogId,
-  )
-
+  const { blog } = props
   return (
     <>
       <Container>
-        {isLoading && <div>loading...</div>}
-        {blog && (
-          <>
-            <Flex flexDirection="row" alignItems="start">
-              <ImageWrapper>
-                <img src={blog.thumbnailImageFileName} alt={blog.title} />
-              </ImageWrapper>
-              <ContentWrapper>
-                <Text fontSize="extraExtraLarge" fontWeight="bold">
-                  {blog.title}
-                </Text>
-                <TagsWrapper marginTop={1}>
-                  {blog.tags.map((tag) => (
-                    <Badge>{tag}</Badge>
-                  ))}
-                </TagsWrapper>
-                <Box marginTop={2}>
-                  <Text fontSize="medium">{blog.description}</Text>
-                </Box>
-                <Box marginTop={2}>
-                  <Text fontSize="small" fontWeight="bold" color="gray">
-                    {blog.created}
-                  </Text>
-                </Box>
-              </ContentWrapper>
-            </Flex>
-          </>
-        )}
+        <Flex flexDirection="row" alignItems="start">
+          <ImageWrapper>
+            <img src={blog.thumbnailImageFileName} alt={blog.title} />
+          </ImageWrapper>
+          <ContentWrapper>
+            <Text fontSize="extraExtraLarge" fontWeight="bold">
+              {blog.title}
+            </Text>
+            {blog.tags && (
+              <TagsWrapper marginTop={1}>
+                {blog.tags.map((tag) => (
+                  <Badge>{tag}</Badge>
+                ))}
+              </TagsWrapper>
+            )}
+            <Box marginTop={2}>
+              <Text fontSize="medium">{blog.description}</Text>
+            </Box>
+            <Box marginTop={2}>
+              <Text fontSize="small" fontWeight="bold" color="gray">
+                {toStringYYYYMMDD_HHMMSS(blog.created)}
+              </Text>
+            </Box>
+          </ContentWrapper>
+        </Flex>
       </Container>
     </>
   )

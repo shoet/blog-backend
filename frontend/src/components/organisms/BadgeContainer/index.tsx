@@ -1,6 +1,6 @@
 import { Badge } from '@/components/atoms/Badge'
-import Box from '@/components/layout/Box'
 import { useTags } from '@/services/tags/use-tags'
+import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 
 const Container = styled.div`
@@ -8,23 +8,38 @@ const Container = styled.div`
   flex-wrap: wrap;
 `
 
+const BadgeWrapper = styled.div`
+  display: inline-flex;
+  margin: 3px 3px;
+  cursor: pointer;
+`
+
 export const BadgeContainer = () => {
-  // TODO: anchor
+  const navigate = useNavigate()
+
   const { tags } = useTags(
     {
       apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
     },
     [],
   )
+
   return (
     <Container>
       {tags &&
         tags.map((t) => (
-          <Box key={t.id} display="inline-flex" padding="3px 3px">
-            <Badge backgroundColor="black" color="white">
+          <BadgeWrapper
+            key={t.id}
+            onClick={() => navigate(`/search?tag=${t.name}`)}
+          >
+            <Badge
+              backgroundColor="black"
+              color="white"
+              focusColor="focusPurple"
+            >
               {t.name}
             </Badge>
-          </Box>
+          </BadgeWrapper>
         ))}
     </Container>
   )

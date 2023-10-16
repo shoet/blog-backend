@@ -15,13 +15,13 @@ export const Footer = () => {
     >
       <Flex flexDirection="row" alignItems="center">
         <Box>
-          <IconGitHub size={14} />
+          <IconGitHub size={14} focusColor="focusGreen" />
         </Box>
         <Box marginLeft={2}>
-          <IconTwitter size={14} />
+          <IconTwitter size={14} focusColor="focusGreen" />
         </Box>
         <Box marginLeft={2}>
-          <IconYoutube size={14} />
+          <IconYoutube size={14} focusColor="focusGreen" />
         </Box>
       </Flex>
       <Box>

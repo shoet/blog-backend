@@ -19,8 +19,10 @@
     "@fortawesome/react-fontawesome": "^0.2.0",
     "@storybook/addon-actions": "^7.4.5",
     "axios": "^1.5.1",
+    "marked": "^9.1.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-hook-form": "^7.47.0",
     "react-router-dom": "^6.16.0",
     "styled-components": "^6.0.8",
     "swr": "^2.2.4"

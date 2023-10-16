@@ -11,16 +11,19 @@ import { Suspense, lazy } from 'react'
 import { BlogListPage } from './components/pages/BlogList'
 import { BlogDetailPage } from './components/pages/BlogDetail'
 import { ExamplePage } from './components/pages/Example'
+import { SearchPage } from './components/pages/Search'
+import { BlogEditPage } from './components/pages/BlogEdit'
 
 const AdminPage = lazy(() => import('@/components/pages/Admin'))
 
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<App />} errorElement={<ErrorPage />}>
-      <Route path="/" element={<ExamplePage />} />
-      <Route path="blog" element={<BlogListPage />} />
-      <Route path="blog/:id" element={<BlogDetailPage />} />
+      <Route path="" element={<BlogListPage />} />
+      <Route path=":id" element={<BlogDetailPage />} />
+      <Route path="search" element={<SearchPage />} />
       <Route path="about" element={<AboutPage />} />
+      <Route path="new" element={<BlogEditPage />} />
       <Route
         path="admin"
         element={
