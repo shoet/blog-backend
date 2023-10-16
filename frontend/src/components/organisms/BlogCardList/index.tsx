@@ -1,5 +1,7 @@
+import Box from '@/components/layout/Box'
 import { BlogCard } from '@/components/molecules/BlogCard'
 import { useBlogList } from '@/services/blogs/use-blog-list'
+import { NavLink } from 'react-router-dom'
 import styled from 'styled-components'
 
 const Container = styled.div`
@@ -21,7 +23,14 @@ export const BlogCardList = () => {
   return (
     <>
       <Container>
-        {blogs && blogs.map((b, idx) => <BlogCard key={idx} blog={b} />)}
+        {blogs &&
+          blogs.map((b, idx) => (
+            <Box key={idx}>
+              <NavLink to={`/${b.id}`}>
+                <BlogCard blog={b} />
+              </NavLink>
+            </Box>
+          ))}
       </Container>
     </>
   )

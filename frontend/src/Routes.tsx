@@ -17,9 +17,8 @@ const AdminPage = lazy(() => import('@/components/pages/Admin'))
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<App />} errorElement={<ErrorPage />}>
-      <Route path="/" element={<ExamplePage />} />
-      <Route path="blog" element={<BlogListPage />} />
-      <Route path="blog/:id" element={<BlogDetailPage />} />
+      <Route path="" element={<BlogListPage />} />
+      <Route path=":id" element={<BlogDetailPage />} />
       <Route path="search" element={<SearchPage />} />
       <Route path="about" element={<AboutPage />} />
       <Route
