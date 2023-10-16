@@ -44,7 +44,7 @@ const Dropzone = (props: PropsWithChildren<DropzoneProps>) => {
         onDrop={dropFile}
         onDragOver={dragOver}
       >
-        {children || 'ファイルをドロップまたはクリックして下さい'}
+        {children || 'Drop or click on a file'}
         <input
           type="file"
           multiple
@@ -72,10 +72,11 @@ const DropzoneContainer = styled(Flex)<{ isError?: boolean }>`
     isError ? theme.colors.danger : theme.colors.border};
   border-radius: 10px;
   height: 200px;
-  width: 100%;
+  max-width: 300px;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  text-align: center;
 `
 
 export default Dropzone

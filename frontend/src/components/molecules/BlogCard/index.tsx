@@ -20,7 +20,8 @@ const Container = styled.div`
 
 const ImageWrapper = styled(Box)`
   flex: 1;
-  width: 400px;
+  min-width: 200px;
+  max-width: 200px;
   img {
     width: 100%;
     height: 100%;
