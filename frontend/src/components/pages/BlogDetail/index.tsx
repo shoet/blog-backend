@@ -20,7 +20,7 @@ const ImageWrapper = styled(Box)`
 `
 
 const TagsWrapper = styled(Box)`
-  div:not(:last-child) {
+  span:not(:last-child) {
     margin-right: 0.5rem;
   }
 `

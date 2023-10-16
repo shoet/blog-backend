@@ -10,7 +10,7 @@ type BadgeProps = {
   onClicn?: () => void
 }
 
-const Container = styled.div<{
+const Container = styled.span<{
   backgroundColor: Responsive<Color>
   color: Responsive<Color>
   focusColor?: Responsive<Color>

@@ -4,6 +4,7 @@ import { styled } from 'styled-components'
 import Flex from '@/components/layout/Flex'
 import { Badge } from '@/components/atoms/Badge'
 import Box from '@/components/layout/Box'
+import { Text } from '@/components/atoms/Text'
 
 type TagFormProps = {
   value?: string[]
@@ -33,6 +34,11 @@ const TagForm = (props: TagFormProps) => {
     onChange && onChange(inputText)
   }
 
+  const handleOnClickClose = (idx: number) => {
+    tags.splice(idx, 1)
+    setTags([...tags])
+  }
+
   return (
     <>
       <TagFormContainer>
@@ -47,7 +53,22 @@ const TagForm = (props: TagFormProps) => {
       <Box marginTop={1}>
         <TagItems>
           {tags.map((t, idx) => (
-            <Badge key={idx}>{t}</Badge>
+            <Badge key={idx}>
+              <Flex flexDirection="row">
+                <Text fontSize="small" color="inherit">
+                  {t}
+                </Text>
+                <Box
+                  display="inline"
+                  marginLeft={1}
+                  onClick={() => handleOnClickClose(idx)}
+                >
+                  <Text color="inherit" fontSize="extraSmall">
+                    ✗
+                  </Text>
+                </Box>
+              </Flex>
+            </Badge>
           ))}
         </TagItems>
       </Box>

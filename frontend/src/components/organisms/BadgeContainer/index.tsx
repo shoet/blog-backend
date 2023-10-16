@@ -10,7 +10,7 @@ const Container = styled.div`
 
 const BadgeWrapper = styled.div`
   display: inline-flex;
-  padding: 3px 3px;
+  margin: 3px 3px;
   cursor: pointer;
 `
 
