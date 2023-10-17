@@ -43,7 +43,7 @@ const TagsWrapper = styled(Box)`
 `
 
 const BadgeWrapper = styled.span.withConfig({
-  shouldForwardProp: (prop) => !['padddingTop'].includes(prop),
+  shouldForwardProp: (prop) => !['paddingTop'].includes(prop),
 })<{ paddingTop?: Responsive<Space> }>`
   display: inline-block;
   ${({ paddingTop, theme }) =>
