@@ -1,6 +1,8 @@
 import styled from 'styled-components'
 
-export const Input = styled.input<{ hasBorder?: boolean; hasError?: boolean }>`
+export const Input = styled.input.withConfig({
+  shouldForwardProp: (prop) => !['hasBorder', 'hasError'].includes(prop),
+})<{ hasBorder?: boolean; hasError?: boolean }>`
   ${({ hasBorder, hasError, theme }) => {
     if (hasBorder) {
       return `

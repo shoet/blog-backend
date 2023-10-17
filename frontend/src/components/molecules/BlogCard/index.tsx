@@ -4,6 +4,7 @@ import Box from '@/components/layout/Box'
 import Flex from '@/components/layout/Flex'
 import { Blog } from '@/types/api'
 import { toStringYYYYMMDD_HHMMSS } from '@/utils/date'
+import { Responsive, Space, toResponsiveValue } from '@/utils/style'
 import styled from 'styled-components'
 
 type BlogCardProps = {
@@ -41,6 +42,14 @@ const TagsWrapper = styled(Box)`
   }
 `
 
+const BadgeWrapper = styled.span.withConfig({
+  shouldForwardProp: (prop) => !['paddingTop'].includes(prop),
+})<{ paddingTop?: Responsive<Space> }>`
+  display: inline-block;
+  ${({ paddingTop, theme }) =>
+    paddingTop && toResponsiveValue('padding-top', paddingTop, theme)}
+`
+
 export const BlogCard = (props: BlogCardProps) => {
   // TODO: anchor link
   const { blog } = props
@@ -57,8 +66,10 @@ export const BlogCard = (props: BlogCardProps) => {
             </Text>
             {blog.tags && (
               <TagsWrapper marginTop={1}>
-                {blog.tags.map((tag) => (
-                  <Badge>{tag}</Badge>
+                {blog.tags.map((tag, idx) => (
+                  <BadgeWrapper key={idx} paddingTop={{ base: '5px', md: '0' }}>
+                    <Badge>{tag}</Badge>
+                  </BadgeWrapper>
                 ))}
               </TagsWrapper>
             )}

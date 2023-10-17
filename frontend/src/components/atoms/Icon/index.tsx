@@ -15,7 +15,9 @@ type IconProps = {
   focusColor?: Responsive<Color>
 }
 
-const IconStyle = styled.div<IconProps>`
+const IconStyle = styled.div.withConfig({
+  shouldForwardProp: (prop) => !['focusColor'].includes(prop),
+})<IconProps>`
   display: 'inline-block';
   width: ${({ size }) => `${size}px`};
   height: ${({ size }) => `${size}px`};

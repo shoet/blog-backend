@@ -24,7 +24,10 @@ const variants = {
   },
 }
 
-export const Text = styled.text<{
+export const Text = styled.text.withConfig({
+  shouldForwardProp: (prop) =>
+    !['fontSize', 'fontWeight', 'letterSpacing'].includes(prop),
+})<{
   variant?: TextVariant
   fontSize?: Responsive<FontSize>
   fontWeight?: Responsive<string>
