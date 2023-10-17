@@ -16,7 +16,9 @@ const Divider = ({ space = 0 }: { space?: number }) => {
   return <Div space={`${half}px`} />
 }
 
-const NavItem = styled.div<{
+const NavItem = styled.div.withConfig({
+  shouldForwardProp: (prop) => !['focusColor'].includes(prop),
+})<{
   focusColor?: Responsive<Color>
 }>`
   ${({ focusColor, theme }) =>

@@ -10,7 +10,10 @@ type BadgeProps = {
   onClicn?: () => void
 }
 
-const Container = styled.span<{
+const Container = styled.span.withConfig({
+  shouldForwardProp: (prop) =>
+    !['focusColor', 'backgroundColor'].includes(prop),
+})<{
   backgroundColor: Responsive<Color>
   color: Responsive<Color>
   focusColor?: Responsive<Color>
