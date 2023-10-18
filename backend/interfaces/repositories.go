@@ -28,7 +28,7 @@ type BlogRepository interface {
 	List(ctx context.Context, db Queryer, option options.ListBlogOptions) ([]*models.Blog, error)
 	Get(ctx context.Context, db Queryer, id models.BlogId) (*models.Blog, error)
 	Delete(ctx context.Context, db Execer, id models.BlogId) error
-	Put(ctx context.Context, db Execer, blog *models.Blog) error
+	Put(ctx context.Context, db Execer, blog *models.Blog) (models.BlogId, error)
 	AddBlogTag(ctx context.Context, db Execer, blogId models.BlogId, tagId models.TagId) (int64, error)
 	SelectTags(ctx context.Context, db Queryer, tag string) ([]*models.Tag, error)
 	AddTag(ctx context.Context, db Execer, tag string) (models.TagId, error)

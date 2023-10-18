@@ -172,8 +172,34 @@ func (r *BlogRepository) Delete(ctx context.Context, db interfaces.Execer, id mo
 	}
 	return nil
 }
-func (r *BlogRepository) Put(ctx context.Context, db interfaces.Execer, blog *models.Blog) error {
-	return nil
+func (r *BlogRepository) Put(
+	ctx context.Context, db interfaces.Execer, blog *models.Blog,
+) (models.BlogId, error) {
+	sql := `
+	UPDATE blogs
+	SET
+		author_id = ?
+		, title = ?
+		, content = ?
+		, description = ?
+		, thumbnail_image_file_name = ?
+		, is_public = ?
+		, modified = ?
+	WHERE
+		id = ?
+	;
+	`
+	now := r.Clocker.Now()
+	blog.Modified = now
+	_, err := db.ExecContext(
+		ctx,
+		sql,
+		blog.AuthorId, blog.Title, blog.Content, blog.Description,
+		blog.ThumbnailImageFileName, blog.IsPublic, blog.Modified, blog.Id)
+	if err != nil {
+		return 0, fmt.Errorf("failed to update blog: %w", err)
+	}
+	return blog.Id, nil
 }
 
 func (r *BlogRepository) AddBlogTag(
