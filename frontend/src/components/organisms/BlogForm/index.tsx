@@ -6,6 +6,10 @@ import TextArea from '@/components/atoms/TextArea'
 import Box from '@/components/layout/Box'
 import Flex from '@/components/layout/Flex'
 import TagForm from '@/components/molecules/TagForm'
+import { getSignedPutUrl } from '@/services/files/get-signed-url'
+import { putSignedUrl } from '@/services/files/put-file'
+import { ApiContext, Blog } from '@/types/api'
+import { generateBase32EncodedUuid } from '@/utils/ids'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import styled from 'styled-components'
@@ -21,9 +25,19 @@ export type BlogFormData = {
 }
 
 type BlogFormProps = {
-  data?: BlogFormData
+  data?: Blog
   onSubmit?: (data: BlogFormData) => void
 }
+
+type ImageFileData = {
+  file: File
+  presignedUrl: string
+  putedUrl: string
+}
+
+const PreviewImageTitle = styled(Box)`
+  border-radius: 5px 5px 0px 0px; 
+`
 
 const PreviewImageWrapper = styled.div`
   width: 100%;
@@ -49,14 +63,33 @@ export const BlogForm = (props: BlogFormProps) => {
     defaultValues: data,
   })
 
-  const [imageFiles, setImageFiles] = useState<File[]>([])
+  const [thumbnailImageFiles, setThumbnailImageFiles] = useState<File[]>([])
+  const [thumbnailImageData, setThumbnailImageData] = useState<ImageFileData>()
+  const [previewImage, setPreviewImage] = useState<string>()
 
   const handleOnSubmit = async (data: BlogFormData) => {
-    data.isPublic = true
-    data.authorId = 1
-    console.log('submit')
-    console.log(data)
+    data.isPublic = true // TODO
+    data.authorId = 1 // TODO
+    if (
+      thumbnailImageData === undefined ||
+      thumbnailImageData.file === undefined ||
+      thumbnailImageData.presignedUrl === undefined ||
+      thumbnailImageData.putedUrl === undefined
+    ) {
+      console.log('put url is undefined')
+      return
+    }
+    await putSignedUrl({
+      signedPutUrl: thumbnailImageData.presignedUrl,
+      contentType: thumbnailImageData.file.type,
+      file: thumbnailImageData.file,
+    })
+    data.thumbnailImageFileName = thumbnailImageData.putedUrl
     onSubmit && onSubmit(data)
+  }
+
+  const apiContext: ApiContext = {
+    apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
   }
 
   return (
@@ -111,30 +144,48 @@ export const BlogForm = (props: BlogFormProps) => {
             <Controller
               control={control}
               name="thumbnailImageFileName"
-              render={({ field: { value, onChange } }) => (
+              render={({ field: { onChange } }) => (
                 <>
                   <Dropzone
-                    value={imageFiles}
-                    onChange={(files) => {
-                      // TODO: 画像アップロード
+                    value={thumbnailImageFiles}
+                    onChange={async (files) => {
                       if (files.length > 1) {
                         control.setError('thumbnailImageFileName', {
                           message: 'サムネイルは1つまでです。',
                         })
                         return
                       }
-                      const url = URL.createObjectURL(files[0])
-                      setImageFiles([files[0]])
-                      onChange(url)
+                      const fileName = `${generateBase32EncodedUuid()}.${
+                        files[0].type.split('/')[1]
+                      }`
+                      const resp = await getSignedPutUrl(apiContext, {
+                        fileName: fileName,
+                      })
+                      const { signedUrl, putUrl } = resp
+                      setThumbnailImageData({
+                        file: files[0],
+                        presignedUrl: signedUrl,
+                        putedUrl: putUrl,
+                      })
+                      const previewSrc = URL.createObjectURL(files[0])
+                      previewImage && URL.revokeObjectURL(previewImage)
+                      setPreviewImage(previewSrc)
+                      setThumbnailImageFiles([...files])
+                      onChange(putUrl)
                     }}
                   >
-                    {imageFiles.length > 0 && (
+                    {previewImage && (
                       <Box>
-                        <Box backgroundColor="primary" padding="3px">
-                          <Text color="white">{imageFiles[0].name}</Text>
-                        </Box>
+                        <PreviewImageTitle
+                          backgroundColor="primary"
+                          padding="3px"
+                        >
+                          <Text color="white">
+                            {thumbnailImageFiles[0].name}
+                          </Text>
+                        </PreviewImageTitle>
                         <PreviewImageWrapper>
-                          <img src={value} />
+                          <img src={previewImage} />
                         </PreviewImageWrapper>
                       </Box>
                     )}

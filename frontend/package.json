@@ -19,6 +19,7 @@
     "@fortawesome/react-fontawesome": "^0.2.0",
     "@storybook/addon-actions": "^7.4.5",
     "axios": "^1.5.1",
+    "hi-base32": "^0.5.1",
     "highlight.js": "^11.9.0",
     "marked": "^9.1.2",
     "react": "^18.2.0",
@@ -26,7 +27,8 @@
     "react-hook-form": "^7.47.0",
     "react-router-dom": "^6.16.0",
     "styled-components": "^6.0.8",
-    "swr": "^2.2.4"
+    "swr": "^2.2.4",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@storybook/addon-console": "^2.0.0",
@@ -43,6 +45,7 @@
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@types/styled-components": "^5.1.28",
+    "@types/uuid": "^9.0.5",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "@vitejs/plugin-react": "^4.0.3",
