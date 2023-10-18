@@ -83,7 +83,7 @@ func (a *BlogAddHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Content                string        `json:"content" validate:"required"`
 		Description            string        `json:"description" validate:"required"`
 		AuthorId               models.UserId `json:"authorId" validate:"required"`
-		ThumbnailImageFileName string        `json:"thumbnailImage_file_name"`
+		ThumbnailImageFileName string        `json:"thumbnailImageFileName"`
 		IsPublic               bool          `json:"isPublic" default:"false"`
 		Tags                   []string      `json:"tags" default:"[]"`
 	}

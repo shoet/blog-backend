@@ -21,3 +21,7 @@ type AuthService interface {
 	Signout(ctx context.Context, token string) error
 	Unsubscribe(ctx context.Context) error
 }
+
+type StorageService interface {
+	GenerateThumbnailPutURL(fileName string) (string, string, error)
+}

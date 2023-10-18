@@ -9,11 +9,12 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/rs/zerolog"
 	"github.com/shoet/blog/clocker"
+	"github.com/shoet/blog/config"
 	"github.com/shoet/blog/services"
 	"github.com/shoet/blog/store"
 )
 
-func NewMux(ctx context.Context) (*chi.Mux, error) {
+func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 	db, err := store.NewDBSQLite3(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create db: %w", err)
@@ -29,6 +30,11 @@ func NewMux(ctx context.Context) (*chi.Mux, error) {
 		With().
 		Timestamp().
 		Logger()
+
+	awsStorage, err := services.NewAWSS3StorageService(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create aws storage: %w", err)
+	}
 
 	router := chi.NewRouter()
 	router.Route("/", func(r chi.Router) {
@@ -67,6 +73,14 @@ func NewMux(ctx context.Context) (*chi.Mux, error) {
 		r.Route("/tags", func(r chi.Router) {
 			th := &TagListHandler{}
 			r.Get("/", th.ServeHTTP)
+		})
+
+		r.Route("/files", func(r chi.Router) {
+			s := GenerateSignedURLHandler{
+				StorageService: awsStorage,
+				Validator:      validate,
+			}
+			r.Post("/thumbnail/new", s.ServeHTTP)
 		})
 
 	})

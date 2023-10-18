@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/shoet/blog/config"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -18,13 +19,13 @@ type Server struct {
 	l   net.Listener
 }
 
-func NewServer(ctx context.Context, port int) (*Server, error) {
-	l, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
+	l, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.AppPort))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create listener in NewServer(): %w", err)
 	}
 	log.Printf("server listening on %s", l.Addr().String())
-	mux, err := NewMux(ctx)
+	mux, err := NewMux(ctx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create mux in NewServer(): %w", err)
 	}
