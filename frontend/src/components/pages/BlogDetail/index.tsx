@@ -43,6 +43,7 @@ export const BlogDetailPage = () => {
   if (!id) {
     redirect('/404')
   }
+
   const { blog, isLoading } = useBlog(
     {
       apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
@@ -91,7 +92,7 @@ export const BlogDetailPage = () => {
               </TagsWrapper>
             )}
           </Flex>
-          <ImageWrapper>
+          <ImageWrapper marginTop={2}>
             <img src={blog.thumbnailImageFileName} alt={blog.title} />
           </ImageWrapper>
           <Box marginTop={3}>
