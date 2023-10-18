@@ -13,6 +13,7 @@ import { BlogDetailPage } from './components/pages/BlogDetail'
 import { ExamplePage } from './components/pages/Example'
 import { SearchPage } from './components/pages/Search'
 import { BlogEditPage } from './components/pages/BlogEdit'
+import { BlogPostPage } from './components/pages/BlogPost'
 
 const AdminPage = lazy(() => import('@/components/pages/Admin'))
 
@@ -23,7 +24,8 @@ const router = createBrowserRouter(
       <Route path=":id" element={<BlogDetailPage />} />
       <Route path="search" element={<SearchPage />} />
       <Route path="about" element={<AboutPage />} />
-      <Route path="new" element={<BlogEditPage />} />
+      <Route path="new" element={<BlogPostPage />} />
+      <Route path=":id/edit" element={<BlogEditPage />} />
       <Route
         path="admin"
         element={

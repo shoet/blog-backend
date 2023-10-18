@@ -68,6 +68,11 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 			}
 			r.Post("/delete", bdh.ServeHTTP)
 
+			buh := &BlogPutHandler{
+				Service:   blogService,
+				Validator: validate,
+			}
+			r.Post("/update", buh.ServeHTTP)
 		})
 
 		r.Route("/tags", func(r chi.Router) {

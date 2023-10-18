@@ -110,18 +110,13 @@ func (a *BlogAddHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Tags:                   reqBody.Tags,
 	}
 
-	err := a.Service.AddBlog(ctx, blog)
+	newBlog, err := a.Service.AddBlog(ctx, blog)
 	if err != nil {
 		logger.Error().Msgf("failed to add blog: %v", err)
 		ResponsdInternalServerError(w, r, err)
 		return
 	}
-	resp := struct {
-		Id int `json:"id"`
-	}{
-		Id: int(blog.Id),
-	}
-	if err := RespondJSON(w, r, http.StatusOK, resp); err != nil {
+	if err := RespondJSON(w, r, http.StatusOK, newBlog); err != nil {
 		logger.Error().Msgf("failed to respond json response: %v", err)
 	}
 	return
@@ -169,28 +164,39 @@ func (d *BlogDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type BlogPutHandler struct {
-	Service BlogService
+	Service   BlogService
+	Validator *validator.Validate
 }
 
 func (p *BlogPutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := GetLogger(ctx)
 	var reqBody struct {
-		Title                  string   `json:"title" validate:"required"`
-		Content                string   `json:"content" validate:"required"`
-		Description            string   `json:"description" validate:"required"`
-		ThumbnailImageFileName string   `json:"thumbnailImageFileName"`
-		IsPublic               bool     `json:"isPublic" default:"false"`
-		Tags                   []string `json:"tags" default:"[]"`
+		Id                     models.BlogId `json:"id" validate:"required"`
+		AuthorId               models.UserId `json:"authorId" validate:"required"`
+		Title                  string        `json:"title"`
+		Content                string        `json:"content"`
+		Description            string        `json:"description"`
+		ThumbnailImageFileName string        `json:"thumbnailImageFileName"`
+		IsPublic               bool          `json:"isPublic"`
+		Tags                   []string      `json:"tags"`
 	}
 	defer r.Body.Close()
-	if err := JsonToStruct(r, reqBody); err != nil {
+	if err := JsonToStruct(r, &reqBody); err != nil {
 		logger.Error().Msgf("failed to parse request body: %v", err)
 		ResponsdBadRequest(w, r, err)
 		return
 	}
 
+	if err := p.Validator.Struct(reqBody); err != nil {
+		logger.Error().Msgf("failed to validate request body: %v", err)
+		ResponsdBadRequest(w, r, err)
+		return
+	}
+
 	blog := &models.Blog{
+		Id:                     reqBody.Id,
+		AuthorId:               reqBody.AuthorId,
 		Title:                  reqBody.Title,
 		Content:                reqBody.Content,
 		Description:            reqBody.Description,
@@ -199,18 +205,13 @@ func (p *BlogPutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Tags:                   reqBody.Tags,
 	}
 
-	err := p.Service.PutBlog(ctx, blog)
+	newBlog, err := p.Service.PutBlog(ctx, blog)
 	if err != nil {
 		logger.Error().Msgf("failed to put blog: %v", err)
 		ResponsdInternalServerError(w, r, err)
 		return
 	}
-	resp := struct {
-		Id int `json:"id"`
-	}{
-		Id: int(blog.Id),
-	}
-	if err := RespondJSON(w, r, http.StatusOK, resp); err != nil {
+	if err := RespondJSON(w, r, http.StatusOK, newBlog); err != nil {
 		logger.Error().Msgf("failed to respond json response: %v", err)
 	}
 	return

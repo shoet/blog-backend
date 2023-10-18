@@ -10,7 +10,7 @@ import (
 type BlogService interface {
 	ListBlog(ctx context.Context, option options.ListBlogOptions) ([]*models.Blog, error)
 	GetBlog(ctx context.Context, id models.BlogId) (*models.Blog, error)
-	AddBlog(ctx context.Context, blog *models.Blog) error
+	AddBlog(ctx context.Context, blog *models.Blog) (*models.Blog, error)
 	DeleteBlog(ctx context.Context, id models.BlogId) error
-	PutBlog(ctx context.Context, blog *models.Blog) error
+	PutBlog(ctx context.Context, blog *models.Blog) (*models.Blog, error)
 }
