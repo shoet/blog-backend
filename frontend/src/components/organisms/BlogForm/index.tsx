@@ -15,6 +15,7 @@ import { Controller, useForm } from 'react-hook-form'
 import styled from 'styled-components'
 
 export type BlogFormData = {
+  id: number
   title: string
   description: string
   content: string
@@ -27,12 +28,6 @@ export type BlogFormData = {
 type BlogFormProps = {
   data?: Blog
   onSubmit?: (data: BlogFormData) => void
-}
-
-type ImageFileData = {
-  file: File
-  presignedUrl: string
-  putedUrl: string
 }
 
 const PreviewImageTitle = styled(Box)`
@@ -63,28 +58,14 @@ export const BlogForm = (props: BlogFormProps) => {
     defaultValues: data,
   })
 
-  const [thumbnailImageFiles, setThumbnailImageFiles] = useState<File[]>([])
-  const [thumbnailImageData, setThumbnailImageData] = useState<ImageFileData>()
-  const [previewImage, setPreviewImage] = useState<string>()
+  const [imageFiles, setImageFiles] = useState<File[]>([])
+  const [previewImage, setPreviewImage] = useState<string>(
+    data?.thumbnailImageFileName || '',
+  )
 
   const handleOnSubmit = async (data: BlogFormData) => {
     data.isPublic = true // TODO
     data.authorId = 1 // TODO
-    if (
-      thumbnailImageData === undefined ||
-      thumbnailImageData.file === undefined ||
-      thumbnailImageData.presignedUrl === undefined ||
-      thumbnailImageData.putedUrl === undefined
-    ) {
-      console.log('put url is undefined')
-      return
-    }
-    await putSignedUrl({
-      signedPutUrl: thumbnailImageData.presignedUrl,
-      contentType: thumbnailImageData.file.type,
-      file: thumbnailImageData.file,
-    })
-    data.thumbnailImageFileName = thumbnailImageData.putedUrl
     onSubmit && onSubmit(data)
   }
 
@@ -144,10 +125,11 @@ export const BlogForm = (props: BlogFormProps) => {
             <Controller
               control={control}
               name="thumbnailImageFileName"
+              defaultValue=""
               render={({ field: { onChange } }) => (
                 <>
                   <Dropzone
-                    value={thumbnailImageFiles}
+                    value={imageFiles}
                     onChange={async (files) => {
                       if (files.length > 1) {
                         control.setError('thumbnailImageFileName', {
@@ -162,28 +144,26 @@ export const BlogForm = (props: BlogFormProps) => {
                         fileName: fileName,
                       })
                       const { signedUrl, putUrl } = resp
-                      setThumbnailImageData({
+                      await putSignedUrl({
+                        signedPutUrl: signedUrl,
+                        contentType: files[0].type,
                         file: files[0],
-                        presignedUrl: signedUrl,
-                        putedUrl: putUrl,
                       })
-                      const previewSrc = URL.createObjectURL(files[0])
-                      previewImage && URL.revokeObjectURL(previewImage)
-                      setPreviewImage(previewSrc)
-                      setThumbnailImageFiles([...files])
+                      setImageFiles(files)
+                      setPreviewImage(putUrl)
                       onChange(putUrl)
                     }}
                   >
                     {previewImage && (
                       <Box>
-                        <PreviewImageTitle
-                          backgroundColor="primary"
-                          padding="3px"
-                        >
-                          <Text color="white">
-                            {thumbnailImageFiles[0].name}
-                          </Text>
-                        </PreviewImageTitle>
+                        {imageFiles.length > 0 && (
+                          <PreviewImageTitle
+                            backgroundColor="primary"
+                            padding="3px"
+                          >
+                            <Text color="white">{imageFiles[0].name}</Text>
+                          </PreviewImageTitle>
+                        )}
                         <PreviewImageWrapper>
                           <img src={previewImage} />
                         </PreviewImageWrapper>
@@ -207,11 +187,12 @@ export const BlogForm = (props: BlogFormProps) => {
           <Box marginTop={1}>
             <Controller
               control={control}
+              defaultValue={[]}
               name="tags"
               rules={{
                 validate: (value) => {
                   return (
-                    (value && value.length <= 3) ||
+                    (0 <= value.length && value.length <= 3) ||
                     '選択できるタグは3つまでです。'
                   )
                 },
