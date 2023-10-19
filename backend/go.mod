@@ -12,6 +12,7 @@ require (
 	github.com/google/uuid v1.3.1
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/mattn/go-sqlite3 v1.14.17
+	github.com/redis/go-redis/v9 v9.2.1
 	github.com/rs/zerolog v1.31.0
 	golang.org/x/net v0.17.0
 	golang.org/x/sync v0.4.0
