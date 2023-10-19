@@ -35,9 +35,9 @@ type BlogRepository interface {
 }
 
 type UserRepository interface {
-	Add(ctx context.Context, db Execer, user *models.User) (models.UserId, error)
-	Get(ctx context.Context, db Queryer, id models.UserId) (*models.User, error)
+	// Add(ctx context.Context, db Execer, user *models.User) (models.UserId, error)
+	// Get(ctx context.Context, db Queryer, id models.UserId) (*models.User, error)
 	GetByEmail(ctx context.Context, db Queryer, email string) (*models.User, error)
-	Delete(ctx context.Context, db Execer, id models.UserId) error
-	Put(ctx context.Context, db Execer, user *models.User) error
+	// Delete(ctx context.Context, db Execer, id models.UserId) error
+	// Put(ctx context.Context, db Execer, user *models.User) error
 }

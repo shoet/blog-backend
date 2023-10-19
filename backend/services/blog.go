@@ -22,8 +22,8 @@ type BlogService struct {
 	blog interfaces.BlogRepository
 }
 
-func (s *BlogService) AddBlog(ctx context.Context, blog *models.Blog) (*models.Blog, error) {
-	tx, err := s.db.BeginTxx(ctx, nil)
+func (b *BlogService) AddBlog(ctx context.Context, blog *models.Blog) (*models.Blog, error) {
+	tx, err := b.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
@@ -32,12 +32,12 @@ func (s *BlogService) AddBlog(ctx context.Context, blog *models.Blog) (*models.B
 	// add tags
 	var tagIds []models.TagId
 	for _, tag := range blog.Tags {
-		tags, err := s.blog.SelectTags(ctx, tx, tag)
+		tags, err := b.blog.SelectTags(ctx, tx, tag)
 		if err != nil {
 			return nil, fmt.Errorf("failed to upsert tag: %w", err)
 		}
 		if len(tags) == 0 {
-			tagId, err := s.blog.AddTag(ctx, tx, tag)
+			tagId, err := b.blog.AddTag(ctx, tx, tag)
 			if err != nil {
 				return nil, fmt.Errorf("failed to add tag: %w", err)
 			}
@@ -49,14 +49,14 @@ func (s *BlogService) AddBlog(ctx context.Context, blog *models.Blog) (*models.B
 	}
 
 	// add blog
-	id, err := s.blog.Add(ctx, tx, blog)
+	id, err := b.blog.Add(ctx, tx, blog)
 	if err != nil {
 		return nil, fmt.Errorf("failed to add blog: %w", err)
 	}
 
 	// add blogs_tags
 	for _, tagId := range tagIds {
-		_, err := s.blog.AddBlogTag(ctx, tx, id, tagId)
+		_, err := b.blog.AddBlogTag(ctx, tx, id, tagId)
 		if err != nil {
 			return nil, fmt.Errorf("failed to add blogs_tags: %w", err)
 		}
@@ -67,7 +67,7 @@ func (s *BlogService) AddBlog(ctx context.Context, blog *models.Blog) (*models.B
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	newBlog, err := s.GetBlog(ctx, id)
+	newBlog, err := b.GetBlog(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get blog: %w", err)
 	}
@@ -75,32 +75,32 @@ func (s *BlogService) AddBlog(ctx context.Context, blog *models.Blog) (*models.B
 	return newBlog, nil
 }
 
-func (s *BlogService) ListBlog(ctx context.Context, option options.ListBlogOptions) ([]*models.Blog, error) {
-	blogs, err := s.blog.List(ctx, s.db, option)
+func (b *BlogService) ListBlog(ctx context.Context, option options.ListBlogOptions) ([]*models.Blog, error) {
+	blogs, err := b.blog.List(ctx, b.db, option)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list blog: %w", err)
 	}
 	return blogs, err
 }
 
-func (s *BlogService) GetBlog(ctx context.Context, id models.BlogId) (*models.Blog, error) {
-	blog, err := s.blog.Get(ctx, s.db, id)
+func (b *BlogService) GetBlog(ctx context.Context, id models.BlogId) (*models.Blog, error) {
+	blog, err := b.blog.Get(ctx, b.db, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get blog: %w", err)
 	}
 	return blog, nil
 }
 
-func (s *BlogService) DeleteBlog(ctx context.Context, id models.BlogId) error {
-	err := s.blog.Delete(ctx, s.db, id)
+func (b *BlogService) DeleteBlog(ctx context.Context, id models.BlogId) error {
+	err := b.blog.Delete(ctx, b.db, id)
 	if err != nil {
 		return fmt.Errorf("failed to delete blog: %w", err)
 	}
 	return nil
 }
 
-func (s *BlogService) PutBlog(ctx context.Context, blog *models.Blog) (*models.Blog, error) {
-	tx, err := s.db.BeginTxx(ctx, nil)
+func (b *BlogService) PutBlog(ctx context.Context, blog *models.Blog) (*models.Blog, error) {
+	tx, err := b.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
@@ -109,12 +109,12 @@ func (s *BlogService) PutBlog(ctx context.Context, blog *models.Blog) (*models.B
 	// add tags
 	var tagIds []models.TagId
 	for _, tag := range blog.Tags {
-		tags, err := s.blog.SelectTags(ctx, tx, tag)
+		tags, err := b.blog.SelectTags(ctx, tx, tag)
 		if err != nil {
 			return nil, fmt.Errorf("failed to upsert tag: %w", err)
 		}
 		if len(tags) == 0 {
-			tagId, err := s.blog.AddTag(ctx, tx, tag)
+			tagId, err := b.blog.AddTag(ctx, tx, tag)
 			if err != nil {
 				return nil, fmt.Errorf("failed to add tag: %w", err)
 			}
@@ -126,14 +126,14 @@ func (s *BlogService) PutBlog(ctx context.Context, blog *models.Blog) (*models.B
 	}
 
 	// put blog
-	id, err := s.blog.Put(ctx, tx, blog)
+	id, err := b.blog.Put(ctx, tx, blog)
 	if err != nil {
 		return nil, fmt.Errorf("failed to put blog: %w", err)
 	}
 
 	// add blogs_tags
 	for _, tagId := range tagIds {
-		_, err := s.blog.AddBlogTag(ctx, tx, id, tagId)
+		_, err := b.blog.AddBlogTag(ctx, tx, id, tagId)
 		if err != nil {
 			return nil, fmt.Errorf("failed to add blogs_tags: %w", err)
 		}
@@ -144,10 +144,14 @@ func (s *BlogService) PutBlog(ctx context.Context, blog *models.Blog) (*models.B
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	newBlog, err := s.GetBlog(ctx, id)
+	newBlog, err := b.GetBlog(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get blog: %w", err)
 	}
 
 	return newBlog, nil
+}
+
+func (s *BlogService) Export(ctx context.Context) error {
+	return nil
 }

@@ -255,3 +255,28 @@ func (r *BlogRepository) AddTag(ctx context.Context, db interfaces.Execer, tag s
 	return models.TagId(id), nil
 
 }
+
+type UserRepository struct {
+	Clocker clocker.Clocker
+}
+
+func (u *UserRepository) GetByEmail(
+	ctx context.Context, db interfaces.Queryer, email string,
+) (*models.User, error) {
+	sql := `
+	SELECT
+		id, name, email, password, created, modified
+	FROM users
+	WHERE email = ?
+	;
+	`
+	fmt.Println(email)
+	var users []*models.User
+	if err := db.SelectContext(ctx, &users, sql, email); err != nil {
+		return nil, fmt.Errorf("failed to select users: %w", err)
+	}
+	if len(users) == 0 {
+		return nil, fmt.Errorf("user not found")
+	}
+	return users[0], nil
+}

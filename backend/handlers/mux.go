@@ -19,10 +19,11 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create db: %w", err)
 	}
-	repo := store.BlogRepository{
-		Clocker: &clocker.RealClocker{},
+	c := clocker.RealClocker{}
+	blogRepo := store.BlogRepository{
+		Clocker: &c,
 	}
-	blogService := services.NewBlogService(db, &repo)
+	blogService := services.NewBlogService(db, &blogRepo)
 	validate := validator.New()
 
 	logger := zerolog.
@@ -34,6 +35,14 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 	awsStorage, err := services.NewAWSS3StorageService(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create aws storage: %w", err)
+	}
+
+	userRepo := store.UserRepository{
+		Clocker: &c,
+	}
+	authService, err := services.NewAuthService(db, &userRepo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create auth service: %w", err)
 	}
 
 	router := chi.NewRouter()
@@ -86,6 +95,21 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 				Validator:      validate,
 			}
 			r.Post("/thumbnail/new", s.ServeHTTP)
+		})
+
+		r.Route("/auth", func(r chi.Router) {
+			ah := &AuthLoginHandler{
+				Service:   authService,
+				Validator: validate,
+			}
+			r.Post("/login", ah.ServeHTTP)
+
+			aah := &AuthAdminLoginHandler{
+				Service:   authService,
+				Validator: validate,
+				config:    cfg,
+			}
+			r.Post("/admin/login", aah.ServeHTTP)
 		})
 
 	})
