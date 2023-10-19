@@ -40,7 +40,18 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 	userRepo := store.UserRepository{
 		Clocker: &c,
 	}
-	authService, err := services.NewAuthService(db, &userRepo)
+	kvs, err := store.NewRedisKVS(
+		ctx,
+		cfg.KVSHost,
+		cfg.KVSPort,
+		cfg.KVSUser,
+		cfg.KVSPass,
+		cfg.JWTExpiresInSec)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create redis kvs: %w", err)
+	}
+	jwter := services.NewJWTService(kvs, cfg, &c)
+	authService, err := services.NewAuthService(db, &userRepo, jwter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create auth service: %w", err)
 	}
@@ -85,6 +96,7 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 		})
 
 		r.Route("/tags", func(r chi.Router) {
+			// TODO: implement
 			th := &TagListHandler{}
 			r.Get("/", th.ServeHTTP)
 		})
@@ -110,6 +122,12 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 				config:    cfg,
 			}
 			r.Post("/admin/login", aah.ServeHTTP)
+
+			ash := &AuthSessionLoginHandler{
+				Service:   authService,
+				Validator: validate,
+			}
+			r.Post("/login/me", ash.ServeHTTP)
 		})
 
 	})

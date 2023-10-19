@@ -6,23 +6,23 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/shoet/blog/config"
-	"github.com/shoet/blog/interfaces"
 	"github.com/shoet/blog/models"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService struct {
 	db    *sqlx.DB
-	user  interfaces.UserRepository
-	jwter interfaces.JWTer
+	user  UserRepository
+	jwter JWTer
 }
 
 func NewAuthService(
-	db *sqlx.DB, user interfaces.UserRepository, jwter interfaces.JWTer,
+	db *sqlx.DB, user UserRepository, jwter JWTer,
 ) (*AuthService, error) {
 	return &AuthService{
-		db:   db,
-		user: user,
+		db:    db,
+		user:  user,
+		jwter: jwter,
 	}, nil
 }
 
@@ -41,13 +41,12 @@ func (a *AuthService) Login(
 		return "", fmt.Errorf("failed to compare password: %w", err)
 	}
 
-	// generate token
+	// generate token and save session kvs
 	token, err := a.jwter.GenerateToken(ctx, u)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate token: %w", err)
 	}
 
-	// exclude password
 	return token, nil
 }
 
@@ -68,13 +67,12 @@ func (a *AuthService) LoginAdmin(
 		return "", fmt.Errorf("failed to get user by email: %w", err)
 	}
 
-	// generate token
+	// generate token and save session kvs
 	token, err := a.jwter.GenerateToken(ctx, u)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate token: %w", err)
 	}
 
-	// exclude password
 	return token, err
 }
 

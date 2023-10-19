@@ -9,11 +9,13 @@ require (
 	github.com/caarlos0/env/v9 v9.0.0
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/go-playground/validator/v10 v10.15.5
+	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/google/uuid v1.3.1
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/redis/go-redis/v9 v9.2.1
 	github.com/rs/zerolog v1.31.0
+	golang.org/x/crypto v0.14.0
 	golang.org/x/net v0.17.0
 	golang.org/x/sync v0.4.0
 )
@@ -34,13 +36,17 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.17.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.23.2 // indirect
 	github.com/aws/smithy-go v1.15.0 // indirect
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
+	github.com/matryer/moq v0.3.3 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/tools v0.6.0 // indirect
 )
