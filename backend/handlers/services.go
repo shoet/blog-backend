@@ -1,4 +1,4 @@
-package interfaces
+package handlers
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"github.com/shoet/blog/options"
 )
 
-type BlogService interface {
+type BlogManager interface {
 	ListBlog(ctx context.Context, option options.ListBlogOptions) ([]*models.Blog, error)
 	AddBlog(ctx context.Context, blog *models.Blog) (*models.Blog, error)
 	DeleteBlog(ctx context.Context, id models.BlogId) error
@@ -17,7 +17,7 @@ type BlogService interface {
 	GetBlog(ctx context.Context, id models.BlogId) (*models.Blog, error)
 }
 
-type AuthService interface {
+type AuthManager interface {
 	Login(ctx context.Context, email string, password string) (string, error)
 	LoginAdmin(ctx context.Context, cfg *config.Config, email string, password string) (string, error)
 	LoginSession(ctx context.Context, token string) (*models.User, error)
@@ -26,6 +26,6 @@ type AuthService interface {
 	// Unsubscribe(ctx context.Context) error
 }
 
-type StorageService interface {
+type Storager interface {
 	GenerateThumbnailPutURL(fileName string) (string, string, error)
 }

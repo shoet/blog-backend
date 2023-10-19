@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/shoet/blog/config"
@@ -17,9 +18,14 @@ func Test_AWSStorageService_GenerateThumbnailPutURL(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create aws storage service: %v", err)
 	}
-	url, err := s.GenerateThumbnailPutURL("test.jpg")
+	wantFileName := "test.jpg"
+	signedUrl, objectUrl, err := s.GenerateThumbnailPutURL(wantFileName)
 	if err != nil {
 		t.Fatalf("failed to generate url: %v", err)
 	}
-	fmt.Println(url)
+	if strings.HasSuffix(signedUrl, wantFileName) {
+		t.Fatalf("signed url is not expected: %v", signedUrl)
+	}
+	fmt.Println(signedUrl)
+	fmt.Println(objectUrl)
 }

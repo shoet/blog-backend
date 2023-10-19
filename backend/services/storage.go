@@ -32,6 +32,21 @@ func NewAWSS3StorageService(cfg *config.Config) (*AWSS3StorageService, error) {
 	}, nil
 }
 
+/*
+Summary:
+
+	GeneratePutURL generates a signed url for put object.
+
+Args:
+
+	fileName: string
+
+Returns:
+
+	string: signed url
+	string: object url
+	error: error
+*/
 func (s *AWSS3StorageService) GenerateThumbnailPutURL(fileName string) (string, string, error) {
 	bucketName := s.config.AWSS3Bucket
 	objectKey := filepath.Join(s.config.AWSS3ThumbnailDirectory, fileName)

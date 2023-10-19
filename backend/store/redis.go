@@ -19,7 +19,7 @@ type RedisOption func(*redis.Options)
 func NewRedisKVS(
 	ctx context.Context,
 	host string,
-	port int,
+	port int64,
 	username string,
 	password string,
 	expirationSec int,

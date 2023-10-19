@@ -5,12 +5,11 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/shoet/blog/interfaces"
 	"github.com/shoet/blog/models"
 	"github.com/shoet/blog/options"
 )
 
-func NewBlogService(db *sqlx.DB, blog interfaces.BlogRepository) *BlogService {
+func NewBlogService(db *sqlx.DB, blog BlogRepository) *BlogService {
 	return &BlogService{
 		db:   db,
 		blog: blog,
@@ -19,7 +18,7 @@ func NewBlogService(db *sqlx.DB, blog interfaces.BlogRepository) *BlogService {
 
 type BlogService struct {
 	db   *sqlx.DB
-	blog interfaces.BlogRepository
+	blog BlogRepository
 }
 
 func (b *BlogService) AddBlog(ctx context.Context, blog *models.Blog) (*models.Blog, error) {

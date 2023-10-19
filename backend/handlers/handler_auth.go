@@ -5,11 +5,10 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/shoet/blog/config"
-	"github.com/shoet/blog/interfaces"
 )
 
 type AuthLoginHandler struct {
-	Service   interfaces.AuthService
+	Service   AuthManager
 	Validator *validator.Validate
 }
 
@@ -51,7 +50,7 @@ func (a *AuthLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type AuthAdminLoginHandler struct {
-	Service   interfaces.AuthService
+	Service   AuthManager
 	Validator *validator.Validate
 	config    *config.Config
 }
@@ -90,5 +89,15 @@ func (a *AuthAdminLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	if err := RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		logger.Error().Msgf("failed to respond json response: %v", err)
 	}
+	return
+}
+
+type AuthSessionLoginHandler struct {
+	Service   AuthManager
+	Validator *validator.Validate
+}
+
+func (a *AuthSessionLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// get authorization header
 	return
 }

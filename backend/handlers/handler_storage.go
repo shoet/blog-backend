@@ -4,11 +4,10 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/shoet/blog/interfaces"
 )
 
 type GenerateSignedURLHandler struct {
-	StorageService interfaces.StorageService
+	StorageService Storager
 	Validator      *validator.Validate
 }
 
