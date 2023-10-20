@@ -1,12 +1,12 @@
 import Box from '@/components/layout/Box'
 import Flex from '@/components/layout/Flex'
 
-type ContentProps = {
+type BaseLayoutProps = {
   MainContent: React.ReactNode
   SubContent: React.ReactNode
 }
 
-const Content = (props: ContentProps) => {
+export const BaseLayout = (props: BaseLayoutProps) => {
   const { MainContent, SubContent } = props
   return (
     <Flex
@@ -23,5 +23,3 @@ const Content = (props: ContentProps) => {
     </Flex>
   )
 }
-
-export default Content
