@@ -79,5 +79,11 @@ func (a *AuthService) LoginAdmin(
 func (a *AuthService) LoginSession(
 	ctx context.Context, token string,
 ) (*models.User, error) {
-	return nil, nil
+	// verify token and load session kvs
+	userId, err := a.jwter.VerifyToken(ctx, token)
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify token: %w", err)
+	}
+	u, err := a.user.Get(ctx, a.db, userId)
+	return u, nil
 }

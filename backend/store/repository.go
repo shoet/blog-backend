@@ -258,6 +258,26 @@ type UserRepository struct {
 	Clocker clocker.Clocker
 }
 
+func (t *UserRepository) Get(
+	ctx context.Context, db Queryer, id models.UserId,
+) (*models.User, error) {
+	sql := `
+	SELECT
+		id, name, created, modified
+	FROM users
+	WHERE id = ?
+	;
+	`
+	var users []*models.User
+	if err := db.SelectContext(ctx, &users, sql, id); err != nil {
+		return nil, fmt.Errorf("failed to select users: %w", err)
+	}
+	if len(users) == 0 {
+		return nil, fmt.Errorf("user not found")
+	}
+	return users[0], nil
+}
+
 func (u *UserRepository) GetByEmail(
 	ctx context.Context, db Queryer, email string,
 ) (*models.User, error) {

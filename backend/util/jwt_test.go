@@ -1,4 +1,4 @@
-package services
+package util
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/shoet/blog/clocker"
 	"github.com/shoet/blog/config"
 	"github.com/shoet/blog/models"
+	"github.com/shoet/blog/services"
 )
 
 func Test_JWTService_GenerateToken(t *testing.T) {
@@ -19,7 +20,7 @@ func Test_JWTService_GenerateToken(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed new config: %v", err)
 	}
-	kvs := KVSerMock{}
+	kvs := services.KVSerMock{}
 	kvs.SaveFunc = func(ctx context.Context, key string, value string) error {
 		if value != strconv.Itoa(wantUserId) {
 			t.Fatalf("failed want user id: %v, got: %v", wantUserId, value)
@@ -27,7 +28,7 @@ func Test_JWTService_GenerateToken(t *testing.T) {
 		return nil
 	}
 	c := clocker.FiexedClocker{}
-	sut := JWTService{
+	sut := JWTer{
 		kvs:     &kvs,
 		cfg:     cfg,
 		clocker: &c,
@@ -51,7 +52,7 @@ func Test_JWTService_VerifyToken(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed new config: %v", err)
 	}
-	kvs := KVSerMock{}
+	kvs := services.KVSerMock{}
 	var uuid string
 	kvs.SaveFunc = func(ctx context.Context, key string, value string) error {
 		uuid = key
@@ -67,7 +68,7 @@ func Test_JWTService_VerifyToken(t *testing.T) {
 		return strconv.Itoa(wantUserId), nil
 	}
 	c := clocker.RealClocker{}
-	sut := JWTService{
+	sut := JWTer{
 		kvs:     &kvs,
 		cfg:     cfg,
 		clocker: &c,

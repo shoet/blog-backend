@@ -46,6 +46,15 @@ func ResponsdInternalServerError(w http.ResponseWriter, r *http.Request, err err
 	}
 }
 
+func RespondUnauthorized(w http.ResponseWriter, r *http.Request, err error) {
+	ctx := r.Context()
+	logger := GetLogger(ctx)
+	resp := ErrorResponse{Message: ErrMessageUnauthorized}
+	if err := RespondJSON(w, r, http.StatusUnauthorized, resp); err != nil {
+		logger.Error().Msgf("failed to respond json error: %v", err)
+	}
+}
+
 func JsonToStruct(r *http.Request, v any) error {
 	defer r.Body.Close()
 	if err := json.NewDecoder(r.Body).Decode(v); err != nil {

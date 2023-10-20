@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/shoet/blog/config"
@@ -35,11 +37,11 @@ func (a *AuthLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	token, err := a.Service.Login(ctx, reqBody.Email, reqBody.Password)
 	if err != nil {
 		logger.Error().Msgf("failed login: %v", err)
-		ResponsdInternalServerError(w, r, err)
+		RespondUnauthorized(w, r, err)
 		return
 	}
 	resp := struct {
-		AuthToken string `json:"auth_token"`
+		AuthToken string `json:"authToken"`
 	}{
 		AuthToken: token,
 	}
@@ -78,11 +80,11 @@ func (a *AuthAdminLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	token, err := a.Service.LoginAdmin(ctx, a.config, reqBody.Email, reqBody.Password)
 	if err != nil {
 		logger.Error().Msgf("failed login admin: %v", err)
-		ResponsdInternalServerError(w, r, err)
+		RespondUnauthorized(w, r, err)
 		return
 	}
 	resp := struct {
-		AuthToken string `json:"auth_token"`
+		AuthToken string `json:"authToken"`
 	}{
 		AuthToken: token,
 	}
@@ -93,11 +95,35 @@ func (a *AuthAdminLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 }
 
 type AuthSessionLoginHandler struct {
-	Service   AuthManager
-	Validator *validator.Validate
+	Service AuthManager
 }
 
 func (a *AuthSessionLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// get authorization header
+	ctx := r.Context()
+	logger := GetLogger(ctx)
+	token := r.Header.Get("Authorization")
+	if token == "" {
+		logger.Error().Msgf("failed to get authorization header")
+		RespondUnauthorized(w, r, fmt.Errorf("failed to get authorization header"))
+		return
+	}
+
+	if !strings.HasPrefix(token, "Bearer ") {
+		logger.Error().Msgf("failed invalid authorization header")
+		RespondUnauthorized(w, r, fmt.Errorf("failed to get authorization header"))
+		return
+	}
+
+	token = strings.TrimPrefix(token, "Bearer ")
+
+	u, err := a.Service.LoginSession(ctx, token)
+	if err != nil {
+		logger.Error().Msgf("failed login session: %v", err)
+		RespondUnauthorized(w, r, err)
+		return
+	}
+	if err := RespondJSON(w, r, http.StatusOK, u); err != nil {
+		logger.Error().Msgf("failed to respond json response: %v", err)
+	}
 	return
 }
