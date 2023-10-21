@@ -4,7 +4,7 @@ import { PropsWithChildren } from 'react'
 import Box from '@/components/layout/Box'
 import Flex from '@/components/layout/Flex'
 
-const Layout = ({ children }: PropsWithChildren) => {
+export const BaseLayout = ({ children }: PropsWithChildren) => {
   return (
     <>
       <Flex flexDirection="column" minHeight="100vh" paddingTop={2}>
@@ -28,5 +28,3 @@ const Layout = ({ children }: PropsWithChildren) => {
     </>
   )
 }
-
-export default Layout

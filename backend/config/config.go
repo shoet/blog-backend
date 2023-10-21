@@ -20,6 +20,10 @@ type Config struct {
 	AWSS3Bucket               string `env:"BLOG_AWS_S3_BUCKET"`
 	AWSS3ThumbnailDirectory   string `env:"BLOG_AWS_S3_THUMBNAIL_DIRECTORY"`
 	AWSS3PresignPutExpiresSec int64  `env:"BLOG_AWS_S3_PRESIGN_PUT_EXPIRES_SEC" envDefault:"300"`
+	AdminEmail                string `env:"ADMIN_EMAIL"`
+	AdminPassword             string `env:"ADMIN_PASSWORD"`
+	JWTSecret                 string `env:"JWT_SECRET"`
+	JWTExpiresInSec           int    `env:"JWT_EXPIRES_IN_SEC" envDefault:"86400"`
 }
 
 func NewConfig() (*Config, error) {

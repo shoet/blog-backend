@@ -1,6 +1,7 @@
 version: "3.9"
 services:
   api:
+    container_name: blog-api
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -18,3 +19,19 @@ services:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?err}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?err}
       AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:?err}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      BLOG_KVS_HOST: blog-kvs
+      BLOG_KVS_PORT: 6379
+      BLOG_KVS_USER: default
+      BLOG_KVS_PASSWORD: redispw
+
+  blog-kvs:
+    image: redis:latest
+    container_name: blog-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - blog-redis-data:/data
+volumes:
+  blog-redis-data:

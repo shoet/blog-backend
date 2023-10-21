@@ -6,7 +6,7 @@ import {
   faYoutube,
   faTwitter,
 } from '@fortawesome/free-brands-svg-icons'
-import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons'
+import { faMagnifyingGlass, faXmark } from '@fortawesome/free-solid-svg-icons'
 import { Color, Responsive, toResponsiveValue } from '@/utils/style'
 
 type IconProps = {
@@ -49,3 +49,4 @@ export const IconTwitter = withIconStyle(<FontAwesomeIcon icon={faTwitter} />)
 export const IconSearch = withIconStyle(
   <FontAwesomeIcon icon={faMagnifyingGlass} />,
 )
+export const IconXmark = withIconStyle(<FontAwesomeIcon icon={faXmark} />)

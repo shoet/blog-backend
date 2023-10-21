@@ -12,7 +12,7 @@ import (
 )
 
 type BlogListHandler struct {
-	Service BlogService
+	Service BlogManager
 }
 
 func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +41,7 @@ func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type BlogGetHandler struct {
-	Service BlogService
+	Service BlogManager
 }
 
 func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +71,7 @@ func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type BlogAddHandler struct {
-	Service   BlogService
+	Service   BlogManager
 	Validator *validator.Validate
 }
 
@@ -123,7 +123,7 @@ func (a *BlogAddHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type BlogDeleteHandler struct {
-	Service   BlogService
+	Service   BlogManager
 	Validator *validator.Validate
 }
 
@@ -164,7 +164,7 @@ func (d *BlogDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type BlogPutHandler struct {
-	Service   BlogService
+	Service   BlogManager
 	Validator *validator.Validate
 }
 

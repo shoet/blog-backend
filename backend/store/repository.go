@@ -3,20 +3,18 @@ package store
 import (
 	"context"
 	"fmt"
-	"strings"
-	"time"
-
 	"github.com/shoet/blog/clocker"
-	"github.com/shoet/blog/interfaces"
 	"github.com/shoet/blog/models"
 	"github.com/shoet/blog/options"
+	"strings"
+	"time"
 )
 
 type BlogRepository struct {
 	Clocker clocker.Clocker
 }
 
-func (r *BlogRepository) Add(ctx context.Context, db interfaces.Execer, blog *models.Blog) (models.BlogId, error) {
+func (r *BlogRepository) Add(ctx context.Context, db Execer, blog *models.Blog) (models.BlogId, error) {
 	sql := `
 	INSERT INTO blogs
 		(author_id, title, content, description, thumbnail_image_file_name, is_public, created, modified)
@@ -43,7 +41,7 @@ func (r *BlogRepository) Add(ctx context.Context, db interfaces.Execer, blog *mo
 }
 
 func (r *BlogRepository) List(
-	ctx context.Context, db interfaces.Queryer, option options.ListBlogOptions,
+	ctx context.Context, db Queryer, option options.ListBlogOptions,
 ) ([]*models.Blog, error) {
 
 	if option.AuthorId == nil {
@@ -120,7 +118,7 @@ func (r *BlogRepository) List(
 }
 
 func (r *BlogRepository) Get(
-	ctx context.Context, db interfaces.Queryer, id models.BlogId,
+	ctx context.Context, db Queryer, id models.BlogId,
 ) (*models.Blog, error) {
 	sqlBlog := `
 	SELECT
@@ -158,7 +156,7 @@ func (r *BlogRepository) Get(
 	return blogs[0], nil
 }
 
-func (r *BlogRepository) Delete(ctx context.Context, db interfaces.Execer, id models.BlogId) error {
+func (r *BlogRepository) Delete(ctx context.Context, db Execer, id models.BlogId) error {
 	sql := `
 	DELETE FROM
 		blogs
@@ -173,7 +171,7 @@ func (r *BlogRepository) Delete(ctx context.Context, db interfaces.Execer, id mo
 	return nil
 }
 func (r *BlogRepository) Put(
-	ctx context.Context, db interfaces.Execer, blog *models.Blog,
+	ctx context.Context, db Execer, blog *models.Blog,
 ) (models.BlogId, error) {
 	sql := `
 	UPDATE blogs
@@ -203,7 +201,7 @@ func (r *BlogRepository) Put(
 }
 
 func (r *BlogRepository) AddBlogTag(
-	ctx context.Context, db interfaces.Execer, blogId models.BlogId, tagId models.TagId,
+	ctx context.Context, db Execer, blogId models.BlogId, tagId models.TagId,
 ) (int64, error) {
 	sql := `
 	REPLACE INTO blogs_tags
@@ -221,7 +219,7 @@ func (r *BlogRepository) AddBlogTag(
 }
 
 func (r *BlogRepository) SelectTags(
-	ctx context.Context, db interfaces.Queryer, tag string,
+	ctx context.Context, db Queryer, tag string,
 ) ([]*models.Tag, error) {
 	sql := `
 	SELECT
@@ -239,7 +237,7 @@ func (r *BlogRepository) SelectTags(
 	return tags, nil
 }
 
-func (r *BlogRepository) AddTag(ctx context.Context, db interfaces.Execer, tag string) (models.TagId, error) {
+func (r *BlogRepository) AddTag(ctx context.Context, db Execer, tag string) (models.TagId, error) {
 	sql := `
 	INSERT INTO tags
 		(name)
@@ -254,4 +252,48 @@ func (r *BlogRepository) AddTag(ctx context.Context, db interfaces.Execer, tag s
 	id, err := res.LastInsertId()
 	return models.TagId(id), nil
 
+}
+
+type UserRepository struct {
+	Clocker clocker.Clocker
+}
+
+func (t *UserRepository) Get(
+	ctx context.Context, db Queryer, id models.UserId,
+) (*models.User, error) {
+	sql := `
+	SELECT
+		id, name, created, modified
+	FROM users
+	WHERE id = ?
+	;
+	`
+	var users []*models.User
+	if err := db.SelectContext(ctx, &users, sql, id); err != nil {
+		return nil, fmt.Errorf("failed to select users: %w", err)
+	}
+	if len(users) == 0 {
+		return nil, fmt.Errorf("user not found")
+	}
+	return users[0], nil
+}
+
+func (u *UserRepository) GetByEmail(
+	ctx context.Context, db Queryer, email string,
+) (*models.User, error) {
+	sql := `
+	SELECT
+		id, name, email, password, created, modified
+	FROM users
+	WHERE email = ?
+	;
+	`
+	var users []*models.User
+	if err := db.SelectContext(ctx, &users, sql, email); err != nil {
+		return nil, fmt.Errorf("failed to select users: %w", err)
+	}
+	if len(users) == 0 {
+		return nil, fmt.Errorf("user not found")
+	}
+	return users[0], nil
 }

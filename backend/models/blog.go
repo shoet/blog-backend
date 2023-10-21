@@ -22,10 +22,10 @@ type UserId int64
 type User struct {
 	Id       UserId    `json:"id" db:"id"`
 	Name     string    `json:"name" db:"name"`
-	Email    string    `json:"email" db:"email"`
-	Password string    `json:"password" db:"password"`
-	Created  time.Time `json:"created" db:"created"`
-	Modified time.Time `json:"modified" db:"modified"`
+	Email    string    `json:"email,omitempty" db:"email"`
+	Password string    `json:"password,omitempty" db:"password"`
+	Created  time.Time `json:"created,omitempty" db:"created"`
+	Modified time.Time `json:"modified,omitempty" db:"modified"`
 }
 
 type TagId int64

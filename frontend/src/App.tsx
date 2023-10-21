@@ -4,9 +4,6 @@ import { theme } from './themes'
 import { Outlet } from 'react-router-dom'
 import { SWRConfig } from 'swr'
 import { fetcher } from './utils/fetcher'
-import Layout from './components/templates/Layout'
-import Content from './components/templates/Content'
-import { SideContent } from './components/organisms/SideContent'
 
 function App() {
   return (
@@ -14,9 +11,7 @@ function App() {
       <GlobalStyle />
       <ThemeProvider theme={theme}>
         <SWRConfig value={{ fetcher }}>
-          <Layout>
-            <Content MainContent={<Outlet />} SubContent={<SideContent />} />
-          </Layout>
+          <Outlet />
         </SWRConfig>
       </ThemeProvider>
     </>

@@ -1,9 +1,12 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/rs/zerolog"
+	"github.com/shoet/blog/services"
 	"golang.org/x/net/context"
 )
 
@@ -55,4 +58,46 @@ func WithLoggerMiddleware(logger zerolog.Logger) func(next http.Handler) http.Ha
 
 func GetLogger(ctx context.Context) zerolog.Logger {
 	return ctx.Value(loggerKey).(zerolog.Logger)
+}
+
+type AuthorizationMiddleware struct {
+	jwter services.JWTer
+}
+
+func NewAuthorizationMiddleware(jwter services.JWTer) *AuthorizationMiddleware {
+	return &AuthorizationMiddleware{
+		jwter: jwter,
+	}
+}
+
+func (a *AuthorizationMiddleware) Middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		logger := GetLogger(ctx)
+		token := r.Header.Get("Authorization")
+		if token == "" {
+			logger.Error().Msgf("failed to get authorization header")
+			RespondUnauthorized(w, r, fmt.Errorf("failed to get authorization header"))
+			return
+		}
+
+		if !strings.HasPrefix(token, "Bearer ") {
+			logger.Error().Msgf("failed invalid authorization header")
+			RespondUnauthorized(w, r, fmt.Errorf("failed to get authorization header"))
+			return
+		}
+
+		token = strings.TrimPrefix(token, "Bearer ")
+		userId, err := a.jwter.VerifyToken(ctx, token)
+		if err != nil {
+			logger.Error().Msgf("failed to verify token: %v", err)
+			RespondUnauthorized(w, r, fmt.Errorf("failed to verify token"))
+			return
+		}
+
+		// Todo: set user info with context
+		_ = userId
+
+		next.ServeHTTP(w, r)
+	})
 }
