@@ -1,3 +1,4 @@
+import { Alert } from '@/components/atoms/Alert'
 import { Button } from '@/components/atoms/Button'
 import { Input } from '@/components/atoms/Input'
 import { Text } from '@/components/atoms/Text'
@@ -11,6 +12,7 @@ export type LoginFormData = {
 }
 
 type LoginFormProps = {
+  errorMessgae?: string
   onSubmit?: (data: LoginFormData) => void
 }
 
@@ -48,6 +50,7 @@ export const LoginForm = (props: LoginFormProps) => {
           </Box>
           <Box marginTop={2}>
             <Input
+              type="password"
               placeholder="Password"
               {...register('password', {
                 required: 'パスワードを入力してください。',

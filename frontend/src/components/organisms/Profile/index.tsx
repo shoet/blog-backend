@@ -5,6 +5,7 @@ import Flex from '@/components/layout/Flex'
 
 export const Profile = () => {
   // TODO: anchor link
+  // TODO: icon size
   return (
     <Box>
       <Flex flexDirection="row" alignItems="baseline">
