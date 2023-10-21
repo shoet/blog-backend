@@ -14,11 +14,11 @@ const variants = {
     },
   },
   secondary: {
-    color: '',
-    backgroundColor: '',
+    color: 'white',
+    backgroundColor: 'secondary',
     pseudo: {
       hover: {
-        backgroundColor: '',
+        backgroundColor: 'secondaryDark',
       },
     },
   },
