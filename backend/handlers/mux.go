@@ -16,7 +16,8 @@ import (
 )
 
 func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
-	db, err := store.NewDBSQLite3(ctx)
+	// db, err := store.NewDBSQLite3(ctx)
+	db, err := store.NewDBMySQL(ctx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create db: %w", err)
 	}
