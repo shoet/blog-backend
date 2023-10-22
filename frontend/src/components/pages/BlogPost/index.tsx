@@ -1,5 +1,6 @@
 import { BlogForm, BlogFormData } from '@/components/organisms/BlogForm'
 import { addBlog } from '@/services/blogs/add-blog'
+import { parseCookie } from '@/utils/cookie'
 import { useNavigate } from 'react-router-dom'
 
 export const BlogPostPage = () => {
@@ -15,11 +16,13 @@ export const BlogPostPage = () => {
       thumbnailImageFileName: data.thumbnailImageFileName ?? '',
       tags: data.tags,
     }
+    const token = parseCookie(document.cookie)['authToken']
     await addBlog(
       {
         apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
       },
       { blog: newBlog },
+      token,
     )
     navigate(`/`)
   }

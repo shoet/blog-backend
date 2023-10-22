@@ -1,6 +1,7 @@
 import { BlogForm, BlogFormData } from '@/components/organisms/BlogForm'
 import { putBlog } from '@/services/blogs/put-blog'
 import { useBlog } from '@/services/blogs/use-blog'
+import { parseCookie } from '@/utils/cookie'
 import { redirect, useNavigate, useParams } from 'react-router-dom'
 
 type BlogEditPageParams = {
@@ -9,7 +10,6 @@ type BlogEditPageParams = {
 
 export const BlogEditPage = () => {
   const navigate = useNavigate()
-
   const { id } = useParams<BlogEditPageParams>()
   if (!id) {
     redirect('/404')
@@ -33,11 +33,13 @@ export const BlogEditPage = () => {
       thumbnailImageFileName: data.thumbnailImageFileName ?? '',
       tags: data.tags,
     }
+    const token = parseCookie(document.cookie)['authToken']
     await putBlog(
       {
         apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
       },
       { blog: newBlog },
+      token,
     )
     navigate(`/`)
   }

@@ -9,6 +9,7 @@ import TagForm from '@/components/molecules/TagForm'
 import { getSignedPutUrl } from '@/services/files/get-signed-url'
 import { putSignedUrl } from '@/services/files/put-file'
 import { ApiContext, Blog } from '@/types/api'
+import { parseCookie } from '@/utils/cookie'
 import { generateBase32EncodedUuid } from '@/utils/ids'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
@@ -72,6 +73,7 @@ export const BlogForm = (props: BlogFormProps) => {
   const apiContext: ApiContext = {
     apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
   }
+  const token = parseCookie(document.cookie)['authToken']
 
   return (
     <form>
@@ -140,9 +142,13 @@ export const BlogForm = (props: BlogFormProps) => {
                       const fileName = `${generateBase32EncodedUuid()}.${
                         files[0].type.split('/')[1]
                       }`
-                      const resp = await getSignedPutUrl(apiContext, {
-                        fileName: fileName,
-                      })
+                      const resp = await getSignedPutUrl(
+                        apiContext,
+                        {
+                          fileName: fileName,
+                        },
+                        token,
+                      )
                       const { signedUrl, putUrl } = resp
                       await putSignedUrl({
                         signedPutUrl: signedUrl,
