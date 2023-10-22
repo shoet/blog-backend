@@ -70,11 +70,13 @@ func (r *BlogRepository) List(
 	LEFT OUTER JOIN (
 		SELECT
 			blogs_tags.blog_id
-			, GROUP_CONCAT(tags.name, ',') as tags
+			-- , GROUP_CONCAT(tags.name, ',') as tags -- for sqlite3
+			, GROUP_CONCAT(tags.name) as tags -- for mysql
 		FROM blogs_tags
 		JOIN tags
 			ON blogs_tags.tag_id = tags.id
 		GROUP BY blogs_tags.blog_id
+		-- TODO: 将来的に遅くなる チューニング
 	) AS tags
 		ON blogs.id = tags.blog_id
 	;

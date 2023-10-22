@@ -1,11 +1,11 @@
 import { ThemeProvider } from 'styled-components'
-import { GlobalStyle } from './components/layout/GlobalStyle'
-import { theme } from './themes'
+import { GlobalStyle } from '@/components/layout/GlobalStyle'
+import { theme } from '@/themes'
 import { Outlet } from 'react-router-dom'
 import { SWRConfig } from 'swr'
-import { fetcher } from './utils/fetcher'
-import { AuthContextProvider } from './contexts/AuthContext'
-import { ApiContext } from './types/api'
+import { fetcher } from '@/utils/fetcher'
+import { ApiContext } from '@/types/api'
+import { AuthContextProvider } from '@/contexts/AuthContext'
 
 function App() {
   const context: ApiContext = {

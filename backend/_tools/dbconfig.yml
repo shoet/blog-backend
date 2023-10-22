@@ -1,0 +1,14 @@
+development:
+  dialect: sqlite3
+  datasource: database.sqlite
+  dir: migrations/sqlite3
+
+staging:
+  dialect: mysql
+  datasource: blog_user:blog@tcp(127.0.0.1)/blog?charset=utf8mb4&parseTime=true
+  dir: migrations/mysql
+
+production:
+  dialect: mysql
+  datasource: ${BLOG_DB_USER}:${BLOG_DB_PASSWORD}@tcp(${BLOG_DB_HOST}:${BLOG_DB_PORT})/${BLOG_DB_NAME}?charset=utf8mb4&parseTime=true
+  dir: migrations/mysql

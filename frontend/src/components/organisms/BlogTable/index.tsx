@@ -1,21 +1,33 @@
 import { Button } from '@/components/atoms/Button'
-import { Blog } from '@/types/api'
+import { ApiContext, Blog } from '@/types/api'
 import './style.module.css'
 import { useNavigate } from 'react-router-dom'
+import { deleteBlog } from '@/services/blogs/delete-blog'
+import { parseCookie } from '@/utils/cookie'
 
 type BlogTableProps = {
   blogs: Blog[]
+  onClickDelete?: () => void
 }
 
 export const BlogTable = (props: BlogTableProps) => {
-  const { blogs } = props
+  const { blogs, onClickDelete } = props
 
   const navigate = useNavigate()
 
   const onEdit = (id: number) => {
     navigate(`/${id}/edit`)
   }
-  const onDelete = (id: number) => {}
+
+  const context: ApiContext = {
+    apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
+  }
+
+  const token = parseCookie(document.cookie)['authToken']
+  const onDelete = async (id: number) => {
+    await deleteBlog(context, { blogId: id }, token)
+    onClickDelete && onClickDelete()
+  }
 
   return (
     <table>
@@ -42,7 +54,9 @@ export const BlogTable = (props: BlogTableProps) => {
               </Button>
             </td>
             <td>
-              <Button variant="danger">Delete</Button>
+              <Button variant="danger" onClick={() => onDelete(blog.id)}>
+                Delete
+              </Button>
             </td>
           </tr>
         ))}

@@ -25,6 +25,24 @@ services:
       BLOG_KVS_PORT: 6379
       BLOG_KVS_USER: default
       BLOG_KVS_PASSWORD: redispw
+      BLOG_DB_HOST: blog-rdb
+      BLOG_DB_PORT: 3306
+      BLOG_DB_USER: blog_user
+      BLOG_DB_PASS: blog
+      BLOG_DB_NAME: blog
+
+  blog-rdb:
+    image: mysql:latest
+    container_name: blog-rdb
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_USER: blog_user
+      MYSQL_PASSWORD: blog
+      MYSQL_DATABASE: blog
+    volumes:
+      - blog-rdb-data:/var/lib/mysql
 
   blog-kvs:
     image: redis:latest
@@ -33,5 +51,7 @@ services:
       - "6379:6379"
     volumes:
       - blog-redis-data:/data
+
 volumes:
+  blog-rdb-data:
   blog-redis-data:
