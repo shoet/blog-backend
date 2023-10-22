@@ -8,7 +8,6 @@ import {
 import { AboutPage } from './components/pages/About'
 import { ErrorPage } from './components/pages/Error'
 import App from './App'
-import { lazy } from 'react'
 import { BlogListPage } from './components/pages/BlogList'
 import { BlogDetailPage } from './components/pages/BlogDetail'
 import { SearchPage } from './components/pages/Search'
@@ -18,8 +17,7 @@ import { VSplit } from './components/templates/VSplit'
 import { SideContent } from './components/organisms/SideContent'
 import { BaseLayout } from './components/templates/BaseLayout'
 import { LoginPage } from './components/pages/Login'
-
-const AdminPage = lazy(() => import('@/components/pages/Admin'))
+import AdminPage from './components/pages/Admin'
 
 const NormalLayout = () => {
   return (

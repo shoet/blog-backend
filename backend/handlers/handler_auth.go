@@ -129,3 +129,20 @@ func (a *AuthSessionLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	}
 	return
 }
+
+type AuthLogoutHandler struct{}
+
+func (a *AuthLogoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	logger := GetLogger(ctx)
+	ClearCookie(w, "authToken")
+	resp := struct {
+		Message string `json:"message"`
+	}{
+		Message: "success",
+	}
+	if err := RespondJSON(w, r, http.StatusOK, resp); err != nil {
+		logger.Error().Msgf("failed to respond json response: %v", err)
+	}
+	return
+}

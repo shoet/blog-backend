@@ -17,18 +17,21 @@ const SpacePropKeys = new Set([
   'padding-bottom',
   'padding-left',
 ])
+const LineHeightPropKeys = new Set(['line-height'])
 
 // Themeキー判定用
 type ColorThemeKeys = keyof typeof theme.colors
 type FontSizeThemeKeys = keyof typeof theme.fontSizes
 type LetterSpacingThemeKeys = keyof typeof theme.letterSpacings
 type SpaceThemeKeys = keyof typeof theme.spaces
+type LineHeightThemeKeys = keyof typeof theme.lineHeights
 
 // 型推論用
 export type Color = ColorThemeKeys | (string & {})
 export type FontSize = FontSizeThemeKeys | (string & {})
 export type LetterSpacing = LetterSpacingThemeKeys | (string & {})
 export type Space = SpaceThemeKeys | (string & {})
+export type LineHeight = LineHeightThemeKeys | (string & {})
 
 const BREAKPOINT = {
   sm: '576px',
@@ -101,6 +104,11 @@ export function toThemeValue(propKey: string, value: any, theme: AppTheme) {
     return theme.letterSpacings[value]
   } else if (SpacePropKeys.has(propKey) && isSpaceThemeKey(value, theme)) {
     return theme.spaces[value]
+  } else if (
+    LineHeightPropKeys.has(propKey) &&
+    isLineHeightThemeKey(value, theme)
+  ) {
+    return theme.lineHeights[value]
   }
   return value
 }
@@ -125,4 +133,11 @@ function isLetterSpacingThemeKey(
 
 function isSpaceThemeKey(value: any, theme: AppTheme): value is SpaceThemeKeys {
   return Object.keys(theme.spaces).filter((k) => k == value).length > 0
+}
+
+function isLineHeightThemeKey(
+  value: any,
+  theme: AppTheme,
+): value is LineHeightThemeKeys {
+  return Object.keys(theme.lineHeights).filter((k) => k == value).length > 0
 }

@@ -18,3 +18,12 @@ func SetCookie(w http.ResponseWriter, key string, value string) {
 		Path:     "/",
 	})
 }
+
+func ClearCookie(w http.ResponseWriter, key string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:   key,
+		Value:  "",
+		MaxAge: -1,
+		Path:   "/",
+	})
+}

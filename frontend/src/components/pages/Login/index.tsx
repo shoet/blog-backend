@@ -2,23 +2,17 @@ import { Alert } from '@/components/atoms/Alert'
 import Box from '@/components/layout/Box'
 import Flex from '@/components/layout/Flex'
 import { LoginForm, LoginFormData } from '@/components/organisms/LoginForm'
-import { signin } from '@/services/auth/signin'
-import { ApiContext } from '@/types/api'
+import { useAuthContext } from '@/contexts/AuthContext'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 export const LoginPage = () => {
   const [error, setError] = useState<string>()
-  const apiContext: ApiContext = {
-    apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
-  }
   const navigate = useNavigate()
+  const { signin } = useAuthContext()
   const onSubmit = async (data: LoginFormData) => {
     try {
-      await signin(apiContext, {
-        email: data.email,
-        password: data.password,
-      })
+      await signin(data.email, data.password)
     } catch {
       setError('Invalid email or password')
       return
