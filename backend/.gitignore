@@ -1,3 +1,4 @@
 *.sqlite
 tmp/*
 .env
+cookie.txt
