@@ -68,7 +68,7 @@ export const LoginForm = (props: LoginFormProps) => {
         <Flex justifyContent="end" marginTop={3}>
           <Button
             variant="primary"
-            type="button"
+            type="submit"
             onClick={handleSubmit(handleOnSubmit)}
           >
             Sign In
