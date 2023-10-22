@@ -19,10 +19,10 @@ export const fetcher = async (
   } catch (err) {
     if (axios.isAxiosError(err)) {
       console.log(`Failed request by axios: ${err.message}`)
-      throw new Error('Failed request by fetcher')
+      throw err
     } else {
       console.log(`Failed request by unknown error: ${err}`)
-      throw new Error('Failed request by unknown error')
+      throw err
     }
   }
 }

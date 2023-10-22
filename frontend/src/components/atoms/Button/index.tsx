@@ -1,4 +1,10 @@
-import { Color, FontSize, Responsive, toResponsiveValue } from '@/utils/style'
+import {
+  Color,
+  FontSize,
+  LineHeight,
+  Responsive,
+  toResponsiveValue,
+} from '@/utils/style'
 import styled from 'styled-components'
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger'
@@ -34,7 +40,7 @@ const variants = {
 }
 
 export const Button = styled.button.withConfig({
-  shouldForwardProp: (prop) => !['variant'].includes(prop),
+  shouldForwardProp: (prop) => !['variant', 'lineHeight'].includes(prop),
 })<{
   variant?: ButtonVariant
   color?: Responsive<Color>
@@ -45,6 +51,7 @@ export const Button = styled.button.withConfig({
     }
   }
   fontSize?: Responsive<FontSize>
+  lineHeight?: Responsive<LineHeight>
 }>`
   ${({ variant, color, backgroundColor, pseudo, theme }) => {
     const styles: string[] = []
@@ -67,6 +74,8 @@ export const Button = styled.button.withConfig({
     return styles.join('\n')
   }}
   ${({ fontSize, theme }) => toResponsiveValue('font-size', fontSize, theme)}
+  ${({ lineHeight, theme }) =>
+    toResponsiveValue('line-height', lineHeight, theme)}
   padding: 5px 10px;
   border: none;
   border-radius: 5px;

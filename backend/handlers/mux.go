@@ -133,6 +133,9 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 				Service: authService,
 			}
 			r.Get("/login/me", ash.ServeHTTP)
+
+			alh := &AuthLogoutHandler{}
+			r.Post("/admin/signout", alh.ServeHTTP)
 		})
 
 	})

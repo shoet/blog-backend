@@ -1,21 +1,37 @@
+import { Button } from '@/components/atoms/Button'
 import { IconGitHub, IconTwitter, IconYoutube } from '@/components/atoms/Icon'
 import { Text } from '@/components/atoms/Text'
 import Box from '@/components/layout/Box'
 import Flex from '@/components/layout/Flex'
 import { useAuthContext } from '@/contexts/AuthContext'
-import { NavLink } from 'react-router-dom'
+import { useEffect } from 'react'
+import { NavLink, useNavigate } from 'react-router-dom'
 
 export const Profile = () => {
   // TODO: anchor link
   // TODO: icon size
-  const { authUser, isLoading } = useAuthContext()
+  const {
+    authUser,
+    signout,
+    isLoading,
+    mutate: refreshSession,
+  } = useAuthContext()
+  const handleSignout = async () => {
+    await signout()
+    refreshSession()
+  }
+  useEffect(() => {
+    refreshSession()
+  }, [authUser])
   return (
     <Box>
       <Flex flexDirection="row" alignItems="baseline">
         <Box>
           <Text fontSize="large" fontWeight="bold" letterSpacing="large">
             {authUser ? (
-              <NavLink to="/admin">shoet</NavLink>
+              <NavLink to="/admin">
+                <Text color="focusGreen">shoet</Text>
+              </NavLink>
             ) : (
               <NavLink to="/admin/login">shoet</NavLink>
             )}
@@ -31,7 +47,16 @@ export const Profile = () => {
           <Box paddingLeft={1}>
             <IconYoutube size={14} focusColor="focusGreen" />
           </Box>
-          <Box paddingLeft={3}>{isLoading ? 'loading...' : authUser?.name}</Box>
+          {authUser && (
+            <Box paddingLeft={3}>
+              {isLoading && <Text>Loading...</Text>}
+              {authUser && (
+                <Button variant="primary" onClick={handleSignout}>
+                  SignOut
+                </Button>
+              )}
+            </Box>
+          )}
         </Flex>
       </Flex>
       <Box paddingTop={1}>

@@ -9,7 +9,7 @@ type AuthContextValue = {
   authUser?: User
   isLoading: boolean
   error?: Error
-  singin: (email: string, password: string) => Promise<void>
+  signin: (email: string, password: string) => Promise<void>
   signout: () => Promise<void>
   mutate: () => Promise<User | undefined>
 }
@@ -18,7 +18,7 @@ const AuthContext = React.createContext<AuthContextValue>({
   authUser: undefined,
   isLoading: false,
   error: undefined,
-  singin: async () => {},
+  signin: async () => {},
   signout: async () => {},
   mutate: async () => {
     return {} as User
@@ -45,13 +45,25 @@ export const AuthContextProvider = (
   }
 
   const {
-    data: authUser,
+    data,
     isLoading,
     error,
     mutate: mutateFunc,
   } = useSWR<User>(
     `${import.meta.env.VITE_API_BASE_URL}/auth/login/me`,
     authFetcher,
+    {
+      onErrorRetry: (error, _1, _2, revalidate, { retryCount }) => {
+        // 401では再試行しない
+        if (error.response.status === 401) return
+
+        // 再試行は3回まで
+        if (retryCount >= 3) return
+
+        // 5秒後に再試行
+        setTimeout(() => revalidate({ retryCount }), 5000)
+      },
+    },
   )
 
   const signinFunc = async (email: string, password: string) => {
@@ -61,7 +73,7 @@ export const AuthContextProvider = (
 
   const signoutFunc = async () => {
     await signout(context)
-    await mutateFunc()
+    await mutateFunc(undefined, false)
   }
 
   return (
@@ -69,8 +81,8 @@ export const AuthContextProvider = (
       value={{
         isLoading,
         error,
-        authUser,
-        singin: signinFunc,
+        authUser: data,
+        signin: signinFunc,
         signout: signoutFunc,
         mutate: mutateFunc,
       }}

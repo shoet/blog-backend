@@ -15,7 +15,7 @@ function App() {
     <>
       <GlobalStyle />
       <ThemeProvider theme={theme}>
-        <SWRConfig value={{ fetcher }}>
+        <SWRConfig value={{ fetcher, shouldRetryOnError: false }}>
           <AuthContextProvider context={context}>
             <Outlet />
           </AuthContextProvider>
