@@ -1,4 +1,5 @@
 import { BlogForm, BlogFormData } from '@/components/organisms/BlogForm'
+import { useAuthGuard } from '@/services/auth/auth-guard'
 import { putBlog } from '@/services/blogs/put-blog'
 import { useBlog } from '@/services/blogs/use-blog'
 import { parseCookie } from '@/utils/cookie'
@@ -9,7 +10,9 @@ type BlogEditPageParams = {
 }
 
 export const BlogEditPage = () => {
+  useAuthGuard()
   const navigate = useNavigate()
+
   const { id } = useParams<BlogEditPageParams>()
   if (!id) {
     redirect('/404')

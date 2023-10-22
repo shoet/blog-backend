@@ -1,9 +1,11 @@
 import { BlogForm, BlogFormData } from '@/components/organisms/BlogForm'
+import { useAuthGuard } from '@/services/auth/auth-guard'
 import { addBlog } from '@/services/blogs/add-blog'
 import { parseCookie } from '@/utils/cookie'
 import { useNavigate } from 'react-router-dom'
 
 export const BlogPostPage = () => {
+  useAuthGuard()
   const navigate = useNavigate()
 
   const onSubmit = async (data: BlogFormData) => {

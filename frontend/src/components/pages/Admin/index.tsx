@@ -1,10 +1,13 @@
 import { Text } from '@/components/atoms/Text'
 import Box from '@/components/layout/Box'
 import { BlogTable } from '@/components/organisms/BlogTable'
+import { useAuthGuard } from '@/services/auth/auth-guard'
 import { useBlogList } from '@/services/blogs/use-blog-list'
 import { ApiContext } from '@/types/api'
 
 const AdminPage = () => {
+  useAuthGuard()
+
   const apiContext: ApiContext = {
     apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
   }

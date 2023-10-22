@@ -9,22 +9,21 @@ import { useNavigate } from 'react-router-dom'
 
 export const LoginPage = () => {
   const [error, setError] = useState<string>()
-  const navigate = useNavigate()
   const apiContext: ApiContext = {
     apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
   }
+  const navigate = useNavigate()
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const resp = await signin(apiContext, {
+      await signin(apiContext, {
         email: data.email,
         password: data.password,
       })
-      console.log(resp.authToken) // TODO: set context
     } catch {
       setError('Invalid email or password')
       return
     }
-    navigate('/')
+    navigate('/admin')
   }
   return (
     <Flex height="100%" flexDirection="column" width="100%" alignItems="center">
