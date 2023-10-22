@@ -13,6 +13,7 @@ type GetSignedPutURLResponse = {
 export const getSignedPutUrl = async (
   context: ApiContext,
   { fileName }: GetSignedPutURLPrams,
+  authToken: string,
 ): Promise<GetSignedPutURLResponse> => {
   const url = `${context.apiBaseUrl}/files/thumbnail/new`
   return await fetcher(url, {
@@ -20,6 +21,7 @@ export const getSignedPutUrl = async (
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`,
     },
     data: JSON.stringify({ fileName: fileName }),
   })

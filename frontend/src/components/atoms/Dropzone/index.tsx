@@ -67,7 +67,9 @@ const Dropzone = (props: PropsWithChildren<DropzoneProps>) => {
   )
 }
 
-const DropzoneContainer = styled(Flex)<{ isError?: boolean }>`
+const DropzoneContainer = styled(Flex).withConfig({
+  shouldForwardProp: (prop) => !['isError'].includes(prop),
+})<{ isError?: boolean }>`
   border: dashed 1px ${({ isError, theme }) =>
     isError ? theme.colors.danger : theme.colors.border};
   border-radius: 10px;

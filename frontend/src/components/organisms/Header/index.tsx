@@ -5,14 +5,17 @@ import { Color, Responsive, toResponsiveValue } from '@/utils/style'
 import { NavLink } from 'react-router-dom'
 import styled from 'styled-components'
 
+const Div = styled.div.withConfig({
+  shouldForwardProp: (prop) => !['space'].includes(prop),
+})<{ space: string }>`
+  width: 1px;
+  border: 1px solid gray;
+  height: 20px;
+  ${({ space }) => space && `margin: 0px ${space};`}
+`
+
 const Divider = ({ space = 0 }: { space?: number }) => {
   const half = space / 2
-  const Div = styled.div<{ space: string }>`
-    width: 1px;
-    border: 1px solid gray;
-    height: 20px;
-    ${({ space }) => space && `margin: 0px ${space};`}
-  `
   return <Div space={`${half}px`} />
 }
 

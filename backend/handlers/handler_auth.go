@@ -45,6 +45,7 @@ func (a *AuthLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}{
 		AuthToken: token,
 	}
+	SetCookie(w, "authToken", resp.AuthToken)
 	if err := RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		logger.Error().Msgf("failed to respond json response: %v", err)
 	}
@@ -88,6 +89,7 @@ func (a *AuthAdminLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}{
 		AuthToken: token,
 	}
+	SetCookie(w, "authToken", resp.AuthToken)
 	if err := RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		logger.Error().Msgf("failed to respond json response: %v", err)
 	}

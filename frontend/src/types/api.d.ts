@@ -19,3 +19,8 @@ export type Blog = {
   created: string
   modified: string
 }
+
+export type User = {
+  id: number
+  name: string
+}

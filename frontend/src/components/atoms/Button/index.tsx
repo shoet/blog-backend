@@ -14,11 +14,11 @@ const variants = {
     },
   },
   secondary: {
-    color: '',
-    backgroundColor: '',
+    color: 'white',
+    backgroundColor: 'secondary',
     pseudo: {
       hover: {
-        backgroundColor: '',
+        backgroundColor: 'secondaryDark',
       },
     },
   },
@@ -33,7 +33,9 @@ const variants = {
   },
 }
 
-export const Button = styled.button<{
+export const Button = styled.button.withConfig({
+  shouldForwardProp: (prop) => !['variant'].includes(prop),
+})<{
   variant?: ButtonVariant
   color?: Responsive<Color>
   backgroundColor?: Responsive<Color>

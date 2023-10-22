@@ -15,6 +15,7 @@ export const signin = async (
   params: SigninParams,
 ): Promise<SigninResponse> => {
   const url = `${context.apiBaseUrl}/auth/login`
+  const url = `${context.apiBaseUrl}/auth/signin`
   return await fetcher(url, {
     method: 'POST',
     headers: {

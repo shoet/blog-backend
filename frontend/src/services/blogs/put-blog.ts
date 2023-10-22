@@ -8,6 +8,7 @@ export type PutBlogParams = {
 export const putBlog = async (
   context: ApiContext,
   { blog }: PutBlogParams,
+  authToken: string,
 ): Promise<Blog> => {
   const url = `${context.apiBaseUrl}/blogs/update`
   return await fetcher(url, {
@@ -15,6 +16,7 @@ export const putBlog = async (
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
+      Authorization: `Bearer ${authToken}`,
     },
     data: JSON.stringify(blog),
   })

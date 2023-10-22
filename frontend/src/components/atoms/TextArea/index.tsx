@@ -48,7 +48,10 @@ const TextArea = ({
   )
 }
 
-const TextAreaStyled = styled.textarea<{
+const TextAreaStyled = styled.textarea.withConfig({
+  shouldForwardProp: (prop) =>
+    !['lineHeight', 'isError', 'fontSize'].includes(prop),
+})<{
   isError: boolean
   fontSize: number
   lineHeight: number
