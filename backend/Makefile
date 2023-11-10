@@ -3,8 +3,8 @@
 .DEFAULT_GOAL := help
 
 DOCKER_TAG := latest
-build_api: ## Build docker image to deploy
-	docker build -t blog-backend:${DOCKER_TAG} --target deploy ./dockerfiles/api
+build-deploy: ## Build docker image to deploy
+	docker build -t blog-backend:${DOCKER_TAG} --target deploy ./
 
 build: ## Build docker image to local development
 	docker compose build --no-cache
