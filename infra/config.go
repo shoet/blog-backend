@@ -8,7 +8,8 @@ import (
 )
 
 type Config struct {
-	AWSAccountId string `env:"AWS_ACCOUNT_ID"`
+	AWSAccountId      string `env:"AWS_ACCOUNT_ID"`
+	BastionSSHKeyName string `env:"BASTION_SSH_KEY_NAME"`
 }
 
 func NewConfig() (*Config, error) {
