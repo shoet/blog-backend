@@ -1,5 +1,5 @@
 # ===== build stage ====
-FROM golang:1.19.13-bullseye as build
+FROM golang:1.19.13-bullseye as builder
 
 WORKDIR /app
 
@@ -11,17 +11,20 @@ COPY . .
 RUN go build -trimpath -ldflags="-w -s" -o app cmd/api/main.go
 
 # ===== deploy stage ====
-FROM golang:1.19.13-alpine as deploy
+FROM golang:1.19.13-bullseye as deploy
 
-RUN apk update
+WORKDIR /app
 
-COPY --from=build /app/app ./app
+RUN apt update -y
 
-RUN go install github.com/rubenv/sql-migrate/...@latest
-COPY --from=build /app/migrations ./migrations
-RUN sql-migrate up
+COPY --from=builder /app/app .
 
-CMD ["./app"]
+# RUN go install github.com/rubenv/sql-migrate/...@latest
+# COPY --from=build /app/_tools/migrations ./migrations
+# COPY --from=build /app/_tools/dbconfig.yml ./dbconfig.yml
+# RUN sql-migrate up
+
+CMD ["/app/app"]
 
 # ===== dev ====
 FROM golang:1.19.13-bullseye as dev

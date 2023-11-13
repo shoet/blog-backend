@@ -43,6 +43,7 @@ func NewDBMySQL(ctx context.Context, cfg *config.Config) (*sqlx.DB, error) {
 		ParseTime:            true,
 		Loc:                  jst,
 		AllowNativePasswords: true,
+		TLSConfig:            "true",
 	}
 	db, err := sql.Open("mysql", config.FormatDSN())
 	if err != nil {
