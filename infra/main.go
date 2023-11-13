@@ -27,7 +27,6 @@ func CreateSubnet(
 	ctx *pulumi.Context,
 	vpc *ec2.Vpc,
 	cidr string,
-	// availabilityZone string,
 	resourceName string,
 ) (*ec2.Subnet, error) {
 	return ec2.NewSubnet(ctx, resourceName, &ec2.SubnetArgs{
@@ -114,6 +113,46 @@ func CreateSecurityGroupForMaintenanceEC2(
 		})
 }
 
+func CreateSecurityGroupForAppContainerBackend(
+	ctx *pulumi.Context,
+	vpc *ec2.Vpc,
+	securityGroupForMaintenance *ec2.SecurityGroup,
+	resourceName string,
+) (*ec2.SecurityGroup, error) {
+	return ec2.NewSecurityGroup(
+		ctx,
+		resourceName,
+		&ec2.SecurityGroupArgs{
+			VpcId: vpc.ID(),
+			Ingress: ec2.SecurityGroupIngressArray{
+				&ec2.SecurityGroupIngressArgs{
+					SecurityGroups: pulumi.StringArray{
+						securityGroupForMaintenance.ID(),
+					},
+					Description: pulumi.String("for inbound"),
+					Protocol:    pulumi.String("tcp"),
+					FromPort:    pulumi.Int(3000),
+					ToPort:      pulumi.Int(3000),
+					// CidrBlocks: pulumi.StringArray{
+					// 	pulumi.String("0.0.0.0/0"),
+					// },
+				},
+			},
+			Egress: ec2.SecurityGroupEgressArray{
+				&ec2.SecurityGroupEgressArgs{
+					Description: pulumi.String("All outbound traffic"),
+					Protocol:    pulumi.String("-1"),
+					FromPort:    pulumi.Int(0),
+					ToPort:      pulumi.Int(0),
+					CidrBlocks: pulumi.StringArray{
+						pulumi.String("0.0.0.0/0"),
+					},
+				},
+			},
+			Tags: createNameTag(resourceName),
+		})
+}
+
 func main() {
 	config, err := NewConfig()
 	if err != nil {
@@ -136,13 +175,6 @@ func main() {
 			return fmt.Errorf("failed create subnet for App Container: %v", err)
 		}
 		ctx.Export(resourceName, subnetAppContainer.ID())
-
-		resourceName = fmt.Sprintf("%s-subnet-maintenance", projectTag)
-		subnetMaintenance, err := CreateSubnet(ctx, vpc, "10.1.1.0/24", resourceName)
-		if err != nil {
-			return fmt.Errorf("failed create subnet for Maintenance: %v", err)
-		}
-		ctx.Export(resourceName, subnetMaintenance.ID())
 
 		// InternetGateway //////////////////////////////////////////////////////////
 		resourceName = fmt.Sprintf("%s-igw", projectTag)
@@ -168,158 +200,6 @@ func main() {
 			return fmt.Errorf("failed create public route association for AppContainer: %v", err)
 		}
 		ctx.Export(resourceName, routeTableAssociationAppContainer.ID())
-
-		resourceName = fmt.Sprintf("%s-route-table-association-maintenance", projectTag)
-		routeTableAssociationMaintenance, err := CreateRouteTableAssociation(
-			ctx, publicRouteTable, subnetMaintenance, resourceName)
-		if err != nil {
-			return fmt.Errorf("failed create public route association for maintenance: %v", err)
-		}
-		ctx.Export(resourceName, routeTableAssociationMaintenance.ID())
-
-		// IAM //////////////////////////////////////////////////////////////
-		// ロール メンテナンスEC2向け
-		resourceName = fmt.Sprintf("%s-iam-role-for-maintenance-ec2", projectTag)
-		iamMaintenanceEC2, err := iam.NewRole(
-			ctx,
-			resourceName,
-			&iam.RoleArgs{
-				AssumeRolePolicy: pulumi.String(`{
-				"Version": "2012-10-17",
-				"Statement": [{
-					"Effect": "Allow",
-					"Principal": {
-						"Service": "ec2.amazonaws.com"
-					},
-					"Action": "sts:AssumeRole"
-				}]
-			}`),
-				Tags: createNameTag(resourceName),
-			})
-		if err != nil {
-			return fmt.Errorf("failed create iam role for maintenance ec2: %v", err)
-		}
-		ctx.Export(resourceName, iamMaintenanceEC2.ID())
-
-		// ポリシー メンテナンスEC2向け
-		resourceName = fmt.Sprintf("%s-iam-policy-for-maintenance-ec2", projectTag)
-		iamMaintenanceEC2Policy, err := iam.NewRolePolicy(
-			ctx,
-			resourceName,
-			&iam.RolePolicyArgs{
-				Role: iamMaintenanceEC2.Name,
-				Policy: pulumi.String(`{
-				"Version": "2012-10-17",
-				"Statement": [
-					{
-						"Sid": "ECRPermissions",
-						"Effect": "Allow",
-						"Action": [
-							"ecr:GetAuthorizationToken",
-							"ecr:BatchCheckLayerAvailability",
-							"ecr:GetDownloadUrlForLayer",
-							"ecr:GetRepositoryPolicy",
-							"ecr:DescribeRepositories",
-							"ecr:ListImages",
-							"ecr:DescribeImages",
-							"ecr:BatchGetImage",
-							"ecr:InitiateLayerUpload",
-							"ecr:UploadLayerPart",
-							"ecr:CompleteLayerUpload",
-							"ecr:PutImage"
-						],
-						"Resource": "*"
-					}
-				]
-			}`),
-			})
-		if err != nil {
-			return fmt.Errorf("failed create iam policy for maintenance ec2: %v", err)
-		}
-		ctx.Export(resourceName, iamMaintenanceEC2Policy.ID())
-
-		// セキュリティグループ securitygroup ///////////////////////////////////////////////
-		resourceName = fmt.Sprintf("%s-sg-public-maintenance", projectTag)
-		securityGroupPublicMaintenance, err := CreateSecurityGroupForMaintenanceEC2(
-			ctx, vpc, resourceName)
-		if err != nil {
-			return fmt.Errorf("failed create security group for public maintenance: %v", err)
-		}
-		ctx.Export(resourceName, securityGroupPublicMaintenance.ID())
-
-		// EC2 ////////////////////////////////////////////////////////////////////
-		// インスタンスプロファイル
-		resourceName = fmt.Sprintf("%s-instance-profile-for-maintenance-ec2", projectTag)
-		instanceProfileMaintenanceEC2, err := iam.NewInstanceProfile(
-			ctx,
-			resourceName,
-			&iam.InstanceProfileArgs{
-				Role: iamMaintenanceEC2.Name,
-			})
-		if err != nil {
-			return fmt.Errorf("failed create iam instance profile for maintenance ec2: %v", err)
-		}
-		ctx.Export(resourceName, instanceProfileMaintenanceEC2.ID())
-
-		// インスタンス
-		userdataScript, err := loadFileToString("./maintenance_ec2_userdata.sh")
-		if err != nil {
-			return fmt.Errorf("failed load file: %v", err)
-		}
-		resourceName = fmt.Sprintf("%s-ec2-maintenance", projectTag)
-		ec2MaintenanceInstance, err := ec2.NewInstance(
-			ctx,
-			resourceName,
-			&ec2.InstanceArgs{
-				InstanceType:             pulumi.String("t2.micro"),
-				Ami:                      pulumi.String("ami-08a706ba5ea257141"),
-				SubnetId:                 subnetMaintenance.ID(),
-				KeyName:                  pulumi.String(config.BastionSSHKeyName),
-				AssociatePublicIpAddress: pulumi.Bool(true),
-				SecurityGroups: pulumi.StringArray{
-					securityGroupPublicMaintenance.ID(),
-				},
-				IamInstanceProfile: instanceProfileMaintenanceEC2.Name,
-				UserData:           pulumi.String(userdataScript),
-				Tags:               createNameTag(resourceName),
-			},
-			pulumi.IgnoreChanges([]string{"securityGroups"}),
-		)
-		if err != nil {
-			return fmt.Errorf("failed create new maintenance ec2 instance: %v", err)
-		}
-		ctx.Export(resourceName, ec2MaintenanceInstance.ID())
-
-		// ElasticIPアドレス ///////////////////////////////////////////////////////////////////
-		// メンテナンスEC2向け
-		resourceName = fmt.Sprintf("%s-eip-for-maintenance", projectTag)
-		eipForEc2MaintenanceInstance, err := ec2.NewEip(
-			ctx,
-			resourceName,
-			&ec2.EipArgs{
-				Domain:   pulumi.String("vpc"),
-				Instance: ec2MaintenanceInstance.ID(),
-			},
-			pulumi.IgnoreChanges([]string{"instance"}),
-		)
-		if err != nil {
-			return fmt.Errorf("failed create eip for maintenance ec2 instance: %v", err)
-		}
-		ctx.Export(resourceName, eipForEc2MaintenanceInstance.ID())
-
-		// ElasticIP 紐づけ ////////////////////////////////////////////////////////////////////
-		// メンテナンスEC2向け
-		resourceName = fmt.Sprintf("%s-eip-associate-for-maintenance", projectTag)
-		eipAssociate, err := ec2.NewEipAssociation(
-			ctx,
-			resourceName,
-			&ec2.EipAssociationArgs{
-				InstanceId:   ec2MaintenanceInstance.ID(),
-				AllocationId: eipForEc2MaintenanceInstance.ID(),
-			},
-			pulumi.DependsOn([]pulumi.Resource{ec2MaintenanceInstance, eipForEc2MaintenanceInstance}),
-		)
-		ctx.Export(resourceName, eipAssociate.ID())
 
 		// S3 ////////////////////////////////////////////////////////////////////////
 		// bucket
@@ -380,6 +260,219 @@ func main() {
 			return err
 		}
 		ctx.Export(resourceName, s3CORS.ID())
+
+		// IAM //////////////////////////////////////////////////////////////
+		// ロール メンテナンスEC2向け
+		resourceName = fmt.Sprintf("%s-iam-role-for-maintenance-ec2", projectTag)
+		iamMaintenanceEC2, err := iam.NewRole(
+			ctx,
+			resourceName,
+			&iam.RoleArgs{
+				AssumeRolePolicy: pulumi.String(`{
+				"Version": "2012-10-17",
+				"Statement": [{
+					"Effect": "Allow",
+					"Principal": {
+						"Service": "ec2.amazonaws.com"
+					},
+					"Action": "sts:AssumeRole"
+				}]
+			}`),
+				Tags: createNameTag(resourceName),
+			})
+		if err != nil {
+			return fmt.Errorf("failed create iam role for maintenance ec2: %v", err)
+		}
+		ctx.Export(resourceName, iamMaintenanceEC2.ID())
+
+		// ECSタスクロール AppContainer Backend
+		resourceName = fmt.Sprintf("%s-iam-role-for-ecs-task-backend", projectTag)
+		ecsTaskRole, err := iam.NewRole(
+			ctx,
+			resourceName,
+			&iam.RoleArgs{
+				AssumeRolePolicy: pulumi.String(`{
+					"Version": "2012-10-17",
+					"Statement": [{
+						"Effect": "Allow",
+						"Principal": {
+							"Service": "ecs-tasks.amazonaws.com"
+						},
+						"Action": "sts:AssumeRole"
+					}]
+				}`),
+				InlinePolicies: iam.RoleInlinePolicyArray{
+					&iam.RoleInlinePolicyArgs{
+						Name: pulumi.String("ecs-task-policy"),
+						Policy: pulumi.String(`{
+							"Version": "2012-10-17",
+							"Statement": [
+								{
+								   "Effect": "Allow",
+								   "Action": [
+										"ssmmessages:CreateControlChannel",
+										"ssmmessages:CreateDataChannel",
+										"ssmmessages:OpenControlChannel",
+										"ssmmessages:OpenDataChannel"
+								   ],
+								  "Resource": "*"
+								},
+								{
+								   "Effect": "Allow",
+								   "Action": [
+										"s3:GetObject"
+								   ],
+								   "Resource": "arn:aws:s3:::` + bucketName + `/*"
+								}
+							]
+						}`),
+					},
+				},
+			},
+		)
+		if err != nil {
+			return fmt.Errorf("failed create iam role for ecs task: %v", err)
+		}
+		ctx.Export(resourceName, ecsTaskRole.ID())
+
+		// ポリシー メンテナンスEC2向け
+		resourceName = fmt.Sprintf("%s-iam-policy-for-maintenance-ec2", projectTag)
+		iamMaintenanceEC2Policy, err := iam.NewRolePolicy(
+			ctx,
+			resourceName,
+			&iam.RolePolicyArgs{
+				Role: iamMaintenanceEC2.Name,
+				Policy: pulumi.String(`{
+				"Version": "2012-10-17",
+				"Statement": [
+					{
+						"Sid": "ECRPermissions",
+						"Effect": "Allow",
+						"Action": [
+							"ecr:GetAuthorizationToken",
+							"ecr:BatchCheckLayerAvailability",
+							"ecr:GetDownloadUrlForLayer",
+							"ecr:GetRepositoryPolicy",
+							"ecr:DescribeRepositories",
+							"ecr:ListImages",
+							"ecr:DescribeImages",
+							"ecr:BatchGetImage",
+							"ecr:InitiateLayerUpload",
+							"ecr:UploadLayerPart",
+							"ecr:CompleteLayerUpload",
+							"ecr:PutImage"
+						],
+						"Resource": "*"
+					}
+				]
+			}`),
+			})
+		if err != nil {
+			return fmt.Errorf("failed create iam policy for maintenance ec2: %v", err)
+		}
+		ctx.Export(resourceName, iamMaintenanceEC2Policy.ID())
+
+		// セキュリティグループ securitygroup ///////////////////////////////////////////////
+		resourceName = fmt.Sprintf("%s-sg-public-maintenance", projectTag)
+		securityGroupPublicMaintenance, err := CreateSecurityGroupForMaintenanceEC2(
+			ctx, vpc, resourceName)
+		if err != nil {
+			return fmt.Errorf("failed create security group for public maintenance: %v", err)
+		}
+		ctx.Export(resourceName, securityGroupPublicMaintenance.ID())
+
+		resourceName = fmt.Sprintf("%s-sg-public-app-container", projectTag)
+		securityGroupAppContainerBackend, err := CreateSecurityGroupForAppContainerBackend(
+			ctx,
+			vpc,
+			securityGroupPublicMaintenance,
+			resourceName)
+		if err != nil {
+			return fmt.Errorf("failed create security group for AppContainer Backend: %v", err)
+		}
+		ctx.Export(resourceName, securityGroupAppContainerBackend.ID())
+
+		// EC2 ////////////////////////////////////////////////////////////////////
+		// インスタンスプロファイル
+		resourceName = fmt.Sprintf("%s-instance-profile-for-maintenance-ec2", projectTag)
+		instanceProfileMaintenanceEC2, err := iam.NewInstanceProfile(
+			ctx,
+			resourceName,
+			&iam.InstanceProfileArgs{
+				Role: iamMaintenanceEC2.Name,
+			})
+		if err != nil {
+			return fmt.Errorf("failed create iam instance profile for maintenance ec2: %v", err)
+		}
+		ctx.Export(resourceName, instanceProfileMaintenanceEC2.ID())
+
+		// インスタンス
+		userdataScript, err := loadFileToString("./maintenance_ec2_userdata.sh")
+		if err != nil {
+			return fmt.Errorf("failed load file: %v", err)
+		}
+		resourceName = fmt.Sprintf("%s-ec2-maintenance", projectTag)
+		ec2MaintenanceInstance, err := ec2.NewInstance(
+			ctx,
+			resourceName,
+			&ec2.InstanceArgs{
+				InstanceType:             pulumi.String("t2.micro"),
+				Ami:                      pulumi.String("ami-08a706ba5ea257141"),
+				SubnetId:                 subnetAppContainer.ID(),
+				KeyName:                  pulumi.String(config.BastionSSHKeyName),
+				AssociatePublicIpAddress: pulumi.Bool(true),
+				SecurityGroups: pulumi.StringArray{
+					securityGroupPublicMaintenance.ID(),
+				},
+				IamInstanceProfile: instanceProfileMaintenanceEC2.Name,
+				UserData:           pulumi.String(userdataScript),
+				Tags:               createNameTag(resourceName),
+			},
+			pulumi.IgnoreChanges([]string{"securityGroups"}),
+		)
+		if err != nil {
+			return fmt.Errorf("failed create new maintenance ec2 instance: %v", err)
+		}
+		ctx.Export(resourceName, ec2MaintenanceInstance.ID())
+
+		// ElasticIPアドレス ///////////////////////////////////////////////////////////////////
+		// メンテナンスEC2向け
+		resourceName = fmt.Sprintf("%s-eip-for-maintenance", projectTag)
+		eipForEc2MaintenanceInstance, err := ec2.NewEip(
+			ctx,
+			resourceName,
+			&ec2.EipArgs{
+				Domain:   pulumi.String("vpc"),
+				Instance: ec2MaintenanceInstance.ID(),
+			},
+			pulumi.IgnoreChanges([]string{"instance"}),
+		)
+		if err != nil {
+			return fmt.Errorf("failed create eip for maintenance ec2 instance: %v", err)
+		}
+		ctx.Export(resourceName, eipForEc2MaintenanceInstance.ID())
+
+		// ElasticIP 紐づけ ////////////////////////////////////////////////////////////////////
+		// メンテナンスEC2向け
+		resourceName = fmt.Sprintf("%s-eip-associate-for-maintenance", projectTag)
+		eipAssociate, err := ec2.NewEipAssociation(
+			ctx,
+			resourceName,
+			&ec2.EipAssociationArgs{
+				InstanceId:   ec2MaintenanceInstance.ID(),
+				AllocationId: eipForEc2MaintenanceInstance.ID(),
+			},
+			pulumi.DependsOn([]pulumi.Resource{ec2MaintenanceInstance, eipForEc2MaintenanceInstance}),
+		)
+		ctx.Export(resourceName, eipAssociate.ID())
+
+		// KVS upstash # TODO
+
+		// RDB aurora # TODO
+
+		// SecretManager # TODO
+
+		// ECS # TODO
 
 		// Public Access Block
 		resourceName = fmt.Sprintf("%s-s3-public_access_block", projectTag)
