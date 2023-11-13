@@ -8,6 +8,7 @@ import (
 
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/ec2"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/iam"
+	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/rds"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/s3"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
@@ -27,13 +28,14 @@ func CreateSubnet(
 	ctx *pulumi.Context,
 	vpc *ec2.Vpc,
 	cidr string,
+	availableZone string,
 	resourceName string,
 ) (*ec2.Subnet, error) {
 	return ec2.NewSubnet(ctx, resourceName, &ec2.SubnetArgs{
-		VpcId:     vpc.ID(),
-		CidrBlock: pulumi.String(cidr),
-		// AvailabilityZone: pulumi.String(availabilityZone),
-		Tags: createNameTag(resourceName),
+		VpcId:            vpc.ID(),
+		CidrBlock:        pulumi.String(cidr),
+		AvailabilityZone: pulumi.String(availableZone),
+		Tags:             createNameTag(resourceName),
 	})
 }
 
@@ -128,14 +130,12 @@ func CreateSecurityGroupForAppContainerBackend(
 				&ec2.SecurityGroupIngressArgs{
 					SecurityGroups: pulumi.StringArray{
 						securityGroupForMaintenance.ID(),
+						// TODO: frontend container
 					},
 					Description: pulumi.String("for inbound"),
 					Protocol:    pulumi.String("tcp"),
 					FromPort:    pulumi.Int(3000),
 					ToPort:      pulumi.Int(3000),
-					// CidrBlocks: pulumi.StringArray{
-					// 	pulumi.String("0.0.0.0/0"),
-					// },
 				},
 			},
 			Egress: ec2.SecurityGroupEgressArray{
@@ -148,6 +148,103 @@ func CreateSecurityGroupForAppContainerBackend(
 						pulumi.String("0.0.0.0/0"),
 					},
 				},
+			},
+			Tags: createNameTag(resourceName),
+		})
+}
+
+func CreateSecurityGroupForRDS(
+	ctx *pulumi.Context,
+	vpc *ec2.Vpc,
+	securityGroupForMaintenance *ec2.SecurityGroup,
+	securityGroupAppContainerBackend *ec2.SecurityGroup,
+	resourceName string,
+) (*ec2.SecurityGroup, error) {
+	return ec2.NewSecurityGroup(
+		ctx,
+		resourceName,
+		&ec2.SecurityGroupArgs{
+			VpcId: vpc.ID(),
+			Ingress: ec2.SecurityGroupIngressArray{
+				&ec2.SecurityGroupIngressArgs{
+					SecurityGroups: pulumi.StringArray{
+						securityGroupForMaintenance.ID(),
+					},
+					Description: pulumi.String("for MaintenanceEC2Instance"),
+					Protocol:    pulumi.String("tcp"),
+					FromPort:    pulumi.Int(3306),
+					ToPort:      pulumi.Int(3306),
+				},
+				&ec2.SecurityGroupIngressArgs{
+					SecurityGroups: pulumi.StringArray{
+						securityGroupAppContainerBackend.ID(),
+					},
+					Description: pulumi.String("for AppContainerBackend"),
+					Protocol:    pulumi.String("tcp"),
+					FromPort:    pulumi.Int(3306),
+					ToPort:      pulumi.Int(3306),
+				},
+			},
+			Egress: ec2.SecurityGroupEgressArray{
+				&ec2.SecurityGroupEgressArgs{
+					Description: pulumi.String("All outbound traffic"),
+					Protocol:    pulumi.String("-1"),
+					FromPort:    pulumi.Int(0),
+					ToPort:      pulumi.Int(0),
+					CidrBlocks: pulumi.StringArray{
+						pulumi.String("0.0.0.0/0"),
+					},
+				},
+			},
+			Tags: createNameTag(resourceName),
+		})
+}
+
+func CreateRDSSubnetGroup(
+	ctx *pulumi.Context,
+	subnetZoneA *ec2.Subnet,
+	subnetZoneC *ec2.Subnet,
+	resourceName string,
+) (*rds.SubnetGroup, error) {
+	return rds.NewSubnetGroup(
+		ctx,
+		resourceName,
+		&rds.SubnetGroupArgs{
+			Name:        pulumi.String(resourceName),
+			Description: pulumi.String(resourceName),
+			SubnetIds: pulumi.StringArray{
+				subnetZoneA.ID(),
+				subnetZoneC.ID(),
+			},
+			Tags: createNameTag(resourceName),
+		})
+}
+
+func CreateRDSInstance(
+	ctx *pulumi.Context,
+	dbName string,
+	username string,
+	password string,
+	securityGroup *ec2.SecurityGroup,
+	dbSubnetGroup *rds.SubnetGroup,
+	resourceName string,
+) (*rds.Instance, error) {
+	return rds.NewInstance(
+		ctx,
+		resourceName,
+		&rds.InstanceArgs{
+			Engine:                pulumi.String("mysql"),
+			EngineVersion:         pulumi.String("8.0.33"),
+			InstanceClass:         pulumi.String("db.t3.micro"),
+			AllocatedStorage:      pulumi.Int(20),
+			DbSubnetGroupName:     dbSubnetGroup.Name,
+			DbName:                pulumi.String(dbName),
+			Username:              pulumi.String(username),
+			Password:              pulumi.String(password),
+			BackupRetentionPeriod: pulumi.Int(0),
+			SkipFinalSnapshot:     pulumi.Bool(true),
+			VpcSecurityGroupIds: pulumi.StringArray{
+				securityGroup.ID(),
 			},
 			Tags: createNameTag(resourceName),
 		})
@@ -169,12 +266,31 @@ func main() {
 		ctx.Export(resourceName, vpc.ID())
 
 		// Subnet /////////////////////////////////////////////////////////////////////////
+		// Public
 		resourceName = fmt.Sprintf("%s-subnet-app-container", projectTag)
-		subnetAppContainer, err := CreateSubnet(ctx, vpc, "10.1.0.0/24", resourceName)
+		subnetAppContainer, err := CreateSubnet(
+			ctx, vpc, "10.1.0.0/24", "ap-northeast-1a", resourceName)
 		if err != nil {
 			return fmt.Errorf("failed create subnet for App Container: %v", err)
 		}
 		ctx.Export(resourceName, subnetAppContainer.ID())
+
+		// Private
+		resourceName = fmt.Sprintf("%s-subnet-private-1a", projectTag)
+		subnetPrivate1a, err := CreateSubnet(
+			ctx, vpc, "10.1.1.0/24", "ap-northeast-1a", resourceName)
+		if err != nil {
+			return fmt.Errorf("failed create subnet for private: %v", err)
+		}
+		ctx.Export(resourceName, subnetPrivate1a.ID())
+
+		resourceName = fmt.Sprintf("%s-subnet-private-1c", projectTag)
+		subnetPrivate1c, err := CreateSubnet(
+			ctx, vpc, "10.1.2.0/24", "ap-northeast-1c", resourceName)
+		if err != nil {
+			return fmt.Errorf("failed create subnet for private: %v", err)
+		}
+		ctx.Export(resourceName, subnetPrivate1c.ID())
 
 		// InternetGateway //////////////////////////////////////////////////////////
 		resourceName = fmt.Sprintf("%s-igw", projectTag)
@@ -392,6 +508,18 @@ func main() {
 		}
 		ctx.Export(resourceName, securityGroupAppContainerBackend.ID())
 
+		resourceName = fmt.Sprintf("%s-sg-rds", projectTag)
+		securityGroupRDS, err := CreateSecurityGroupForRDS(
+			ctx,
+			vpc,
+			securityGroupPublicMaintenance,
+			securityGroupAppContainerBackend,
+			resourceName)
+		if err != nil {
+			return fmt.Errorf("failed create security group for RDS: %v", err)
+		}
+		ctx.Export(resourceName, securityGroupRDS.ID())
+
 		// EC2 ////////////////////////////////////////////////////////////////////
 		// インスタンスプロファイル
 		resourceName = fmt.Sprintf("%s-instance-profile-for-maintenance-ec2", projectTag)
@@ -468,7 +596,31 @@ func main() {
 
 		// KVS upstash # TODO
 
-		// RDB aurora # TODO
+		// RDS  ///////////////////////////////////////////////////////////////////////////
+		// DB SubnetGroup
+		resourceName = fmt.Sprintf("%s-rds-subnet-group", projectTag)
+		rdsSubnetGroup, err := CreateRDSSubnetGroup(
+			ctx, subnetPrivate1a, subnetPrivate1c, resourceName)
+		if err != nil {
+			return fmt.Errorf("failed create rds subnet group: %v", err)
+		}
+		ctx.Export(resourceName, rdsSubnetGroup.ID())
+
+		// DB Instance
+		resourceName = fmt.Sprintf("%s-rds-instance", projectTag)
+		rdsInstance, err := CreateRDSInstance(
+			ctx,
+			config.DBName,
+			config.DBUsername,
+			config.DBPassword,
+			securityGroupRDS,
+			rdsSubnetGroup,
+			resourceName,
+		)
+		if err != nil {
+			return fmt.Errorf("failed create rds instance: %v", err)
+		}
+		ctx.Export(resourceName, rdsInstance.ID())
 
 		// SecretManager # TODO
 
