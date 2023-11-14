@@ -9,7 +9,9 @@ build-image: ## Build docker image to deploy
 
 .PHONY: build-image-local
 build-image-local: ## Build docker image on AppleSilicon
-	docker build -t blog-backend:local --no-cache --target deploy ./
+	docker build -t blog-backend:local \
+		--no-cache \
+		--target deploy ./
 
 .PHONY: push-image
 push-image: ## Push docker image to ECR

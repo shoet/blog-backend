@@ -11,6 +11,7 @@ import (
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/rds"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/s3"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/upstash/pulumi-upstash/sdk/go/upstash"
 )
 
 var projectTag = "blog"
@@ -401,6 +402,51 @@ func main() {
 		}
 		ctx.Export(resourceName, iamMaintenanceEC2.ID())
 
+		// ECSタスク実行用ロール
+		resourceName = fmt.Sprintf("%s-iam-role-for-ecs-task-execute", projectTag)
+		ecsTaskExecutionRole, err := iam.NewRole(
+			ctx,
+			resourceName,
+			&iam.RoleArgs{
+				AssumeRolePolicy: pulumi.String(`{
+					"Version": "2012-10-17",
+					"Statement": [{
+						"Effect": "Allow",
+						"Principal": {
+							"Service": "ecs-tasks.amazonaws.com"
+						},
+						"Action": "sts:AssumeRole"
+					}]
+				}`),
+				ManagedPolicyArns: pulumi.StringArray{
+					pulumi.String("arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"),
+					// ECSからのECRをpullするために必要
+					pulumi.String("arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"),
+				},
+				// ECSのcontainerDefinitionsのawslogs-create-groupに必要
+				InlinePolicies: iam.RoleInlinePolicyArray{
+					&iam.RoleInlinePolicyArgs{
+						Name: pulumi.String("ecs-task-policy"),
+						Policy: pulumi.String(`{
+							"Version": "2012-10-17",
+							"Statement": [
+								{
+								   "Effect": "Allow",
+								   "Action": [
+										"logs:CreateLogGroup"
+								   ],
+								  "Resource": "*"
+								}
+							]
+						}`),
+					},
+				},
+			})
+		if err != nil {
+			return fmt.Errorf("failed create iam role for ecs task execution: %v", err)
+		}
+		ctx.Export(resourceName, ecsTaskExecutionRole.ID())
+
 		// ECSタスクロール AppContainer Backend
 		resourceName = fmt.Sprintf("%s-iam-role-for-ecs-task-backend", projectTag)
 		ecsTaskRole, err := iam.NewRole(
@@ -594,7 +640,20 @@ func main() {
 		)
 		ctx.Export(resourceName, eipAssociate.ID())
 
-		// KVS upstash # TODO
+		// KVS upstash
+		resourceName = fmt.Sprintf("%s-kvs-redis-by-upstash", projectTag)
+		redisKVS, err := upstash.NewRedisDatabase(ctx, resourceName, &upstash.RedisDatabaseArgs{
+			DatabaseName: pulumi.String("blog-kvs"),
+			Multizone:    pulumi.Bool(true),
+			Region:       pulumi.String("ap-northeast-1"),
+			Tls:          pulumi.Bool(true),
+			Eviction:     pulumi.Bool(true),
+		})
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+		ctx.Export("db from get request", redisKVS.ID())
 
 		// RDS  ///////////////////////////////////////////////////////////////////////////
 		// DB SubnetGroup

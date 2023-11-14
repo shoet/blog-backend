@@ -12,10 +12,10 @@ type Config struct {
 	DBUser                    string `env:"BLOG_DB_USER,required"`
 	DBPass                    string `env:"BLOG_DB_PASS,required"`
 	DBName                    string `env:"BLOG_DB_NAME,required"`
-	KVSHost                   string `env:"BLOG_KVS_HOST"`
-	KVSPort                   int64  `env:"BLOG_KVS_PORT"`
-	KVSUser                   string `env:"BLOG_KVS_USER"`
-	KVSPass                   string `env:"BLOG_KVS_PASS"`
+	KVSHost                   string `env:"BLOG_KVS_HOST,required"`
+	KVSPort                   int64  `env:"BLOG_KVS_PORT,required"`
+	KVSUser                   string `env:"BLOG_KVS_USER,required"`
+	KVSPass                   string `env:"BLOG_KVS_PASS,required"`
 	AWSS3Region               string `env:"AWS_DEFAULT_REGION"`
 	AWSS3Bucket               string `env:"BLOG_AWS_S3_BUCKET,required"`
 	AWSS3ThumbnailDirectory   string `env:"BLOG_AWS_S3_THUMBNAIL_DIRECTORY,required"`
