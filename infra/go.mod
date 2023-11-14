@@ -7,6 +7,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/pulumi/pulumi-aws/sdk/v6 v6.2.1
 	github.com/pulumi/pulumi/sdk/v3 v3.86.0
+	github.com/upstash/pulumi-upstash/sdk v0.2.0
 )
 
 require (

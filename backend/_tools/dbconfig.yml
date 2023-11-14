@@ -10,5 +10,5 @@ staging:
 
 production:
   dialect: mysql
-  datasource: ${BLOG_DB_USER}:${BLOG_DB_PASSWORD}@tcp(${BLOG_DB_HOST}:${BLOG_DB_PORT})/${BLOG_DB_NAME}?charset=utf8mb4&parseTime=true
+  datasource: ${DBDSN}
   dir: migrations/mysql

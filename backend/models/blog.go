@@ -17,6 +17,8 @@ type Blog struct {
 	Modified               time.Time `json:"modified" db:"modified"`
 }
 
+type Blogs []*Blog
+
 type UserId int64
 
 type User struct {
