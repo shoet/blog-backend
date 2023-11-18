@@ -10,9 +10,9 @@ export const deleteBlog = async (
   { blogId }: DeleteBlogParams,
   authToken: string,
 ): Promise<void> => {
-  const url = `${context.apiBaseUrl}/blogs/delete`
+  const url = `${context.apiBaseUrl}/blogs`
   return await fetcher(url, {
-    method: 'POST',
+    method: 'DELETE',
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',

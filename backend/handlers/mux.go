@@ -91,14 +91,14 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 				Service:   blogService,
 				Validator: validate,
 			}
-			r.With(authMiddleWare.Middleware).Post("/delete", bdh.ServeHTTP)
+			r.With(authMiddleWare.Middleware).Delete("/", bdh.ServeHTTP)
 
 			// require login
 			buh := &BlogPutHandler{
 				Service:   blogService,
 				Validator: validate,
 			}
-			r.With(authMiddleWare.Middleware).Post("/update", buh.ServeHTTP)
+			r.With(authMiddleWare.Middleware).Put("/", buh.ServeHTTP)
 		})
 
 		r.Route("/tags", func(r chi.Router) {

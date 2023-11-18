@@ -10,9 +10,9 @@ export const putBlog = async (
   { blog }: PutBlogParams,
   authToken: string,
 ): Promise<Blog> => {
-  const url = `${context.apiBaseUrl}/blogs/update`
+  const url = `${context.apiBaseUrl}/blogs`
   return await fetcher(url, {
-    method: 'POST',
+    method: 'PUT',
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
