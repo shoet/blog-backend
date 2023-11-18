@@ -5,7 +5,7 @@ import Box from '@/components/layout/Box'
 import Flex from '@/components/layout/Flex'
 import { useAuthContext } from '@/contexts/AuthContext'
 import { useEffect } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 
 export const Profile = () => {
   // TODO: anchor link

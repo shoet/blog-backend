@@ -16,7 +16,6 @@ import (
 )
 
 func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
-	// db, err := store.NewDBSQLite3(ctx)
 	db, err := store.NewDBMySQL(ctx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create db: %w", err)
@@ -48,7 +47,9 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 		cfg.KVSPort,
 		cfg.KVSUser,
 		cfg.KVSPass,
-		cfg.JWTExpiresInSec)
+		cfg.JWTExpiresInSec,
+		cfg.KVSTlsEnabled,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create redis kvs: %w", err)
 	}
@@ -91,14 +92,14 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 				Service:   blogService,
 				Validator: validate,
 			}
-			r.With(authMiddleWare.Middleware).Post("/delete", bdh.ServeHTTP)
+			r.With(authMiddleWare.Middleware).Delete("/", bdh.ServeHTTP)
 
 			// require login
 			buh := &BlogPutHandler{
 				Service:   blogService,
 				Validator: validate,
 			}
-			r.With(authMiddleWare.Middleware).Post("/update", buh.ServeHTTP)
+			r.With(authMiddleWare.Middleware).Put("/", buh.ServeHTTP)
 		})
 
 		r.Route("/tags", func(r chi.Router) {

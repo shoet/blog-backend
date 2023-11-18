@@ -23,6 +23,7 @@ func NewRedisKVS(
 	username string,
 	password string,
 	expirationSec int,
+	enableTLS bool,
 	options ...RedisOption,
 ) (*RedisKVS, error) {
 	redisOpt := &redis.Options{
@@ -30,9 +31,12 @@ func NewRedisKVS(
 		Addr:     fmt.Sprintf("%s:%d", host, port),
 		Username: username,
 		Password: password,
-		TLSConfig: &tls.Config{
+	}
+
+	if enableTLS {
+		redisOpt.TLSConfig = &tls.Config{
 			MinVersion: tls.VersionTLS12,
-		},
+		}
 	}
 
 	for _, opt := range options {
