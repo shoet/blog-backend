@@ -91,10 +91,36 @@ func (b *BlogService) GetBlog(ctx context.Context, id models.BlogId) (*models.Bl
 }
 
 func (b *BlogService) DeleteBlog(ctx context.Context, id models.BlogId) error {
-	err := b.blog.Delete(ctx, b.db, id)
+	tx, err := b.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// delete blogs_tags
+	tagIds, err := b.blog.DeleteBlogTag(ctx, tx, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete blogs_tags: %w", err)
+	}
+
+	// delte tags
+	for _, tagId := range tagIds {
+		if err := b.blog.DeleteTag(ctx, tx, tagId); err != nil {
+			return fmt.Errorf("failed to delete tags: %w", err)
+		}
+	}
+
+	// delete blogs
+	err = b.blog.Delete(ctx, tx, id)
 	if err != nil {
 		return fmt.Errorf("failed to delete blog: %w", err)
 	}
+
+	/// commit
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
 	return nil
 }
 

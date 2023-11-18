@@ -13,6 +13,7 @@ type Queryer interface {
 }
 
 type Execer interface {
+	Queryer
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 }
 

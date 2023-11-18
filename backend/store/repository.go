@@ -3,11 +3,13 @@ package store
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/shoet/blog/clocker"
 	"github.com/shoet/blog/models"
 	"github.com/shoet/blog/options"
-	"strings"
-	"time"
+	"golang.org/x/exp/slices"
 )
 
 type BlogRepository struct {
@@ -220,6 +222,83 @@ func (r *BlogRepository) AddBlogTag(
 	return id, nil
 }
 
+type tagResult []*struct {
+	TagId models.TagId `db:"tag_id"`
+}
+
+func (t tagResult) Flatten() []models.TagId {
+	var ids []models.TagId
+	for _, row := range t {
+		ids = append(ids, row.TagId)
+	}
+	return ids
+}
+
+func (r *BlogRepository) DeleteBlogTag(
+	ctx context.Context, db Execer, blogId models.BlogId,
+) ([]models.TagId, error) {
+
+	// Step1: select using other blog tags
+	var result1 tagResult
+	sql1 := `
+	SELECT 
+		a.tag_id
+	FROM 
+		blogs_tags as a
+	JOIN (
+		SELECT
+			blog_id
+			, tag_id
+		FROM
+			blogs_tags
+		WHERE
+			blog_id = ?
+	) as b
+	ON 
+		a.tag_id = b.tag_id
+		AND
+			a.blog_id <> b.blog_id
+	`
+	if err := db.SelectContext(ctx, &result1, sql1, blogId); err != nil {
+		return nil, fmt.Errorf("failed to select usingtags: %w", err)
+	}
+
+	// Step2: select will delete tags
+	var result2 tagResult
+	sql2 := `
+	SELECT
+		tag_id
+	FROM
+		blogs_tags
+	WHERE
+		blog_id = ?
+	;
+	`
+	if err := db.SelectContext(ctx, &result2, sql2, blogId); err != nil {
+		return nil, fmt.Errorf("failed to select tags: %w", err)
+	}
+	var willDeleteTags []models.TagId
+	for _, t := range result2.Flatten() {
+		if !slices.Contains(result1.Flatten(), t) {
+			willDeleteTags = append(willDeleteTags, t)
+		}
+	}
+
+	// Step3: delete blogg_tags
+	sql3 := `
+	DELETE FROM
+		blogs_tags
+	WHERE
+		blog_id = ?
+	;
+	`
+	if _, err := db.ExecContext(ctx, sql3, blogId); err != nil {
+		return nil, fmt.Errorf("failed to delete blogs_tags: %w", err)
+	}
+
+	return willDeleteTags, nil
+}
+
 func (r *BlogRepository) SelectTags(
 	ctx context.Context, db Queryer, tag string,
 ) ([]*models.Tag, error) {
@@ -254,6 +333,22 @@ func (r *BlogRepository) AddTag(ctx context.Context, db Execer, tag string) (mod
 	id, err := res.LastInsertId()
 	return models.TagId(id), nil
 
+}
+
+func (r *BlogRepository) DeleteTag(
+	ctx context.Context, db Execer, tagId models.TagId,
+) error {
+	sql := `
+	DELETE FROM	
+		tags
+	WHERE 
+		id = ?
+	;
+	`
+	if _, err := db.ExecContext(ctx, sql, tagId); err != nil {
+		return fmt.Errorf("failed to delete tag: %w", err)
+	}
+	return nil
 }
 
 type UserRepository struct {
