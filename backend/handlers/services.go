@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 
-	"github.com/shoet/blog/config"
 	"github.com/shoet/blog/models"
 	"github.com/shoet/blog/options"
 )
@@ -19,7 +18,6 @@ type BlogManager interface {
 
 type AuthManager interface {
 	Login(ctx context.Context, email string, password string) (string, error)
-	LoginAdmin(ctx context.Context, cfg *config.Config, email string, password string) (string, error)
 	LoginSession(ctx context.Context, token string) (*models.User, error)
 	// Signup(ctx context.Context, email string, password string) (string, error)
 	// Signout(ctx context.Context, token string) error

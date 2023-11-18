@@ -123,13 +123,6 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 			}
 			r.Post("/signin", ah.ServeHTTP)
 
-			aah := &AuthAdminLoginHandler{
-				Service:   authService,
-				Validator: validate,
-				config:    cfg,
-			}
-			r.Post("/admin/signin", aah.ServeHTTP)
-
 			ash := &AuthSessionLoginHandler{
 				Service: authService,
 			}

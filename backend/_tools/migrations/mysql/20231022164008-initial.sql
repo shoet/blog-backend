@@ -21,8 +21,6 @@ CREATE TABLE blogs_tags (
   id          INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   blog_id     INT NOT NULL,
   tag_id      INT NOT NULL,
-  FOREIGN KEY(blog_id) REFERENCES blogs(id) ON DELETE CASCADE,
-  FOREIGN KEY(tag_id) REFERENCES tags(id) ON DELETE CASCADE,
   UNIQUE(blog_id, tag_id)
 );
 
@@ -36,3 +34,7 @@ CREATE TABLE users (
 );
 
 -- +migrate Down
+DROP TABLE IF EXISTS `blogs`;
+DROP TABLE IF EXISTS `tags`;
+DROP TABLE IF EXISTS `blogs_tags`;
+DROP TABLE IF EXISTS `users`;

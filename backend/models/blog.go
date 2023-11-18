@@ -22,7 +22,7 @@ type Blogs []*Blog
 type UserId int64
 
 type User struct {
-	Id       UserId    `json:"id" db:"id"`
+	Id       UserId    `json:"id,omitempty" db:"id"`
 	Name     string    `json:"name" db:"name"`
 	Email    string    `json:"email,omitempty" db:"email"`
 	Password string    `json:"password,omitempty" db:"password"`

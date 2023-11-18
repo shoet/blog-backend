@@ -16,12 +16,13 @@ type BlogRepository interface {
 	Delete(ctx context.Context, db store.Execer, id models.BlogId) error
 	Put(ctx context.Context, db store.Execer, blog *models.Blog) (models.BlogId, error)
 	AddBlogTag(ctx context.Context, db store.Execer, blogId models.BlogId, tagId models.TagId) (int64, error)
+	DeleteBlogTag(ctx context.Context, db store.Execer, blogId models.BlogId) ([]models.TagId, error)
 	SelectTags(ctx context.Context, db store.Queryer, tag string) ([]*models.Tag, error)
 	AddTag(ctx context.Context, db store.Execer, tag string) (models.TagId, error)
+	DeleteTag(ctx context.Context, db store.Execer, tagId models.TagId) error
 }
 
 type UserRepository interface {
-	// Add(ctx context.Context, db store.Execer, user *models.User) (models.UserId, error)
 	Add(ctx context.Context, db store.Execer, user *models.User) (*models.User, error)
 	Get(ctx context.Context, db store.Queryer, id models.UserId) (*models.User, error)
 	GetByEmail(ctx context.Context, db store.Queryer, email string) (*models.User, error)
