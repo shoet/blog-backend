@@ -19,12 +19,14 @@ services:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?err}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?err}
       AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:?err}
-      ADMIN_EMAIL: ${ADMIN_EMAIL}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      ADMIN_NAME: ${ADMIN_EMAIL?err}
+      ADMIN_EMAIL: ${ADMIN_EMAIL?err}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD?err}
       BLOG_KVS_HOST: blog-kvs
       BLOG_KVS_PORT: 6379
       BLOG_KVS_USER: default
-      BLOG_KVS_PASSWORD: redispw
+      BLOG_KVS_PASS: redispw
+      JWT_SECRET: ${JWT_SECRET?err}
       BLOG_DB_HOST: blog-rdb
       BLOG_DB_PORT: 3306
       BLOG_DB_USER: blog_user
