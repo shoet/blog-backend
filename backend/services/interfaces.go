@@ -22,6 +22,7 @@ type BlogRepository interface {
 
 type UserRepository interface {
 	// Add(ctx context.Context, db store.Execer, user *models.User) (models.UserId, error)
+	Add(ctx context.Context, db store.Execer, user *models.User) (*models.User, error)
 	Get(ctx context.Context, db store.Queryer, id models.UserId) (*models.User, error)
 	GetByEmail(ctx context.Context, db store.Queryer, email string) (*models.User, error)
 	// Delete(ctx context.Context, db store.Execer, id models.UserId) error

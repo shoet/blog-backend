@@ -8,7 +8,8 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -trimpath -ldflags="-w -s" -o app cmd/api/main.go
+RUN go build -trimpath -ldflags="-w -s" -o cmd/bin/api cmd/api/main.go
+RUN go build -trimpath -ldflags="-w -s" -o cmd/bin/cli cmd/cli/main.go
 
 # ===== deploy stage ====
 FROM golang:1.19.13-bullseye as deploy
@@ -17,14 +18,10 @@ WORKDIR /app
 
 RUN apt update -y
 
-COPY --from=builder /app/app .
+COPY --from=builder /app/api .
+COPY --from=builder /app/cli .
 
-# RUN go install github.com/rubenv/sql-migrate/...@latest
-# COPY --from=build /app/_tools/migrations ./migrations
-# COPY --from=build /app/_tools/dbconfig.yml ./dbconfig.yml
-# RUN sql-migrate up
-
-CMD ["/app/app"]
+CMD ["/app/api"]
 
 # ===== dev ====
 FROM golang:1.19.13-bullseye as dev

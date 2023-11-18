@@ -299,3 +299,32 @@ func (u *UserRepository) GetByEmail(
 	}
 	return users[0], nil
 }
+
+func (u *UserRepository) Add(
+	ctx context.Context, db Execer, user *models.User,
+) (*models.User, error) {
+	sql := `
+	INSERT INTO users
+		(name, email, password, created, modified)
+	VALUES
+		(?, ?, ?, ?, ?)
+	;
+	`
+	now := u.Clocker.Now()
+	user.Created = now
+	user.Modified = now
+
+	res, err := db.ExecContext(
+		ctx,
+		sql,
+		user.Name, user.Email, user.Password, user.Created, user.Modified)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert user: %w", err)
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get last insert id: %w", err)
+	}
+	user.Id = models.UserId(id)
+	return user, nil
+}
