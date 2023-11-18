@@ -34,6 +34,13 @@ func NewDBMySQL(ctx context.Context, cfg *config.Config) (*sqlx.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed load location: %w", err)
 	}
+
+	// true/falseの文字列指定のためboolから変換
+	tlsConfigString := "false"
+	if cfg.DBTlsEnabled {
+		tlsConfigString = "true"
+	}
+
 	config := mysql.Config{
 		Addr:                 fmt.Sprintf("%s:%d", cfg.DBHost, cfg.DBPort),
 		User:                 cfg.DBUser,
@@ -43,7 +50,7 @@ func NewDBMySQL(ctx context.Context, cfg *config.Config) (*sqlx.DB, error) {
 		ParseTime:            true,
 		Loc:                  jst,
 		AllowNativePasswords: true,
-		// TLSConfig:            "true",
+		TLSConfig:            tlsConfigString,
 	}
 	db, err := sql.Open("mysql", config.FormatDSN())
 	if err != nil {
