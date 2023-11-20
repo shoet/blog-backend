@@ -18,8 +18,8 @@ WORKDIR /app
 
 RUN apt update -y
 
-COPY --from=builder /app/api .
-COPY --from=builder /app/cli .
+COPY --from=builder /app/cmd/bin/api .
+COPY --from=builder /app/cmd/bin/cli .
 
 CMD ["/app/api"]
 

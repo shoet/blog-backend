@@ -1,13 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"log"
 	"os"
+	"text/template"
 
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/ec2"
+	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/ecs"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/iam"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/rds"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/s3"
@@ -336,6 +339,7 @@ func main() {
 		// bucket
 		resourceName = fmt.Sprintf("%s-s3-bucket", projectTag)
 		bucketName := fmt.Sprintf("blog-%s", config.AWSAccountId)
+		bucketName := fmt.Sprintf("blog-%s", accountId)
 		s3Bucket, err := s3.NewBucket(
 			ctx,
 			resourceName,
@@ -465,6 +469,8 @@ func main() {
 		ctx.Export(resourceName, iamMaintenanceEC2.ID())
 
 		// ECSタスク実行用ロール
+		secretsManagerArn := fmt.Sprintf("arn:aws:secretsmanager:%s:%s:secret:%s", region.Name, accountId, config.SecretsManagerSecretId)
+		kmsArn := fmt.Sprintf("arn:aws:kms:%s:%s:key/%s", region.Name, accountId, config.KmsKeyId)
 		resourceName = fmt.Sprintf("%s-iam-role-for-ecs-task-execute", projectTag)
 		ecsTaskExecutionRole, err := iam.NewRole(
 			ctx,
@@ -488,7 +494,7 @@ func main() {
 				// ECSのcontainerDefinitionsのawslogs-create-groupに必要
 				InlinePolicies: iam.RoleInlinePolicyArray{
 					&iam.RoleInlinePolicyArgs{
-						Name: pulumi.String("ecs-task-policy"),
+						Name: pulumi.String("ecs-task-policy-logs"),
 						Policy: pulumi.String(`{
 							"Version": "2012-10-17",
 							"Statement": [
@@ -498,6 +504,25 @@ func main() {
 										"logs:CreateLogGroup"
 								   ],
 								  "Resource": "*"
+								}
+							]
+						}`),
+					},
+					&iam.RoleInlinePolicyArgs{
+						Name: pulumi.String("ecs-task-policy-secretsmanager"),
+						Policy: pulumi.String(`{
+							"Version": "2012-10-17",
+							"Statement": [
+								{
+									"Effect": "Allow",
+									"Action": [
+										"secretsmanager:GetSecretValue",
+										"kms:Decrypt"
+									],
+									"Resource": [
+										"` + secretsManagerArn + `",
+										"` + kmsArn + `"
+									]
 								}
 							]
 						}`),
@@ -714,11 +739,30 @@ func main() {
 			fmt.Println(err)
 			return err
 		}
-		ctx.Export("db from get request", redisKVS.ID())
+		ctx.Export(resourceName, redisKVS.ID())
 
-		// SecretManager # TODO
-
-		// ECS # TODO
+		// ECS ////////////////////////////////////////////////////////////////////////
+		// TaskDefinition
+		taskDefinition, err := loadEcsContainerDefinition(
+			"./container_definition.json", accountId, region.Name, config.SecretsManagerSecretId)
+		if err != nil {
+			return fmt.Errorf("failed load ecs task definition: %v", err)
+		}
+		resourceName = fmt.Sprintf("%s-ecs-task-definition", projectTag)
+		ecsTaskDefinition, err := ecs.NewTaskDefinition(
+			ctx,
+			resourceName,
+			&ecs.TaskDefinitionArgs{
+				Family:                  pulumi.String("blog-backend"),
+				NetworkMode:             pulumi.String("awsvpc"),
+				Cpu:                     pulumi.String("1024"),
+				Memory:                  pulumi.String("3072"),
+				TaskRoleArn:             ecsTaskRole.Arn,
+				ExecutionRoleArn:        ecsTaskExecutionRole.Arn,
+				RequiresCompatibilities: pulumi.StringArray{pulumi.String("FARGATE")},
+				ContainerDefinitions:    pulumi.String(taskDefinition),
+			})
+		ctx.Export(resourceName, ecsTaskDefinition.ID())
 
 		return nil
 
@@ -741,4 +785,31 @@ func loadFileToString(path string) (string, error) {
 		return "", fmt.Errorf("failed read file: %v", err)
 	}
 	return string(b), nil
+}
+
+func loadEcsContainerDefinition(
+	path string, awsAccountId string, region string, secretsManagerId string) (string, error) {
+	type Values struct {
+		AwsAccountId     string
+		Region           string
+		SecretsManagerId string
+	}
+	definition, err := loadFileToString(path)
+	if err != nil {
+		return "", fmt.Errorf("failed load ecs container definition: %v", err)
+	}
+	tmpl, err := template.New("ecsTaskDefinition").Parse(definition)
+	if err != nil {
+		return "", fmt.Errorf("failed parse ecs container definition: %v", err)
+	}
+	var buffer bytes.Buffer
+	err = tmpl.Execute(&buffer, Values{
+		AwsAccountId:     awsAccountId,
+		Region:           region,
+		SecretsManagerId: secretsManagerId,
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed execute ecs container definition: %v", err)
+	}
+	return buffer.String(), nil
 }

@@ -8,8 +8,9 @@ import (
 )
 
 type Config struct {
-	BastionSSHKeyName string `env:"BASTION_SSH_KEY_NAME"`
-	KmsKeyId          string `env:"KMS_KEY_ID"`
+	BastionSSHKeyName      string `env:"BASTION_SSH_KEY_NAME"`
+	KmsKeyId               string `env:"KMS_KEY_ID"`
+	SecretsManagerSecretId string `env:"SECRETS_MANAGER_SECRET_ID"`
 }
 
 func NewConfig() (*Config, error) {
