@@ -378,6 +378,54 @@ func main() {
 		}
 		ctx.Export(resourceName, s3CORS.ID())
 
+		// Public Access Block
+		resourceName = fmt.Sprintf("%s-s3-public_access_block", projectTag)
+		publicAccessBlock, err := s3.NewBucketPublicAccessBlock(
+			ctx,
+			resourceName,
+			&s3.BucketPublicAccessBlockArgs{
+				Bucket:                s3Bucket.ID(),
+				BlockPublicAcls:       pulumi.Bool(false),
+				BlockPublicPolicy:     pulumi.Bool(false),
+				IgnorePublicAcls:      pulumi.Bool(false),
+				RestrictPublicBuckets: pulumi.Bool(false),
+			})
+		if err != nil {
+			return err
+		}
+		ctx.Export(resourceName, publicAccessBlock.ID())
+
+		// Policy
+		// thumbnail配下のオブジェクトに対してGetObjectを許可する
+		resourceName = fmt.Sprintf("%s-s3-bucket_policy", projectTag)
+		bucketPolicy, err := s3.NewBucketPolicy(
+			ctx,
+			resourceName,
+			&s3.BucketPolicyArgs{
+				Bucket: s3Bucket.ID(), // refer to the bucket created earlier
+				Policy: pulumi.Any(map[string]interface{}{
+					"Version": "2012-10-17",
+					"Statement": []map[string]interface{}{
+						{
+							"Effect":    "Allow",
+							"Principal": "*",
+							"Action": []interface{}{
+								"s3:GetObject",
+							},
+							"Resource": []interface{}{
+								pulumi.Sprintf("arn:aws:s3:::%s/thumbnail/*", s3Bucket.ID()),
+							},
+						},
+					},
+				}),
+			},
+			pulumi.DependsOn([]pulumi.Resource{s3Bucket}),
+		)
+		if err != nil {
+			return err
+		}
+		ctx.Export(resourceName, bucketPolicy.ID())
+
 		// IAM //////////////////////////////////////////////////////////////
 		// ロール メンテナンスEC2向け
 		resourceName = fmt.Sprintf("%s-iam-role-for-maintenance-ec2", projectTag)
@@ -644,7 +692,6 @@ func main() {
 		resourceName = fmt.Sprintf("%s-kvs-redis-by-upstash", projectTag)
 		redisKVS, err := upstash.NewRedisDatabase(ctx, resourceName, &upstash.RedisDatabaseArgs{
 			DatabaseName: pulumi.String("blog-kvs"),
-			Multizone:    pulumi.Bool(true),
 			Region:       pulumi.String("ap-northeast-1"),
 			Tls:          pulumi.Bool(true),
 			Eviction:     pulumi.Bool(true),
@@ -655,83 +702,9 @@ func main() {
 		}
 		ctx.Export("db from get request", redisKVS.ID())
 
-		// RDS  ///////////////////////////////////////////////////////////////////////////
-		// DB SubnetGroup
-		resourceName = fmt.Sprintf("%s-rds-subnet-group", projectTag)
-		rdsSubnetGroup, err := CreateRDSSubnetGroup(
-			ctx, subnetPrivate1a, subnetPrivate1c, resourceName)
-		if err != nil {
-			return fmt.Errorf("failed create rds subnet group: %v", err)
-		}
-		ctx.Export(resourceName, rdsSubnetGroup.ID())
-
-		// DB Instance
-		resourceName = fmt.Sprintf("%s-rds-instance", projectTag)
-		rdsInstance, err := CreateRDSInstance(
-			ctx,
-			config.DBName,
-			config.DBUsername,
-			config.DBPassword,
-			securityGroupRDS,
-			rdsSubnetGroup,
-			resourceName,
-		)
-		if err != nil {
-			return fmt.Errorf("failed create rds instance: %v", err)
-		}
-		ctx.Export(resourceName, rdsInstance.ID())
-
 		// SecretManager # TODO
 
 		// ECS # TODO
-
-		// Public Access Block
-		resourceName = fmt.Sprintf("%s-s3-public_access_block", projectTag)
-		publicAccessBlock, err := s3.NewBucketPublicAccessBlock(
-			ctx,
-			resourceName,
-			&s3.BucketPublicAccessBlockArgs{
-				Bucket:                s3Bucket.ID(),
-				BlockPublicAcls:       pulumi.Bool(false),
-				BlockPublicPolicy:     pulumi.Bool(false),
-				IgnorePublicAcls:      pulumi.Bool(false),
-				RestrictPublicBuckets: pulumi.Bool(false),
-			})
-		if err != nil {
-			return err
-		}
-		ctx.Export(resourceName, publicAccessBlock.ID())
-
-		// Policy
-		// thumbnail配下のオブジェクトに対してGetObjectを許可する
-		resourceName = fmt.Sprintf("%s-s3-bucket_policy", projectTag)
-		bucketPolicy, err := s3.NewBucketPolicy(
-			ctx,
-			resourceName,
-			&s3.BucketPolicyArgs{
-				Bucket: s3Bucket.ID(), // refer to the bucket created earlier
-				Policy: pulumi.Any(map[string]interface{}{
-					"Version": "2012-10-17",
-					"Statement": []map[string]interface{}{
-						{
-							"Effect":    "Allow",
-							"Principal": "*",
-							"Action": []interface{}{
-								"s3:GetObject",
-							},
-							"Resource": []interface{}{
-								pulumi.Sprintf("arn:aws:s3:::%s/thumbnail/*", s3Bucket.ID()),
-							},
-						},
-					},
-				}),
-			},
-			pulumi.DependsOn([]pulumi.Resource{s3Bucket}),
-		)
-		if err != nil {
-			return err
-		}
-		ctx.Export(resourceName, bucketPolicy.ID())
 
 		return nil
 
