@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/ec2"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/iam"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/rds"
@@ -258,6 +259,19 @@ func main() {
 	}
 
 	pulumi.Run(func(ctx *pulumi.Context) error {
+		// AccountID ///////////////////////////////////////////////////////////////////
+		caller, err := aws.GetCallerIdentity(ctx, nil, nil)
+		if err != nil {
+			return err
+		}
+		accountId := caller.AccountId
+
+		// Region ///////////////////////////////////////////////////////////////////////
+		region, err := aws.GetRegion(ctx, nil, nil)
+		if err != nil {
+			return err
+		}
+
 		// VPC //////////////////////////////////////////////////////////////////////////
 		resourceName := fmt.Sprintf("%s-vpc", projectTag)
 		vpc, err := CreateVPC(ctx, "10.1.0.0/16", resourceName)

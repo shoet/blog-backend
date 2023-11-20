@@ -8,13 +8,8 @@ import (
 )
 
 type Config struct {
-	AWSAccountId      string `env:"AWS_ACCOUNT_ID"`
 	BastionSSHKeyName string `env:"BASTION_SSH_KEY_NAME"`
-	ECRFrontend       string `env:"ECR_FRONTEND"`
-	ECRBackend        string `env:"ECR_BACKEND"`
-	DBUsername        string `env:"DB_USERNAME"`
-	DBPassword        string `env:"DB_PASSWORD"`
-	DBName            string `env:"DB_NAME"`
+	KmsKeyId          string `env:"KMS_KEY_ID"`
 }
 
 func NewConfig() (*Config, error) {
