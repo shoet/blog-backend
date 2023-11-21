@@ -603,6 +603,32 @@ func main() {
 		}
 		ctx.Export(resourceName, iamMaintenanceEC2Policy.ID())
 
+		// CodeDeploy
+		resourceName = fmt.Sprintf("%s-iam-role-for-code-deploy", projectTag)
+		iamCodeDeployRole, err := iam.NewRole(
+			ctx,
+			resourceName,
+			&iam.RoleArgs{
+				AssumeRolePolicy: pulumi.String(`{
+					"Version": "2012-10-17",
+					"Statement": [{
+						"Effect": "Allow",
+						"Principal": {
+							"Service": "codedeploy.amazonaws.com"
+						},
+						"Action": "sts:AssumeRole"
+					}]
+				}`,
+				),
+				ManagedPolicyArns: pulumi.StringArray{
+					pulumi.String("arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS"),
+				},
+			})
+		if err != nil {
+			return fmt.Errorf("failed create iam role for CodeDeploy: %v", err)
+		}
+		ctx.Export(resourceName, iamCodeDeployRole.ID())
+
 		// セキュリティグループ securitygroup ///////////////////////////////////////////////
 		// EC2 maintenance
 		resourceName = fmt.Sprintf("%s-sg-public-maintenance", projectTag)
