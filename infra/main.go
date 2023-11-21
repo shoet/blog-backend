@@ -9,10 +9,10 @@ import (
 	"text/template"
 
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws"
+	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/alb"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/ec2"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/ecs"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/iam"
-	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/rds"
 	"github.com/pulumi/pulumi-aws/sdk/v6/go/aws/s3"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"github.com/upstash/pulumi-upstash/sdk/go/upstash"
@@ -124,6 +124,7 @@ func CreateSecurityGroupForAppContainerBackend(
 	ctx *pulumi.Context,
 	vpc *ec2.Vpc,
 	securityGroupForMaintenance *ec2.SecurityGroup,
+	securityGroupForALB *ec2.SecurityGroup,
 	resourceName string,
 ) (*ec2.SecurityGroup, error) {
 	return ec2.NewSecurityGroup(
@@ -132,12 +133,21 @@ func CreateSecurityGroupForAppContainerBackend(
 		&ec2.SecurityGroupArgs{
 			VpcId: vpc.ID(),
 			Ingress: ec2.SecurityGroupIngressArray{
+				// TODO: frontend container
 				&ec2.SecurityGroupIngressArgs{
 					SecurityGroups: pulumi.StringArray{
 						securityGroupForMaintenance.ID(),
-						// TODO: frontend container
 					},
-					Description: pulumi.String("for inbound"),
+					Description: pulumi.String("for app maintenance ec2"),
+					Protocol:    pulumi.String("tcp"),
+					FromPort:    pulumi.Int(3000),
+					ToPort:      pulumi.Int(3000),
+				},
+				&ec2.SecurityGroupIngressArgs{
+					SecurityGroups: pulumi.StringArray{
+						securityGroupForALB.ID(),
+					},
+					Description: pulumi.String("for alb"),
 					Protocol:    pulumi.String("tcp"),
 					FromPort:    pulumi.Int(3000),
 					ToPort:      pulumi.Int(3000),
@@ -158,11 +168,10 @@ func CreateSecurityGroupForAppContainerBackend(
 		})
 }
 
-func CreateSecurityGroupForRDS(
+func CreateSecurityGroupForALB(
 	ctx *pulumi.Context,
 	vpc *ec2.Vpc,
 	securityGroupForMaintenance *ec2.SecurityGroup,
-	securityGroupAppContainerBackend *ec2.SecurityGroup,
 	resourceName string,
 ) (*ec2.SecurityGroup, error) {
 	return ec2.NewSecurityGroup(
@@ -172,22 +181,22 @@ func CreateSecurityGroupForRDS(
 			VpcId: vpc.ID(),
 			Ingress: ec2.SecurityGroupIngressArray{
 				&ec2.SecurityGroupIngressArgs{
-					SecurityGroups: pulumi.StringArray{
-						securityGroupForMaintenance.ID(),
-					},
-					Description: pulumi.String("for MaintenanceEC2Instance"),
+					Description: pulumi.String("for inbound"),
 					Protocol:    pulumi.String("tcp"),
-					FromPort:    pulumi.Int(3306),
-					ToPort:      pulumi.Int(3306),
+					FromPort:    pulumi.Int(80),
+					ToPort:      pulumi.Int(80),
+					CidrBlocks: pulumi.StringArray{
+						pulumi.String("0.0.0.0/0"),
+					},
 				},
 				&ec2.SecurityGroupIngressArgs{
-					SecurityGroups: pulumi.StringArray{
-						securityGroupAppContainerBackend.ID(),
-					},
-					Description: pulumi.String("for AppContainerBackend"),
+					Description: pulumi.String("for blue/green"),
 					Protocol:    pulumi.String("tcp"),
-					FromPort:    pulumi.Int(3306),
-					ToPort:      pulumi.Int(3306),
+					FromPort:    pulumi.Int(10080),
+					ToPort:      pulumi.Int(10080),
+					CidrBlocks: pulumi.StringArray{
+						pulumi.String("0.0.0.0/0"),
+					},
 				},
 			},
 			Egress: ec2.SecurityGroupEgressArray{
@@ -200,56 +209,6 @@ func CreateSecurityGroupForRDS(
 						pulumi.String("0.0.0.0/0"),
 					},
 				},
-			},
-			Tags: createNameTag(resourceName),
-		})
-}
-
-func CreateRDSSubnetGroup(
-	ctx *pulumi.Context,
-	subnetZoneA *ec2.Subnet,
-	subnetZoneC *ec2.Subnet,
-	resourceName string,
-) (*rds.SubnetGroup, error) {
-	return rds.NewSubnetGroup(
-		ctx,
-		resourceName,
-		&rds.SubnetGroupArgs{
-			Name:        pulumi.String(resourceName),
-			Description: pulumi.String(resourceName),
-			SubnetIds: pulumi.StringArray{
-				subnetZoneA.ID(),
-				subnetZoneC.ID(),
-			},
-			Tags: createNameTag(resourceName),
-		})
-}
-
-func CreateRDSInstance(
-	ctx *pulumi.Context,
-	dbName string,
-	username string,
-	password string,
-	securityGroup *ec2.SecurityGroup,
-	dbSubnetGroup *rds.SubnetGroup,
-	resourceName string,
-) (*rds.Instance, error) {
-	return rds.NewInstance(
-		ctx,
-		resourceName,
-		&rds.InstanceArgs{
-			Engine:                pulumi.String("mysql"),
-			EngineVersion:         pulumi.String("8.0.33"),
-			InstanceClass:         pulumi.String("db.t3.micro"),
-			AllocatedStorage:      pulumi.Int(20),
-			DbSubnetGroupName:     dbSubnetGroup.Name,
-			DbName:                pulumi.String(dbName),
-			Username:              pulumi.String(username),
-			Password:              pulumi.String(password),
-			BackupRetentionPeriod: pulumi.Int(0),
-			SkipFinalSnapshot:     pulumi.Bool(true),
-			VpcSecurityGroupIds: pulumi.StringArray{
-				securityGroup.ID(),
 			},
 			Tags: createNameTag(resourceName),
 		})
@@ -284,19 +243,28 @@ func main() {
 		ctx.Export(resourceName, vpc.ID())
 
 		// Subnet /////////////////////////////////////////////////////////////////////////
-		// Public
-		resourceName = fmt.Sprintf("%s-subnet-app-container", projectTag)
-		subnetAppContainer, err := CreateSubnet(
+		// Public 1a
+		resourceName = fmt.Sprintf("%s-subnet-app-container-1a", projectTag)
+		subnetAppContainer1A, err := CreateSubnet(
 			ctx, vpc, "10.1.0.0/24", "ap-northeast-1a", resourceName)
 		if err != nil {
-			return fmt.Errorf("failed create subnet for App Container: %v", err)
+			return fmt.Errorf("failed create subnet for App Container 1a: %v", err)
 		}
-		ctx.Export(resourceName, subnetAppContainer.ID())
+		ctx.Export(resourceName, subnetAppContainer1A.ID())
+
+		// Public 1c
+		resourceName = fmt.Sprintf("%s-subnet-app-container-1c", projectTag)
+		subnetAppContainer1C, err := CreateSubnet(
+			ctx, vpc, "10.1.1.0/24", "ap-northeast-1c", resourceName)
+		if err != nil {
+			return fmt.Errorf("failed create subnet for App Container 1c: %v", err)
+		}
+		ctx.Export(resourceName, subnetAppContainer1C.ID())
 
 		// Private
 		resourceName = fmt.Sprintf("%s-subnet-private-1a", projectTag)
 		subnetPrivate1a, err := CreateSubnet(
-			ctx, vpc, "10.1.1.0/24", "ap-northeast-1a", resourceName)
+			ctx, vpc, "10.1.7.0/24", "ap-northeast-1a", resourceName)
 		if err != nil {
 			return fmt.Errorf("failed create subnet for private: %v", err)
 		}
@@ -304,7 +272,7 @@ func main() {
 
 		resourceName = fmt.Sprintf("%s-subnet-private-1c", projectTag)
 		subnetPrivate1c, err := CreateSubnet(
-			ctx, vpc, "10.1.2.0/24", "ap-northeast-1c", resourceName)
+			ctx, vpc, "10.1.8.0/24", "ap-northeast-1c", resourceName)
 		if err != nil {
 			return fmt.Errorf("failed create subnet for private: %v", err)
 		}
@@ -327,13 +295,21 @@ func main() {
 		ctx.Export(resourceName, publicRouteTable.ID())
 
 		// ルートテーブル 関連付け///////////////////////////////////////////////////////////
-		resourceName = fmt.Sprintf("%s-route-table-association-app-container", projectTag)
-		routeTableAssociationAppContainer, err := CreateRouteTableAssociation(
-			ctx, publicRouteTable, subnetAppContainer, resourceName)
+		resourceName = fmt.Sprintf("%s-route-table-association-app-container-1a", projectTag)
+		routeTableAssociationAppContainer1A, err := CreateRouteTableAssociation(
+			ctx, publicRouteTable, subnetAppContainer1A, resourceName)
 		if err != nil {
-			return fmt.Errorf("failed create public route association for AppContainer: %v", err)
+			return fmt.Errorf("failed create public route association for AppContainer 1a: %v", err)
 		}
-		ctx.Export(resourceName, routeTableAssociationAppContainer.ID())
+		ctx.Export(resourceName, routeTableAssociationAppContainer1A.ID())
+
+		resourceName = fmt.Sprintf("%s-route-table-association-app-container-1c", projectTag)
+		routeTableAssociationAppContainer1C, err := CreateRouteTableAssociation(
+			ctx, publicRouteTable, subnetAppContainer1C, resourceName)
+		if err != nil {
+			return fmt.Errorf("failed create public route association for AppContainer 1c: %v", err)
+		}
+		ctx.Export(resourceName, routeTableAssociationAppContainer1C.ID())
 
 		// S3 ////////////////////////////////////////////////////////////////////////
 		// bucket
@@ -437,7 +413,13 @@ func main() {
 					},
 				}),
 			},
-			pulumi.DependsOn([]pulumi.Resource{s3Bucket}),
+			pulumi.DependsOn(
+				[]pulumi.Resource{
+					s3Bucket,
+					publicAccessBlock,
+					bucketOwnership,
+				},
+			),
 		)
 		if err != nil {
 			return err
@@ -622,6 +604,7 @@ func main() {
 		ctx.Export(resourceName, iamMaintenanceEC2Policy.ID())
 
 		// セキュリティグループ securitygroup ///////////////////////////////////////////////
+		// EC2 maintenance
 		resourceName = fmt.Sprintf("%s-sg-public-maintenance", projectTag)
 		securityGroupPublicMaintenance, err := CreateSecurityGroupForMaintenanceEC2(
 			ctx, vpc, resourceName)
@@ -630,28 +613,30 @@ func main() {
 		}
 		ctx.Export(resourceName, securityGroupPublicMaintenance.ID())
 
+		// ALB
+		resourceName = fmt.Sprintf("%s-sg-alb", projectTag)
+		securityGroupForALB, err := CreateSecurityGroupForALB(
+			ctx,
+			vpc,
+			securityGroupPublicMaintenance,
+			resourceName)
+		if err != nil {
+			return fmt.Errorf("failed create security group for ALB: %v", err)
+		}
+		ctx.Export(resourceName, securityGroupForALB.ID())
+
+		// App container
 		resourceName = fmt.Sprintf("%s-sg-public-app-container", projectTag)
 		securityGroupAppContainerBackend, err := CreateSecurityGroupForAppContainerBackend(
 			ctx,
 			vpc,
 			securityGroupPublicMaintenance,
+			securityGroupForALB,
 			resourceName)
 		if err != nil {
 			return fmt.Errorf("failed create security group for AppContainer Backend: %v", err)
 		}
 		ctx.Export(resourceName, securityGroupAppContainerBackend.ID())
-
-		resourceName = fmt.Sprintf("%s-sg-rds", projectTag)
-		securityGroupRDS, err := CreateSecurityGroupForRDS(
-			ctx,
-			vpc,
-			securityGroupPublicMaintenance,
-			securityGroupAppContainerBackend,
-			resourceName)
-		if err != nil {
-			return fmt.Errorf("failed create security group for RDS: %v", err)
-		}
-		ctx.Export(resourceName, securityGroupRDS.ID())
 
 		// EC2 ////////////////////////////////////////////////////////////////////
 		// インスタンスプロファイル
@@ -679,7 +664,7 @@ func main() {
 			&ec2.InstanceArgs{
 				InstanceType:             pulumi.String("t2.micro"),
 				Ami:                      pulumi.String("ami-08a706ba5ea257141"),
-				SubnetId:                 subnetAppContainer.ID(),
+				SubnetId:                 subnetAppContainer1A.ID(),
 				KeyName:                  pulumi.String(config.BastionSSHKeyName),
 				AssociatePublicIpAddress: pulumi.Bool(true),
 				SecurityGroups: pulumi.StringArray{
@@ -763,6 +748,129 @@ func main() {
 				ContainerDefinitions:    pulumi.String(taskDefinition),
 			})
 		ctx.Export(resourceName, ecsTaskDefinition.ID())
+
+		// ALB ////////////////////////////////////////////////////////////////////////
+		resourceName = fmt.Sprintf("%s-alb-backend", projectTag)
+		albBackend, err := alb.NewLoadBalancer(
+			ctx,
+			resourceName,
+			&alb.LoadBalancerArgs{
+				Subnets: pulumi.StringArray{
+					subnetAppContainer1A.ID(),
+					subnetAppContainer1C.ID(),
+				},
+				SecurityGroups: pulumi.StringArray{
+					securityGroupForALB.ID(),
+				},
+				Internal: pulumi.Bool(false),
+				Name:     pulumi.String(resourceName),
+				Tags:     createNameTag(resourceName),
+			},
+		)
+		if err != nil {
+			return fmt.Errorf("failed create alb backend: %v", err)
+		}
+		ctx.Export(resourceName, albBackend.ID())
+
+		// TargetGroup
+		// backend Blue
+		resourceName = fmt.Sprintf("%s-tg-blue", projectTag)
+		tgBackendBlue, err := alb.NewTargetGroup(
+			ctx,
+			resourceName,
+			&alb.TargetGroupArgs{
+				Port:       pulumi.Int(3000),
+				Protocol:   pulumi.String("HTTP"),
+				TargetType: pulumi.String("ip"),
+				VpcId:      vpc.ID(),
+				Name:       pulumi.String(resourceName),
+				HealthCheck: &alb.TargetGroupHealthCheckArgs{
+					HealthyThreshold:   pulumi.Int(3),
+					Interval:           pulumi.Int(15),
+					Timeout:            pulumi.Int(5),
+					UnhealthyThreshold: pulumi.Int(2),
+					Protocol:           pulumi.String("HTTP"),
+					Path:               pulumi.String("/health"),
+					Matcher:            pulumi.String("200"),
+				},
+				Tags: createNameTag(resourceName),
+			})
+		if err != nil {
+			return fmt.Errorf("failed create target group blue: %v", err)
+		}
+		ctx.Export(resourceName, tgBackendBlue.ID())
+
+		// backend Green ----------------------------
+		resourceName = fmt.Sprintf("%s-tg-green", projectTag)
+		tgBackendGreen, err := alb.NewTargetGroup(
+			ctx,
+			resourceName,
+			&alb.TargetGroupArgs{
+				Port:       pulumi.Int(3000),
+				Protocol:   pulumi.String("HTTP"),
+				TargetType: pulumi.String("ip"),
+				VpcId:      vpc.ID(),
+				Name:       pulumi.String(resourceName),
+				HealthCheck: &alb.TargetGroupHealthCheckArgs{
+					HealthyThreshold:   pulumi.Int(3),
+					Interval:           pulumi.Int(15),
+					Timeout:            pulumi.Int(5),
+					UnhealthyThreshold: pulumi.Int(2),
+					Protocol:           pulumi.String("HTTP"),
+					Path:               pulumi.String("/health"),
+					Matcher:            pulumi.String("200"),
+				},
+				Tags: createNameTag(resourceName),
+			})
+		if err != nil {
+			return fmt.Errorf("failed create target group green: %v", err)
+		}
+		ctx.Export(resourceName, tgBackendGreen.ID())
+
+		// Lisner
+		// backend Blue ----------------------------
+		resourceName = fmt.Sprintf("%s-alb-listner-blue", projectTag)
+		albListnerBlue, err := alb.NewListener(
+			ctx,
+			resourceName,
+			&alb.ListenerArgs{
+				LoadBalancerArn: albBackend.Arn,
+				Port:            pulumi.Int(80),
+				Protocol:        pulumi.String("HTTP"),
+				DefaultActions: alb.ListenerDefaultActionArray{
+					&alb.ListenerDefaultActionArgs{
+						Type:           pulumi.String("forward"),
+						TargetGroupArn: tgBackendBlue.Arn,
+					},
+				},
+				Tags: createNameTag(resourceName),
+			})
+		if err != nil {
+			return fmt.Errorf("failed create alb listner blue: %v", err)
+		}
+		ctx.Export(resourceName, albListnerBlue.ID())
+
+		// backend Green ----------------------------
+		resourceName = fmt.Sprintf("%s-alb-listner-green", projectTag)
+		albListnerGreen, err := alb.NewListener(
+			ctx,
+			resourceName,
+			&alb.ListenerArgs{
+				LoadBalancerArn: albBackend.Arn,
+				Port:            pulumi.Int(10080),
+				Protocol:        pulumi.String("HTTP"),
+				DefaultActions: alb.ListenerDefaultActionArray{
+					&alb.ListenerDefaultActionArgs{
+						Type:           pulumi.String("forward"),
+						TargetGroupArn: tgBackendGreen.Arn,
+					},
+				},
+				Tags: createNameTag(resourceName),
+			})
+		if err != nil {
+			return fmt.Errorf("failed create alb listner green: %v", err)
+		}
+		ctx.Export(resourceName, albListnerGreen.ID())
 
 		return nil
 
