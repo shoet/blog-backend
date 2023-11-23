@@ -183,6 +183,15 @@ func CreateSecurityGroupForALB(
 				&ec2.SecurityGroupIngressArgs{
 					Description: pulumi.String("for inbound"),
 					Protocol:    pulumi.String("tcp"),
+					FromPort:    pulumi.Int(443),
+					ToPort:      pulumi.Int(443),
+					CidrBlocks: pulumi.StringArray{
+						pulumi.String("0.0.0.0/0"),
+					},
+				},
+				&ec2.SecurityGroupIngressArgs{
+					Description: pulumi.String("for inbound"),
+					Protocol:    pulumi.String("tcp"),
 					FromPort:    pulumi.Int(80),
 					ToPort:      pulumi.Int(80),
 					CidrBlocks: pulumi.StringArray{
@@ -854,6 +863,29 @@ func main() {
 		ctx.Export(resourceName, tgBackendGreen.ID())
 
 		// Lisner
+		// backend Blue HTTPS ----------------------------
+		resourceName = fmt.Sprintf("%s-alb-listner-blue-https", projectTag)
+		albListnerBlueHTTPS, err := alb.NewListener(
+			ctx,
+			resourceName,
+			&alb.ListenerArgs{
+				LoadBalancerArn: albBackend.Arn,
+				Port:            pulumi.Int(443),
+				Protocol:        pulumi.String("HTTPS"),
+				DefaultActions: alb.ListenerDefaultActionArray{
+					&alb.ListenerDefaultActionArgs{
+						Type:           pulumi.String("forward"),
+						TargetGroupArn: tgBackendBlue.Arn,
+					},
+				},
+				CertificateArn: pulumi.String(config.SSLCertificateArn),
+				Tags:           createNameTag(resourceName),
+			})
+		if err != nil {
+			return fmt.Errorf("failed create alb listner blue HTTPS: %v", err)
+		}
+		ctx.Export(resourceName, albListnerBlueHTTPS.ID())
+
 		// backend Blue ----------------------------
 		resourceName = fmt.Sprintf("%s-alb-listner-blue", projectTag)
 		albListnerBlue, err := alb.NewListener(
@@ -865,8 +897,14 @@ func main() {
 				Protocol:        pulumi.String("HTTP"),
 				DefaultActions: alb.ListenerDefaultActionArray{
 					&alb.ListenerDefaultActionArgs{
-						Type:           pulumi.String("forward"),
-						TargetGroupArn: tgBackendBlue.Arn,
+						Type: pulumi.String("redirect"),
+						Redirect: &alb.ListenerDefaultActionRedirectArgs{
+							Protocol:   pulumi.String("HTTPS"),
+							Host:       pulumi.String("#{host}"),
+							Path:       pulumi.String("/#{path}"),
+							Port:       pulumi.String("443"),
+							StatusCode: pulumi.String("HTTP_301"),
+						},
 					},
 				},
 				Tags: createNameTag(resourceName),
