@@ -81,6 +81,14 @@
       {
         "valueFrom": "arn:aws:secretsmanager:{{.Region}}:{{.AwsAccountId}}:secret:{{.SecretsManagerId}}:ADMIN_PASSWORD::",
         "name": "ADMIN_PASSWORD"
+      },
+      {
+        "valueFrom": "arn:aws:secretsmanager:{{.Region}}:{{.AwsAccountId}}:secret:{{.SecretsManagerId}}:SITE_DOMAIN::",
+        "name": "SITE_DOMAIN"
+      },
+      {
+        "valueFrom": "arn:aws:secretsmanager:{{.Region}}:{{.AwsAccountId}}:secret:{{.SecretsManagerId}}:CORS_WHITE_LIST::",
+        "name": "CORS_WHITE_LIST"
       }
     ],
     "environment": [
@@ -90,7 +98,7 @@
       },
       {
         "name": "BLOG_ENV",
-        "value": "dev"
+        "value": "prod"
       }
     ],
     "mountPoints": [],

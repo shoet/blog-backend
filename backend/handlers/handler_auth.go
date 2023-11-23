@@ -6,11 +6,25 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/shoet/blog/config"
 )
 
 type AuthLoginHandler struct {
 	Service   AuthManager
 	Validator *validator.Validate
+	Config    *config.Config
+}
+
+func NewAuthLoginHandler(
+	service AuthManager,
+	validator *validator.Validate,
+	config *config.Config,
+) *AuthLoginHandler {
+	return &AuthLoginHandler{
+		Service:   service,
+		Validator: validator,
+		Config:    config,
+	}
 }
 
 func (a *AuthLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +58,12 @@ func (a *AuthLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}{
 		AuthToken: token,
 	}
-	SetCookie(w, "authToken", resp.AuthToken)
+	if err := SetCookie(a.Config, w, "authToken", resp.AuthToken); err != nil {
+		logger.Error().Msgf("failed to set cookie: %v", err)
+		RespondUnauthorized(w, r, err)
+		return
+	}
+
 	if err := RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		logger.Error().Msgf("failed to respond json response: %v", err)
 	}
@@ -53,6 +72,17 @@ func (a *AuthLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 type AuthSessionLoginHandler struct {
 	Service AuthManager
+	Config  *config.Config
+}
+
+func NewAuthSessionLoginHandler(
+	service AuthManager,
+	config *config.Config,
+) *AuthSessionLoginHandler {
+	return &AuthSessionLoginHandler{
+		Service: service,
+		Config:  config,
+	}
 }
 
 func (a *AuthSessionLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -85,12 +115,22 @@ func (a *AuthSessionLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	return
 }
 
-type AuthLogoutHandler struct{}
+type AuthLogoutHandler struct {
+	Config *config.Config
+}
+
+func NewAuthLogoutHandler(
+	config *config.Config,
+) *AuthLogoutHandler {
+	return &AuthLogoutHandler{
+		Config: config,
+	}
+}
 
 func (a *AuthLogoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := GetLogger(ctx)
-	ClearCookie(w, "authToken")
+	ClearCookie(a.Config, w, "authToken")
 	resp := struct {
 		Message string `json:"message"`
 	}{
