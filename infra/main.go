@@ -321,9 +321,24 @@ func main() {
 		ctx.Export(resourceName, routeTableAssociationAppContainer1C.ID())
 
 		// S3 ////////////////////////////////////////////////////////////////////////
-		// bucket
+		// bucket app ------------------------------------------------
+		resourceName = fmt.Sprintf("%s-s3-bucket-app", projectTag)
+		bucketNameApp := fmt.Sprintf("blog-%s-app", accountId)
+		s3BucketApp, err := s3.NewBucket(
+			ctx,
+			resourceName,
+			&s3.BucketArgs{
+				Bucket: pulumi.String(bucketNameApp),
+				Acl:    pulumi.String("private"),
+			},
+		)
+		if err != nil {
+			return err
+		}
+		ctx.Export(resourceName, s3BucketApp.ID())
+
+		// bucket thumbnail ------------------------------------------------
 		resourceName = fmt.Sprintf("%s-s3-bucket", projectTag)
-		bucketName := fmt.Sprintf("blog-%s", config.AWSAccountId)
 		bucketName := fmt.Sprintf("blog-%s", accountId)
 		s3Bucket, err := s3.NewBucket(
 			ctx,
@@ -355,6 +370,11 @@ func main() {
 
 		// CORS Configuration
 		// フロントでのPreFlightリクエストを許可する
+		whiteList := config.GetCORSWhiteList()
+		var corsWhiteList pulumi.StringArray
+		for _, w := range whiteList {
+			corsWhiteList = append(corsWhiteList, pulumi.String(w))
+		}
 		resourceName = fmt.Sprintf("%s-s3-cors", projectTag)
 		s3CORS, err := s3.NewBucketCorsConfigurationV2(
 			ctx,
@@ -369,10 +389,8 @@ func main() {
 						AllowedMethods: pulumi.StringArray{
 							pulumi.String("PUT"),
 						},
-						AllowedOrigins: pulumi.StringArray{
-							pulumi.String("http://localhost:5173"), // TODO: whitelist
-						},
-						MaxAgeSeconds: pulumi.Int(3000),
+						AllowedOrigins: corsWhiteList,
+						MaxAgeSeconds:  pulumi.Int(3000),
 					},
 				},
 			})
@@ -560,7 +578,8 @@ func main() {
 								{
 								   "Effect": "Allow",
 								   "Action": [
-										"s3:GetObject"
+										"s3:GetObject",
+										"s3:PutObject"
 								   ],
 								   "Resource": "arn:aws:s3:::` + bucketName + `/*"
 								}

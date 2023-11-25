@@ -27,6 +27,8 @@ type Config struct {
 	AdminPassword             string `env:"ADMIN_PASSWORD,required"`
 	JWTSecret                 string `env:"JWT_SECRET,required"`
 	JWTExpiresInSec           int    `env:"JWT_EXPIRES_IN_SEC" envDefault:"86400"`
+	CORSWhiteList             string `env:"CORS_WHITE_LIST"`
+	SiteDomain                string `env:"SITE_DOMAIN"`
 }
 
 func NewConfig() (*Config, error) {

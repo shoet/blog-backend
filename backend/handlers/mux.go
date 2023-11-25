@@ -61,9 +61,10 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 
 	router := chi.NewRouter()
 	authMiddleWare := NewAuthorizationMiddleware(jwter)
+	corsMiddleWare := NewCORSMiddleWare(cfg)
 	router.Route("/", func(r chi.Router) {
 		r.Use(WithLoggerMiddleware(logger))
-		r.Use(CORSMiddleWare)
+		r.Use(corsMiddleWare)
 		r.Route("/health", func(r chi.Router) {
 			hh := &HealthCheckHandler{}
 			r.Get("/", hh.ServeHTTP)
@@ -118,18 +119,13 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 		})
 
 		r.Route("/auth", func(r chi.Router) {
-			ah := &AuthLoginHandler{
-				Service:   authService,
-				Validator: validate,
-			}
+			ah := NewAuthLoginHandler(authService, validate, cfg)
 			r.Post("/signin", ah.ServeHTTP)
 
-			ash := &AuthSessionLoginHandler{
-				Service: authService,
-			}
+			ash := NewAuthSessionLoginHandler(authService, cfg)
 			r.Get("/login/me", ash.ServeHTTP)
 
-			alh := &AuthLogoutHandler{}
+			alh := NewAuthLogoutHandler(cfg)
 			r.Post("/admin/signout", alh.ServeHTTP)
 		})
 
