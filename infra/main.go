@@ -370,6 +370,11 @@ func main() {
 
 		// CORS Configuration
 		// フロントでのPreFlightリクエストを許可する
+		whiteList := config.GetCORSWhiteList()
+		var corsWhiteList pulumi.StringArray
+		for _, w := range whiteList {
+			corsWhiteList = append(corsWhiteList, pulumi.String(w))
+		}
 		resourceName = fmt.Sprintf("%s-s3-cors", projectTag)
 		s3CORS, err := s3.NewBucketCorsConfigurationV2(
 			ctx,
@@ -384,10 +389,8 @@ func main() {
 						AllowedMethods: pulumi.StringArray{
 							pulumi.String("PUT"),
 						},
-						AllowedOrigins: pulumi.StringArray{
-							pulumi.String("http://localhost:5173"), // TODO: whitelist
-						},
-						MaxAgeSeconds: pulumi.Int(3000),
+						AllowedOrigins: corsWhiteList,
+						MaxAgeSeconds:  pulumi.Int(3000),
 					},
 				},
 			})

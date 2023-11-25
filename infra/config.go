@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/caarlos0/env/v9"
 	"github.com/joho/godotenv"
@@ -12,6 +13,7 @@ type Config struct {
 	KmsKeyId               string `env:"KMS_KEY_ID"`
 	SecretsManagerSecretId string `env:"SECRETS_MANAGER_SECRET_ID"`
 	SSLCertificateArn      string `env:"SSL_CERTIFICATE_ARN"`
+	CorsWhiteList          string `env:"CORS_WHITE_LIST"`
 }
 
 func NewConfig() (*Config, error) {
@@ -31,4 +33,9 @@ func loadEnv() error {
 		return fmt.Errorf("error loading .env file: %w", err)
 	}
 	return nil
+}
+
+func (c *Config) GetCORSWhiteList() []string {
+	whiteList := strings.Split(c.CorsWhiteList, ",")
+	return whiteList
 }
