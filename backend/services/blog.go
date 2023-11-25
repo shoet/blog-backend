@@ -7,6 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/shoet/blog/models"
 	"github.com/shoet/blog/options"
+	"github.com/shoet/blog/store"
 )
 
 func NewBlogService(db *sqlx.DB, blog BlogRepository) *BlogService {
@@ -175,6 +176,14 @@ func (b *BlogService) PutBlog(ctx context.Context, blog *models.Blog) (*models.B
 	}
 
 	return newBlog, nil
+}
+
+func (s *BlogService) ListTags(ctx context.Context, option options.ListTagsOptions) ([]*models.Tag, error) {
+	tags, err := s.blog.ListTags(ctx, s.db, option)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list tags: %w", err)
+	}
+	return tags, nil
 }
 
 func (s *BlogService) Export(ctx context.Context) error {

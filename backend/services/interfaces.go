@@ -20,6 +20,7 @@ type BlogRepository interface {
 	SelectTags(ctx context.Context, db store.Queryer, tag string) ([]*models.Tag, error)
 	AddTag(ctx context.Context, db store.Execer, tag string) (models.TagId, error)
 	DeleteTag(ctx context.Context, db store.Execer, tagId models.TagId) error
+	ListTags(ctx context.Context, db store.Queryer, option options.ListTagsOptions) ([]*models.Tag, error)
 }
 
 type UserRepository interface {

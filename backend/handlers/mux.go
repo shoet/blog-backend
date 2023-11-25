@@ -104,8 +104,9 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 		})
 
 		r.Route("/tags", func(r chi.Router) {
-			// TODO: implement
-			th := &TagListHandler{}
+			th := &TagListHandler{
+				Service: blogService,
+			}
 			r.Get("/", th.ServeHTTP)
 		})
 
