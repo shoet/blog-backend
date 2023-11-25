@@ -77,25 +77,31 @@ export const Header = () => {
         >
           <Box>
             <NavItem focusColor="placeholder">
-              <Text variant="large" color="inherit">
-                Blog
-              </Text>
+              <NavLink to="/">
+                <Text variant="large" color="inherit">
+                  Blog
+                </Text>
+              </NavLink>
             </NavItem>
           </Box>
           <Divider space={20} />
           <Box>
             <NavItem focusColor="placeholder">
-              <Text variant="large" color="inherit">
-                Portfolio
-              </Text>
+              <NavLink to="/portfolio">
+                <Text variant="large" color="inherit">
+                  Portfolio
+                </Text>
+              </NavLink>
             </NavItem>
           </Box>
           <Divider space={20} />
           <Box>
             <NavItem focusColor="placeholder">
-              <Text variant="large" color="inherit">
-                About
-              </Text>
+              <NavLink to="/about">
+                <Text variant="large" color="inherit">
+                  About
+                </Text>
+              </NavLink>
             </NavItem>
           </Box>
         </Flex>

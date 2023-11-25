@@ -18,6 +18,7 @@ import { SideContent } from './components/organisms/SideContent'
 import { BaseLayout } from './components/templates/BaseLayout'
 import { LoginPage } from './components/pages/Login'
 import AdminPage from './components/pages/Admin'
+import { PortfolioPage } from './components/pages/Portfolio'
 
 const NormalLayout = () => {
   return (
@@ -43,6 +44,7 @@ const router = createBrowserRouter(
         <Route path=":id" element={<BlogDetailPage />} />
         <Route path="search" element={<SearchPage />} />
         <Route path="about" element={<AboutPage />} />
+        <Route path="portfolio" element={<PortfolioPage />} />
         <Route path="new" element={<BlogPostPage />} />
         <Route path=":id/edit" element={<BlogEditPage />} />
       </Route>
