@@ -12,6 +12,7 @@ import { MarkedOptions } from 'marked'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/monokai.css'
 import { useEffect } from 'react'
+import './style.module.css'
 
 type BlogDetailPageParams = {
   id: string
