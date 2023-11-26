@@ -36,3 +36,29 @@ type Tag struct {
 	Id   TagId  `json:"id" db:"id"`
 	Name string `json:"name" db:"name"`
 }
+
+type Tags []*Tag
+
+type BlogsTags struct {
+	BlogId BlogId `json:"blogId" db:"blog_id"`
+	TagId  TagId  `json:"tagId" db:"tag_id"`
+	Name   string `json:"name" db:"name"`
+}
+
+type BlogsTagsArray []*BlogsTags
+
+func (arr BlogsTagsArray) TagIds() []TagId {
+	var tags []TagId
+	for _, bt := range arr {
+		tags = append(tags, bt.TagId)
+	}
+	return tags
+}
+
+func (arr BlogsTagsArray) TagNames() []string {
+	var tags []string
+	for _, t := range arr {
+		tags = append(tags, t.Name)
+	}
+	return tags
+}

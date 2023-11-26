@@ -15,8 +15,12 @@ type BlogRepository interface {
 	Get(ctx context.Context, db store.Queryer, id models.BlogId) (*models.Blog, error)
 	Delete(ctx context.Context, db store.Execer, id models.BlogId) error
 	Put(ctx context.Context, db store.Execer, blog *models.Blog) (models.BlogId, error)
+
 	AddBlogTag(ctx context.Context, db store.Execer, blogId models.BlogId, tagId models.TagId) (int64, error)
-	DeleteBlogTag(ctx context.Context, db store.Execer, blogId models.BlogId) ([]models.TagId, error)
+	SelectBlogsTagsByOtherUsingBlog(ctx context.Context, db store.Execer, blogId models.BlogId) ([]*models.BlogsTags, error)
+	SelectBlogsTags(ctx context.Context, db store.Queryer, blogId models.BlogId) ([]*models.BlogsTags, error)
+	DeleteBlogsTags(ctx context.Context, db store.Execer, blogId models.BlogId, tagId models.TagId) error
+
 	SelectTags(ctx context.Context, db store.Queryer, tag string) ([]*models.Tag, error)
 	AddTag(ctx context.Context, db store.Execer, tag string) (models.TagId, error)
 	DeleteTag(ctx context.Context, db store.Execer, tagId models.TagId) error
