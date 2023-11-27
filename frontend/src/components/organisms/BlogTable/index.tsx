@@ -4,10 +4,19 @@ import './style.module.css'
 import { useNavigate } from 'react-router-dom'
 import { deleteBlog } from '@/services/blogs/delete-blog'
 import { parseCookie } from '@/utils/cookie'
+import { Badge } from '@/components/atoms/Badge'
 
 type BlogTableProps = {
   blogs: Blog[]
   onClickDelete?: () => void
+}
+
+const IsPublicBadge = () => {
+  return <Badge backgroundColor="primary">公開</Badge>
+}
+
+const IsNotPublicBadge = () => {
+  return <Badge>非公開</Badge>
 }
 
 export const BlogTable = (props: BlogTableProps) => {
@@ -47,14 +56,19 @@ export const BlogTable = (props: BlogTableProps) => {
             <td>{blog.id}</td>
             <td>{blog.title}</td>
             <td>{blog.created}</td>
-            <td>{blog.isPublic}</td>
+            <td style={{ textAlign: 'center' }}>
+              {blog.isPublic ? <IsPublicBadge /> : <IsNotPublicBadge />}
+            </td>
             <td>
               <Button variant="secondary" onClick={() => onEdit(blog.id)}>
                 Edit
               </Button>
             </td>
             <td>
-              <Button variant="danger" onClick={() => onDelete(blog.id)}>
+              <Button
+                backgroundColor="dangerSoft"
+                onClick={() => onDelete(blog.id)}
+              >
                 Delete
               </Button>
             </td>
