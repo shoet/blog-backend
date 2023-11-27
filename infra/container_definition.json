@@ -19,6 +19,10 @@
         "name": "BLOG_AWS_S3_THUMBNAIL_DIRECTORY"
       },
       {
+        "valueFrom": "arn:aws:secretsmanager:{{.Region}}:{{.AwsAccountId}}:secret:{{.SecretsManagerId}}:BLOG_AWS_S3_CONTENT_IMAGE_DIRECTORY::",
+        "name": "BLOG_AWS_S3_CONTENT_IMAGE_DIRECTORY"
+      },
+      {
         "valueFrom": "arn:aws:secretsmanager:{{.Region}}:{{.AwsAccountId}}:secret:{{.SecretsManagerId}}:BLOG_AWS_S3_BUCKET::",
         "name": "BLOG_AWS_S3_BUCKET"
       },

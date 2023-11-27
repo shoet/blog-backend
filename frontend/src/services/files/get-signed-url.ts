@@ -1,8 +1,11 @@
 import { ApiContext } from '@/types/api'
 import { fetcher } from '@/utils/fetcher'
 
+type FileType = 'thumbnail' | 'content'
+
 export type GetSignedPutURLPrams = {
   fileName: string
+  fileType: FileType
 }
 
 type GetSignedPutURLResponse = {
@@ -12,10 +15,10 @@ type GetSignedPutURLResponse = {
 
 export const getSignedPutUrl = async (
   context: ApiContext,
-  { fileName }: GetSignedPutURLPrams,
+  { fileName, fileType = 'thumbnail' }: GetSignedPutURLPrams,
   authToken: string,
 ): Promise<GetSignedPutURLResponse> => {
-  const url = `${context.apiBaseUrl}/files/thumbnail/new`
+  const url = `${context.apiBaseUrl}/files/${fileType}/new`
   return await fetcher(url, {
     method: 'POST',
     headers: {

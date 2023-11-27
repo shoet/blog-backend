@@ -435,6 +435,7 @@ func main() {
 							},
 							"Resource": []interface{}{
 								pulumi.Sprintf("arn:aws:s3:::%s/thumbnail/*", s3Bucket.ID()),
+								pulumi.Sprintf("arn:aws:s3:::%s/content/*", s3Bucket.ID()),
 							},
 						},
 					},

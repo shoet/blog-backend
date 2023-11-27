@@ -27,4 +27,5 @@ type AuthManager interface {
 
 type Storager interface {
 	GenerateThumbnailPutURL(fileName string) (string, string, error)
+	GenerateContentImagePutURL(fileName string) (string, string, error)
 }
