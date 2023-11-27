@@ -14,15 +14,21 @@ export const Footer = () => {
       padding={4}
     >
       <Flex flexDirection="row" alignItems="center">
-        <Box>
-          <IconGitHub size={14} focusColor="focusGreen" />
-        </Box>
-        <Box marginLeft={2}>
-          <IconTwitter size={14} focusColor="focusGreen" />
-        </Box>
-        <Box marginLeft={2}>
-          <IconYoutube size={14} focusColor="focusGreen" />
-        </Box>
+        <a href="https://github.com/shoet" target="_blank">
+          <Box>
+            <IconGitHub size={14} focusColor="focusGreen" />
+          </Box>
+        </a>
+        <a href="https://twitter.com/sHOeTS_u" target="_blank">
+          <Box marginLeft={2}>
+            <IconTwitter size={14} focusColor="focusGreen" />
+          </Box>
+        </a>
+        <a href="https://www.youtube.com/@shoetsu9505/videos" target="_blank">
+          <Box marginLeft={2}>
+            <IconYoutube size={14} focusColor="focusGreen" />
+          </Box>
+        </a>
       </Flex>
       <Box>
         <Text>
