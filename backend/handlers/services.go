@@ -14,6 +14,7 @@ type BlogManager interface {
 	PutBlog(ctx context.Context, blog *models.Blog) (*models.Blog, error)
 	Export(ctx context.Context) error
 	GetBlog(ctx context.Context, id models.BlogId) (*models.Blog, error)
+	ListTags(ctx context.Context, option options.ListTagsOptions) ([]*models.Tag, error)
 }
 
 type AuthManager interface {
@@ -26,4 +27,5 @@ type AuthManager interface {
 
 type Storager interface {
 	GenerateThumbnailPutURL(fileName string) (string, string, error)
+	GenerateContentImagePutURL(fileName string) (string, string, error)
 }

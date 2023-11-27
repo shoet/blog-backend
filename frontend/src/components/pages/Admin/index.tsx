@@ -4,7 +4,7 @@ import Box from '@/components/layout/Box'
 import Flex from '@/components/layout/Flex'
 import { BlogTable } from '@/components/organisms/BlogTable'
 import { useAuthGuard } from '@/services/auth/auth-guard'
-import { useBlogList } from '@/services/blogs/use-blog-list'
+import { useBlogListAdmin } from '@/services/blogs/use-blog-list'
 import { ApiContext } from '@/types/api'
 import { NavLink } from 'react-router-dom'
 
@@ -19,7 +19,7 @@ const AdminPage = () => {
     isLoading,
     error,
     mutate: refreshBlogList,
-  } = useBlogList(apiContext, [])
+  } = useBlogListAdmin(apiContext, [])
 
   const handleOnClickDelete = () => {
     refreshBlogList()
@@ -27,11 +27,6 @@ const AdminPage = () => {
 
   return (
     <Box>
-      <Box>
-        <Text fontSize="display" fontWeight="bold">
-          Admin
-        </Text>
-      </Box>
       <Box>
         <Flex
           flexDirection="row"

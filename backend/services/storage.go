@@ -48,8 +48,18 @@ Returns:
 	error: error
 */
 func (s *AWSS3StorageService) GenerateThumbnailPutURL(fileName string) (string, string, error) {
+	destinationPath := s.config.AWSS3ThumbnailDirectory
+	return s.generatePreSignedURL(destinationPath, fileName)
+}
+
+func (s *AWSS3StorageService) GenerateContentImagePutURL(fileName string) (string, string, error) {
+	destinationPath := s.config.AWSSS3ContentImageDirectory
+	return s.generatePreSignedURL(destinationPath, fileName)
+}
+
+func (s *AWSS3StorageService) generatePreSignedURL(destinationPath string, fileName string) (string, string, error) {
 	bucketName := s.config.AWSS3Bucket
-	objectKey := filepath.Join(s.config.AWSS3ThumbnailDirectory, fileName)
+	objectKey := filepath.Join(destinationPath, fileName)
 	request, err := s.GenerateSignedURL(bucketName, objectKey)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to generate signed url: %w", err)
@@ -58,7 +68,7 @@ func (s *AWSS3StorageService) GenerateThumbnailPutURL(fileName string) (string, 
 		"https://%s.s3.%s.amazonaws.com/%s/%s",
 		bucketName,
 		s.config.AWSS3Region,
-		s.config.AWSS3ThumbnailDirectory,
+		destinationPath,
 		fileName,
 	)
 	return request.URL, objectURL, nil

@@ -9,7 +9,6 @@ import (
 	"github.com/shoet/blog/clocker"
 	"github.com/shoet/blog/models"
 	"github.com/shoet/blog/options"
-	"golang.org/x/exp/slices"
 )
 
 type BlogRepository struct {
@@ -46,12 +45,13 @@ func (r *BlogRepository) List(
 	ctx context.Context, db Queryer, option options.ListBlogOptions,
 ) ([]*models.Blog, error) {
 
-	if option.AuthorId == nil {
-		return nil, fmt.Errorf("author id is required")
-	}
 	latest := 10
 	if option.Limit != nil {
 		latest = int(*option.Limit)
+	}
+	isPublic := ""
+	if option.IsPublic {
+		isPublic = "WHERE is_public = 1"
 	}
 	sql := `
 	SELECT
@@ -62,8 +62,7 @@ func (r *BlogRepository) List(
 			id, author_id, title, description, thumbnail_image_file_name, is_public, created, modified
 		FROM
 			blogs
-		WHERE
-			author_id = ?
+		` + isPublic + ` 
 		ORDER BY 
 			created DESC
 		LIMIT 
@@ -96,7 +95,8 @@ func (r *BlogRepository) List(
 		Modified               time.Time     `json:"modified" db:"modified"`
 	}
 	var temp []data
-	if err := db.SelectContext(ctx, &temp, sql, option.AuthorId, latest); err != nil {
+	// if err := db.SelectContext(ctx, &temp, sql, option.AuthorId, latest); err != nil {
+	if err := db.SelectContext(ctx, &temp, sql, latest); err != nil {
 		return nil, fmt.Errorf("failed to select blogs: %w", err)
 	}
 	var blogs []*models.Blog
@@ -234,15 +234,15 @@ func (t tagResult) Flatten() []models.TagId {
 	return ids
 }
 
-func (r *BlogRepository) DeleteBlogTag(
+func (r *BlogRepository) SelectBlogsTagsByOtherUsingBlog(
 	ctx context.Context, db Execer, blogId models.BlogId,
-) ([]models.TagId, error) {
-
-	// Step1: select using other blog tags
-	var result1 tagResult
-	sql1 := `
+) ([]*models.BlogsTags, error) {
+	var result []*models.BlogsTags
+	sql := `
 	SELECT 
-		a.tag_id
+		a.blog_id
+		, a.tag_id
+		, tags.name
 	FROM 
 		blogs_tags as a
 	JOIN (
@@ -258,45 +258,53 @@ func (r *BlogRepository) DeleteBlogTag(
 		a.tag_id = b.tag_id
 		AND
 			a.blog_id <> b.blog_id
+	LEFT OUTER JOIN tags
+		ON a.tag_id = tags.id
 	`
-	if err := db.SelectContext(ctx, &result1, sql1, blogId); err != nil {
-		return nil, fmt.Errorf("failed to select usingtags: %w", err)
+	if err := db.SelectContext(ctx, &result, sql, blogId); err != nil {
+		return nil, fmt.Errorf("failed to select using tags: %w", err)
 	}
+	return result, nil
+}
 
-	// Step2: select will delete tags
-	var result2 tagResult
-	sql2 := `
+func (r *BlogRepository) SelectBlogsTags(
+	ctx context.Context, db Queryer, blogId models.BlogId,
+) ([]*models.BlogsTags, error) {
+	var result []*models.BlogsTags
+	sql := `
 	SELECT
-		tag_id
+		blogs_tags.blog_id
+		, blogs_tags.tag_id
+		, tags.name
 	FROM
 		blogs_tags
+	LEFT OUTER JOIN tags
+		ON blogs_tags.tag_id = tags.id
 	WHERE
 		blog_id = ?
 	;
 	`
-	if err := db.SelectContext(ctx, &result2, sql2, blogId); err != nil {
+	if err := db.SelectContext(ctx, &result, sql, blogId); err != nil {
 		return nil, fmt.Errorf("failed to select tags: %w", err)
 	}
-	var willDeleteTags []models.TagId
-	for _, t := range result2.Flatten() {
-		if !slices.Contains(result1.Flatten(), t) {
-			willDeleteTags = append(willDeleteTags, t)
-		}
-	}
+	return result, nil
+}
 
-	// Step3: delete blogg_tags
-	sql3 := `
+func (r *BlogRepository) DeleteBlogsTags(
+	ctx context.Context, db Execer, blogId models.BlogId, tagId models.TagId,
+) error {
+	sql := `
 	DELETE FROM
 		blogs_tags
 	WHERE
 		blog_id = ?
+		AND tag_id = ?
 	;
 	`
-	if _, err := db.ExecContext(ctx, sql3, blogId); err != nil {
-		return nil, fmt.Errorf("failed to delete blogs_tags: %w", err)
+	if _, err := db.ExecContext(ctx, sql, blogId, tagId); err != nil {
+		return fmt.Errorf("failed to delete blogs_tags: %w", err)
 	}
-
-	return willDeleteTags, nil
+	return nil
 }
 
 func (r *BlogRepository) SelectTags(
@@ -332,7 +340,6 @@ func (r *BlogRepository) AddTag(ctx context.Context, db Execer, tag string) (mod
 	}
 	id, err := res.LastInsertId()
 	return models.TagId(id), nil
-
 }
 
 func (r *BlogRepository) DeleteTag(
@@ -351,75 +358,22 @@ func (r *BlogRepository) DeleteTag(
 	return nil
 }
 
-type UserRepository struct {
-	Clocker clocker.Clocker
-}
-
-func (t *UserRepository) Get(
-	ctx context.Context, db Queryer, id models.UserId,
-) (*models.User, error) {
+func (r *BlogRepository) ListTags(
+	ctx context.Context, db Queryer, option options.ListTagsOptions,
+) ([]*models.Tag, error) {
 	sql := `
 	SELECT
-		id, name, created, modified
-	FROM users
-	WHERE id = ?
+		id, name
+	FROM
+		tags
+	ORDER BY
+		name
+	LIMIT ?
 	;
 	`
-	var users []*models.User
-	if err := db.SelectContext(ctx, &users, sql, id); err != nil {
-		return nil, fmt.Errorf("failed to select users: %w", err)
+	var tags []*models.Tag
+	if err := db.SelectContext(ctx, &tags, sql, option.Limit); err != nil {
+		return nil, fmt.Errorf("failed to select tags: %w", err)
 	}
-	if len(users) == 0 {
-		return nil, fmt.Errorf("user not found")
-	}
-	return users[0], nil
-}
-
-func (u *UserRepository) GetByEmail(
-	ctx context.Context, db Queryer, email string,
-) (*models.User, error) {
-	sql := `
-	SELECT
-		id, name, email, password, created, modified
-	FROM users
-	WHERE email = ?
-	;
-	`
-	var users []*models.User
-	if err := db.SelectContext(ctx, &users, sql, email); err != nil {
-		return nil, fmt.Errorf("failed to select users: %w", err)
-	}
-	if len(users) == 0 {
-		return nil, fmt.Errorf("user not found")
-	}
-	return users[0], nil
-}
-
-func (u *UserRepository) Add(
-	ctx context.Context, db Execer, user *models.User,
-) (*models.User, error) {
-	sql := `
-	INSERT INTO users
-		(name, email, password, created, modified)
-	VALUES
-		(?, ?, ?, ?, ?)
-	;
-	`
-	now := u.Clocker.Now()
-	user.Created = now
-	user.Modified = now
-
-	res, err := db.ExecContext(
-		ctx,
-		sql,
-		user.Name, user.Email, user.Password, user.Created, user.Modified)
-	if err != nil {
-		return nil, fmt.Errorf("failed to insert user: %w", err)
-	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get last insert id: %w", err)
-	}
-	user.Id = models.UserId(id)
-	return user, nil
+	return tags, nil
 }

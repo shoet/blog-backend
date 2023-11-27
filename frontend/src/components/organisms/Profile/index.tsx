@@ -38,15 +38,21 @@ export const Profile = () => {
           </Text>
         </Box>
         <Flex flexDirection="row" paddingLeft={1} alignItems="center">
-          <Box>
-            <IconGitHub size={14} focusColor="focusGreen" />
-          </Box>
-          <Box paddingLeft={1}>
-            <IconTwitter size={14} focusColor="focusGreen" />
-          </Box>
-          <Box paddingLeft={1}>
-            <IconYoutube size={14} focusColor="focusGreen" />
-          </Box>
+          <a href="https://github.com/shoet" target="_blank">
+            <Box>
+              <IconGitHub size={14} focusColor="focusGreen" />
+            </Box>
+          </a>
+          <a href="https://twitter.com/sHOeTS_u" target="_blank">
+            <Box paddingLeft={1}>
+              <IconTwitter size={14} focusColor="focusGreen" />
+            </Box>
+          </a>
+          <a href="https://www.youtube.com/@shoetsu9505/videos" target="_blank">
+            <Box paddingLeft={1}>
+              <IconYoutube size={14} focusColor="focusGreen" />
+            </Box>
+          </a>
           {authUser && (
             <Box paddingLeft={3}>
               {isLoading && <Text>Loading...</Text>}

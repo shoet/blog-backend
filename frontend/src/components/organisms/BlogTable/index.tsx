@@ -1,14 +1,23 @@
 import { Button } from '@/components/atoms/Button'
 import { ApiContext, Blog } from '@/types/api'
 import './style.module.css'
-import { useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { deleteBlog } from '@/services/blogs/delete-blog'
 import { parseCookie } from '@/utils/cookie'
+import { IsPublicBadge, IsNotPublicBadge } from '@/components/atoms/Badge'
+import styled from 'styled-components'
+import { toResponsiveValue } from '@/utils/style'
 
 type BlogTableProps = {
   blogs: Blog[]
   onClickDelete?: () => void
 }
+
+const TitleLink = styled(NavLink)`
+  text-decoration: underline;
+  color: ${({ theme }) =>
+    toResponsiveValue('color', theme.colors.primaryDark, theme)};
+`
 
 export const BlogTable = (props: BlogTableProps) => {
   const { blogs, onClickDelete } = props
@@ -45,16 +54,25 @@ export const BlogTable = (props: BlogTableProps) => {
         {blogs.map((blog, idx) => (
           <tr key={idx}>
             <td>{blog.id}</td>
-            <td>{blog.title}</td>
+            <td>
+              <TitleLink to={`/${blog.id}`} target="_blank">
+                {blog.title}
+              </TitleLink>
+            </td>
             <td>{blog.created}</td>
-            <td>{blog.isPublic}</td>
+            <td style={{ textAlign: 'center' }}>
+              {blog.isPublic ? <IsPublicBadge /> : <IsNotPublicBadge />}
+            </td>
             <td>
               <Button variant="secondary" onClick={() => onEdit(blog.id)}>
                 Edit
               </Button>
             </td>
             <td>
-              <Button variant="danger" onClick={() => onDelete(blog.id)}>
+              <Button
+                backgroundColor="dangerSoft"
+                onClick={() => onDelete(blog.id)}
+              >
                 Delete
               </Button>
             </td>

@@ -1,8 +1,8 @@
 import { Button } from '@/components/atoms/Button'
+import DropableTextArea from '@/components/atoms/DropableTextArea'
 import Dropzone from '@/components/atoms/Dropzone'
 import { Input } from '@/components/atoms/Input'
 import { Text } from '@/components/atoms/Text'
-import TextArea from '@/components/atoms/TextArea'
 import Box from '@/components/layout/Box'
 import Flex from '@/components/layout/Flex'
 import TagForm from '@/components/molecules/TagForm'
@@ -46,7 +46,6 @@ const PreviewImageWrapper = styled.div`
 `
 
 export const BlogForm = (props: BlogFormProps) => {
-  // TODO: isPublic
   // TODO: authorId
   const { data, onSubmit } = props
 
@@ -54,6 +53,8 @@ export const BlogForm = (props: BlogFormProps) => {
     control,
     register,
     handleSubmit,
+    getValues,
+    setValue,
     formState: { errors },
   } = useForm<BlogFormData>({
     defaultValues: data,
@@ -65,7 +66,6 @@ export const BlogForm = (props: BlogFormProps) => {
   )
 
   const handleOnSubmit = async (data: BlogFormData) => {
-    data.isPublic = true // TODO
     data.authorId = 1 // TODO
     onSubmit && onSubmit(data)
   }
@@ -74,6 +74,34 @@ export const BlogForm = (props: BlogFormProps) => {
     apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
   }
   const token = parseCookie(document.cookie)['authToken']
+
+  const onDropTextArea = async (files: File[]) => {
+    if (files.length != 1) {
+      control.setError('content', {
+        message: '一度にアップロードできる画像は1つまでです。',
+      })
+      return
+    }
+    const fileName = `${generateBase32EncodedUuid()}.${
+      files[0].type.split('/')[1]
+    }`
+    const resp = await getSignedPutUrl(
+      apiContext,
+      {
+        fileName: fileName,
+        fileType: 'content',
+      },
+      token,
+    )
+    const { signedUrl, putUrl } = resp
+    await putSignedUrl({
+      signedPutUrl: signedUrl,
+      contentType: files[0].type,
+      file: files[0],
+    })
+    const con = getValues().content
+    setValue('content', con + `\n\n![](${putUrl} "")`)
+  }
 
   return (
     <form>
@@ -146,6 +174,7 @@ export const BlogForm = (props: BlogFormProps) => {
                         apiContext,
                         {
                           fileName: fileName,
+                          fileType: 'thumbnail',
                         },
                         token,
                       )
@@ -229,7 +258,12 @@ export const BlogForm = (props: BlogFormProps) => {
             name="content"
             rules={{ validate: (value) => !!value || '本文は必須です。' }}
             render={({ field: { onChange, value } }) => (
-              <TextArea minRows={10} value={value} onChange={onChange} />
+              <DropableTextArea
+                minRows={10}
+                value={value}
+                onChange={onChange}
+                onDrop={onDropTextArea}
+              />
             )}
           />
           {errors.content && (
@@ -239,7 +273,13 @@ export const BlogForm = (props: BlogFormProps) => {
           )}
         </Box>
       </Box>
-      <Flex justifyContent="flex-end" marginTop={2}>
+      <Flex justifyContent="flex-end" alignItems="end" marginTop={2}>
+        <Box paddingRight={2}>
+          <input type="checkbox" {...register('isPublic')} />
+          <Text as="label" variant="small" color="gray">
+            公開
+          </Text>
+        </Box>
         <Button
           variant="primary"
           type="button"

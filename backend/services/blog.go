@@ -7,6 +7,8 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/shoet/blog/models"
 	"github.com/shoet/blog/options"
+	"github.com/shoet/blog/store"
+	"golang.org/x/exp/slices"
 )
 
 func NewBlogService(db *sqlx.DB, blog BlogRepository) *BlogService {
@@ -41,7 +43,6 @@ func (b *BlogService) AddBlog(ctx context.Context, blog *models.Blog) (*models.B
 				return nil, fmt.Errorf("failed to add tag: %w", err)
 			}
 			tagIds = append(tagIds, tagId)
-			continue
 		} else {
 			tagIds = append(tagIds, tags[0].Id)
 		}
@@ -97,31 +98,62 @@ func (b *BlogService) DeleteBlog(ctx context.Context, id models.BlogId) error {
 	}
 	defer tx.Rollback()
 
-	// delete blogs_tags
-	tagIds, err := b.blog.DeleteBlogTag(ctx, tx, id)
+	// delete blogs_tags -----------------
+	// select using other blog tags
+	var usingTags models.BlogsTagsArray
+	usingTags, err = b.blog.SelectBlogsTagsByOtherUsingBlog(ctx, tx, id)
 	if err != nil {
-		return fmt.Errorf("failed to delete blogs_tags: %w", err)
+		return fmt.Errorf("failed to select using tags: %w", err)
 	}
 
-	// delte tags
-	for _, tagId := range tagIds {
-		if err := b.blog.DeleteTag(ctx, tx, tagId); err != nil {
-			return fmt.Errorf("failed to delete tags: %w", err)
+	//  select will delete tags
+	blogsTags, err := b.blog.SelectBlogsTags(ctx, tx, id)
+	if err != nil {
+		return fmt.Errorf("failed to select blogs_tags: %w", err)
+	}
+	var willDeleteTags []models.TagId
+	for _, t := range blogsTags {
+		if !slices.Contains(usingTags.TagIds(), t.TagId) {
+			willDeleteTags = append(willDeleteTags, t.TagId)
 		}
 	}
 
-	// delete blogs
+	for _, tagId := range willDeleteTags {
+		// delete tags
+		if err := b.blog.DeleteTag(ctx, tx, tagId); err != nil {
+			return fmt.Errorf("failed to delete tags: %w", err)
+		}
+		// delete blogs_tags
+		if err := b.blog.DeleteBlogsTags(ctx, tx, id, tagId); err != nil {
+			return fmt.Errorf("failed to delete blogs_tags: %w", err)
+		}
+	}
+
+	// delete blogs ----------------------
 	err = b.blog.Delete(ctx, tx, id)
 	if err != nil {
 		return fmt.Errorf("failed to delete blog: %w", err)
 	}
 
-	/// commit
+	// commit
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return nil
+}
+
+func (b *BlogService) SelectTag(
+	ctx context.Context, db store.Execer, tag string,
+) (*models.Tag, error) {
+	tags, err := b.blog.SelectTags(ctx, db, tag)
+	if err != nil {
+		return nil, fmt.Errorf("failed to select tag: %w", err)
+	}
+	if len(tags) == 0 {
+		return nil, nil
+	}
+	return tags[0], nil
 }
 
 func (b *BlogService) PutBlog(ctx context.Context, blog *models.Blog) (*models.Blog, error) {
@@ -131,22 +163,49 @@ func (b *BlogService) PutBlog(ctx context.Context, blog *models.Blog) (*models.B
 	}
 	defer tx.Rollback()
 
-	// add tags
-	var tagIds []models.TagId
+	var usingTagsByOtherBlog models.BlogsTagsArray
+	if usingTagsByOtherBlog, err = b.blog.SelectBlogsTagsByOtherUsingBlog(ctx, tx, blog.Id); err != nil {
+		return nil, fmt.Errorf("failed to select using tags: %w", err)
+	}
+	isUsing := func(tag string) bool { return slices.Contains(usingTagsByOtherBlog.TagNames(), tag) }
+
+	var currentTags models.BlogsTagsArray
+	if currentTags, err = b.blog.SelectBlogsTags(ctx, tx, blog.Id); err != nil {
+		return nil, fmt.Errorf("failed to select current tags: %w", err)
+	}
+	isCurrent := func(tag string) bool { return slices.Contains(currentTags.TagNames(), tag) }
+
+	isContainsNew := func(tag string) bool { return slices.Contains(blog.Tags, tag) }
+
 	for _, tag := range blog.Tags {
-		tags, err := b.blog.SelectTags(ctx, tx, tag)
-		if err != nil {
-			return nil, fmt.Errorf("failed to upsert tag: %w", err)
-		}
-		if len(tags) == 0 {
-			tagId, err := b.blog.AddTag(ctx, tx, tag)
+		if !isCurrent(tag) {
+			tags, err := b.blog.SelectTags(ctx, tx, tag)
 			if err != nil {
-				return nil, fmt.Errorf("failed to add tag: %w", err)
+				return nil, fmt.Errorf("failed to select tag: %w", err)
 			}
-			tagIds = append(tagIds, tagId)
+			// add tags
+			var tagId models.TagId
+			if len(tags) == 0 {
+				tagId, err = b.blog.AddTag(ctx, tx, tag)
+				if err != nil {
+					return nil, fmt.Errorf("failed to add tag: %w", err)
+				}
+			} else {
+				tagId = tags[0].Id
+			}
+			// add blogs_tags
+			b.blog.AddBlogTag(ctx, tx, blog.Id, tagId)
+		}
+	}
+
+	for _, tag := range currentTags {
+		if isContainsNew(tag.Name) {
 			continue
-		} else {
-			tagIds = append(tagIds, tags[0].Id)
+		}
+		if !isUsing(tag.Name) {
+			// delete tags
+			b.blog.DeleteTag(ctx, tx, tag.TagId)
+			b.blog.DeleteBlogsTags(ctx, tx, blog.Id, tag.TagId)
 		}
 	}
 
@@ -156,15 +215,7 @@ func (b *BlogService) PutBlog(ctx context.Context, blog *models.Blog) (*models.B
 		return nil, fmt.Errorf("failed to put blog: %w", err)
 	}
 
-	// add blogs_tags
-	for _, tagId := range tagIds {
-		_, err := b.blog.AddBlogTag(ctx, tx, id, tagId)
-		if err != nil {
-			return nil, fmt.Errorf("failed to add blogs_tags: %w", err)
-		}
-	}
-
-	/// commit
+	// commit
 	if err := tx.Commit(); err != nil {
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
@@ -175,6 +226,14 @@ func (b *BlogService) PutBlog(ctx context.Context, blog *models.Blog) (*models.B
 	}
 
 	return newBlog, nil
+}
+
+func (s *BlogService) ListTags(ctx context.Context, option options.ListTagsOptions) ([]*models.Tag, error) {
+	tags, err := s.blog.ListTags(ctx, s.db, option)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list tags: %w", err)
+	}
+	return tags, nil
 }
 
 func (s *BlogService) Export(ctx context.Context) error {

@@ -78,6 +78,7 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 
 			bgh := &BlogGetHandler{
 				Service: blogService,
+				jwter:   jwter,
 			}
 			r.Get("/{id}", bgh.ServeHTTP)
 
@@ -104,18 +105,25 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 		})
 
 		r.Route("/tags", func(r chi.Router) {
-			// TODO: implement
-			th := &TagListHandler{}
+			th := &TagListHandler{
+				Service: blogService,
+			}
 			r.Get("/", th.ServeHTTP)
 		})
 
 		r.Route("/files", func(r chi.Router) {
 			// require login
-			s := GenerateSignedURLHandler{
+			gt := GenerateThumbnailImageSignedURLHandler{
 				StorageService: awsStorage,
 				Validator:      validate,
 			}
-			r.With(authMiddleWare.Middleware).Post("/thumbnail/new", s.ServeHTTP)
+			r.With(authMiddleWare.Middleware).Post("/thumbnail/new", gt.ServeHTTP)
+
+			gc := GenerateContentsImageSignedURLHandler{
+				StorageService: awsStorage,
+				Validator:      validate,
+			}
+			r.With(authMiddleWare.Middleware).Post("/content/new", gc.ServeHTTP)
 		})
 
 		r.Route("/auth", func(r chi.Router) {
@@ -127,6 +135,13 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 
 			alh := NewAuthLogoutHandler(cfg)
 			r.Post("/admin/signout", alh.ServeHTTP)
+		})
+
+		r.Route("/admin", func(r chi.Router) {
+			bla := &BlogListAdminHandler{
+				Service: blogService,
+			}
+			r.With(authMiddleWare.Middleware).Get("/blogs", bla.ServeHTTP)
 		})
 
 	})

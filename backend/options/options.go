@@ -8,3 +8,7 @@ type ListBlogOptions struct {
 	IsPublic bool
 	Limit    *int64
 }
+
+type ListTagsOptions struct {
+	Limit int
+}

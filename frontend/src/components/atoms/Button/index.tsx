@@ -76,6 +76,8 @@ export const Button = styled.button.withConfig({
   ${({ fontSize, theme }) => toResponsiveValue('font-size', fontSize, theme)}
   ${({ lineHeight, theme }) =>
     toResponsiveValue('line-height', lineHeight, theme)}
+  ${({ backgroundColor, theme }) =>
+    toResponsiveValue('background-color', backgroundColor, theme)}
   padding: 5px 10px;
   border: none;
   border-radius: 5px;

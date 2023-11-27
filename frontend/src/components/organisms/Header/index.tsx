@@ -76,27 +76,33 @@ export const Header = () => {
           justifyContent="space-evenly"
         >
           <Box>
-            <NavItem focusColor="placeholder">
-              <Text variant="large" color="inherit">
-                Blog
-              </Text>
-            </NavItem>
+            <NavLink to="/">
+              <NavItem focusColor="placeholder">
+                <Text variant="large" color="inherit">
+                  Blog
+                </Text>
+              </NavItem>
+            </NavLink>
           </Box>
           <Divider space={20} />
           <Box>
-            <NavItem focusColor="placeholder">
-              <Text variant="large" color="inherit">
-                Portfolio
-              </Text>
-            </NavItem>
+            <NavLink to="/portfolio">
+              <NavItem focusColor="placeholder">
+                <Text variant="large" color="inherit">
+                  Portfolio
+                </Text>
+              </NavItem>
+            </NavLink>
           </Box>
           <Divider space={20} />
           <Box>
-            <NavItem focusColor="placeholder">
-              <Text variant="large" color="inherit">
-                About
-              </Text>
-            </NavItem>
+            <NavLink to="/about">
+              <NavItem focusColor="placeholder">
+                <Text variant="large" color="inherit">
+                  About
+                </Text>
+              </NavItem>
+            </NavLink>
           </Box>
         </Flex>
       </Flex>

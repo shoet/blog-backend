@@ -435,6 +435,7 @@ func main() {
 							},
 							"Resource": []interface{}{
 								pulumi.Sprintf("arn:aws:s3:::%s/thumbnail/*", s3Bucket.ID()),
+								pulumi.Sprintf("arn:aws:s3:::%s/content/*", s3Bucket.ID()),
 							},
 						},
 					},
@@ -794,8 +795,8 @@ func main() {
 			&ecs.TaskDefinitionArgs{
 				Family:                  pulumi.String("blog-backend"),
 				NetworkMode:             pulumi.String("awsvpc"),
-				Cpu:                     pulumi.String("1024"),
-				Memory:                  pulumi.String("3072"),
+				Cpu:                     pulumi.String("256"),
+				Memory:                  pulumi.String("2048"),
 				TaskRoleArn:             ecsTaskRole.Arn,
 				ExecutionRoleArn:        ecsTaskExecutionRole.Arn,
 				RequiresCompatibilities: pulumi.StringArray{pulumi.String("FARGATE")},
