@@ -18,9 +18,8 @@ type BlogListHandler struct {
 func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := GetLogger(ctx)
-	authorId := models.UserId(1) // TODO
 	option := options.ListBlogOptions{
-		AuthorId: &authorId,
+		IsPublic: true,
 	}
 	resp, err := l.Service.ListBlog(ctx, option)
 	if err != nil {
@@ -212,6 +211,32 @@ func (p *BlogPutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := RespondJSON(w, r, http.StatusOK, newBlog); err != nil {
+		logger.Error().Msgf("failed to respond json response: %v", err)
+	}
+	return
+}
+
+type BlogListAdminHandler struct {
+	Service BlogManager
+}
+
+func (l *BlogListAdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	logger := GetLogger(ctx)
+	option := options.ListBlogOptions{}
+	resp, err := l.Service.ListBlog(ctx, option)
+	if err != nil {
+		logger.Error().Msgf("failed to list blog: %v", err)
+		ResponsdInternalServerError(w, r, err)
+		return
+	}
+	if resp == nil {
+		if err := RespondJSON(w, r, http.StatusOK, []interface{}{}); err != nil {
+			logger.Error().Msgf("failed to respond json response: %v", err)
+		}
+		return
+	}
+	if err := RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		logger.Error().Msgf("failed to respond json response: %v", err)
 	}
 	return

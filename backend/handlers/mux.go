@@ -136,6 +136,13 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 			r.Post("/admin/signout", alh.ServeHTTP)
 		})
 
+		r.Route("/admin", func(r chi.Router) {
+			bla := &BlogListAdminHandler{
+				Service: blogService,
+			}
+			r.With(authMiddleWare.Middleware).Get("/blogs", bla.ServeHTTP)
+		})
+
 	})
 	return router, nil
 }

@@ -45,12 +45,13 @@ func (r *BlogRepository) List(
 	ctx context.Context, db Queryer, option options.ListBlogOptions,
 ) ([]*models.Blog, error) {
 
-	if option.AuthorId == nil {
-		return nil, fmt.Errorf("author id is required")
-	}
 	latest := 10
 	if option.Limit != nil {
 		latest = int(*option.Limit)
+	}
+	isPublic := ""
+	if option.IsPublic {
+		isPublic = "WHERE is_public = 1"
 	}
 	sql := `
 	SELECT
@@ -61,8 +62,7 @@ func (r *BlogRepository) List(
 			id, author_id, title, description, thumbnail_image_file_name, is_public, created, modified
 		FROM
 			blogs
-		WHERE
-			author_id = ?
+		` + isPublic + ` 
 		ORDER BY 
 			created DESC
 		LIMIT 
@@ -95,7 +95,8 @@ func (r *BlogRepository) List(
 		Modified               time.Time     `json:"modified" db:"modified"`
 	}
 	var temp []data
-	if err := db.SelectContext(ctx, &temp, sql, option.AuthorId, latest); err != nil {
+	// if err := db.SelectContext(ctx, &temp, sql, option.AuthorId, latest); err != nil {
+	if err := db.SelectContext(ctx, &temp, sql, latest); err != nil {
 		return nil, fmt.Errorf("failed to select blogs: %w", err)
 	}
 	var blogs []*models.Blog
