@@ -18,6 +18,8 @@ const Container = styled.span.withConfig({
   color: Responsive<Color>
   focusColor?: Responsive<Color>
 }>`
+  height: auto;
+  align-items: center;
   border-radius: 3px;
   display: inline-flex;
   padding: 2px 6px;
@@ -56,6 +58,18 @@ export const Badge = (
         {children}
       </Text>
     </Container>
+  )
+}
+
+export const IsPublicBadge = () => {
+  return <Badge backgroundColor="primary">公開</Badge>
+}
+
+export const IsNotPublicBadge = () => {
+  return (
+    <Badge backgroundColor="secondaryGray" color="black">
+      非公開
+    </Badge>
   )
 }
 

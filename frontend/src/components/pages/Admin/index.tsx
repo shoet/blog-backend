@@ -28,11 +28,6 @@ const AdminPage = () => {
   return (
     <Box>
       <Box>
-        <Text fontSize="display" fontWeight="bold">
-          Admin
-        </Text>
-      </Box>
-      <Box>
         <Flex
           flexDirection="row"
           justifyContent="space-between"

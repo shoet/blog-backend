@@ -1,4 +1,4 @@
-import { Badge } from '@/components/atoms/Badge'
+import { Badge, IsNotPublicBadge } from '@/components/atoms/Badge'
 import { Text } from '@/components/atoms/Text'
 import Box from '@/components/layout/Box'
 import Flex from '@/components/layout/Flex'
@@ -73,9 +73,16 @@ export const BlogDetailPage = () => {
       {blog && (
         <>
           <Box marginTop={2}>
-            <Text fontSize="extraExtraLarge" fontWeight="bold">
-              {blog.title}
-            </Text>
+            <Flex alignItems="center">
+              {!blog.isPublic && (
+                <Box marginRight={1}>
+                  <IsNotPublicBadge />
+                </Box>
+              )}
+              <Text fontSize="extraExtraLarge" fontWeight="bold">
+                {blog.title}
+              </Text>
+            </Flex>
           </Box>
           <Flex flexDirection="row" alignItems="center" marginTop={2}>
             <Box>

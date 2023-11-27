@@ -46,7 +46,6 @@ const PreviewImageWrapper = styled.div`
 `
 
 export const BlogForm = (props: BlogFormProps) => {
-  // TODO: isPublic
   // TODO: authorId
   const { data, onSubmit } = props
 
@@ -67,7 +66,6 @@ export const BlogForm = (props: BlogFormProps) => {
   )
 
   const handleOnSubmit = async (data: BlogFormData) => {
-    data.isPublic = true // TODO
     data.authorId = 1 // TODO
     onSubmit && onSubmit(data)
   }
@@ -275,7 +273,13 @@ export const BlogForm = (props: BlogFormProps) => {
           )}
         </Box>
       </Box>
-      <Flex justifyContent="flex-end" marginTop={2}>
+      <Flex justifyContent="flex-end" alignItems="end" marginTop={2}>
+        <Box paddingRight={2}>
+          <input type="checkbox" {...register('isPublic')} />
+          <Text as="label" variant="small" color="gray">
+            公開
+          </Text>
+        </Box>
         <Button
           variant="primary"
           type="button"

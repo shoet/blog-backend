@@ -14,4 +14,5 @@ export const colors = {
   white: '#FFFFFF',
   focusGreen: '#7ccca4',
   focusPurple: '#8c5ce6',
+  secondaryGray: '#DFE6DA',
 } as const
