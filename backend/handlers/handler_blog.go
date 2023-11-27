@@ -9,6 +9,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/shoet/blog/models"
 	"github.com/shoet/blog/options"
+	"github.com/shoet/blog/services"
 )
 
 type BlogListHandler struct {
@@ -41,6 +42,7 @@ func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 type BlogGetHandler struct {
 	Service BlogManager
+	jwter   services.JWTer
 }
 
 func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -62,6 +64,28 @@ func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if blog == nil {
 		ResponsdNotFound(w, r, err)
 		return
+	}
+	if !blog.IsPublic {
+		token := r.Header.Get("Authorization")
+		if token == "" {
+			logger.Error().Msgf("failed to get authorization header")
+			ResponsdNotFound(w, r, err)
+			return
+		}
+
+		if !strings.HasPrefix(token, "Bearer ") {
+			logger.Error().Msgf("failed invalid authorization header")
+			ResponsdNotFound(w, r, err)
+			return
+		}
+
+		token = strings.TrimPrefix(token, "Bearer ")
+		_, err := l.jwter.VerifyToken(ctx, token)
+		if err != nil {
+			logger.Error().Msgf("failed to verify token: %v", err)
+			ResponsdNotFound(w, r, err)
+			return
+		}
 	}
 	if err := RespondJSON(w, r, http.StatusOK, blog); err != nil {
 		logger.Error().Msgf("failed to respond json response: %v", err)

@@ -78,6 +78,7 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 
 			bgh := &BlogGetHandler{
 				Service: blogService,
+				jwter:   jwter,
 			}
 			r.Get("/{id}", bgh.ServeHTTP)
 
