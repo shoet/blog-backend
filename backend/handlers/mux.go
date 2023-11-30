@@ -3,13 +3,12 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
-	"github.com/rs/zerolog"
 	"github.com/shoet/blog/clocker"
 	"github.com/shoet/blog/config"
+	"github.com/shoet/blog/logging"
 	"github.com/shoet/blog/services"
 	"github.com/shoet/blog/store"
 	"github.com/shoet/blog/util"
@@ -27,11 +26,7 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 	blogService := services.NewBlogService(db, &blogRepo)
 	validate := validator.New()
 
-	logger := zerolog.
-		New(os.Stdout).
-		With().
-		Timestamp().
-		Logger()
+	logger := logging.NewLogger()
 
 	awsStorage, err := services.NewAWSS3StorageService(cfg)
 	if err != nil {
@@ -63,7 +58,7 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 	authMiddleWare := NewAuthorizationMiddleware(jwter)
 	corsMiddleWare := NewCORSMiddleWare(cfg)
 	router.Route("/", func(r chi.Router) {
-		r.Use(WithLoggerMiddleware(logger))
+		r.Use(logging.WithLoggerMiddleware(logger))
 		r.Use(corsMiddleWare)
 		r.Route("/health", func(r chi.Router) {
 			hh := &HealthCheckHandler{}

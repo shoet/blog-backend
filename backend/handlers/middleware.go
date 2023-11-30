@@ -5,10 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/rs/zerolog"
 	"github.com/shoet/blog/config"
+	"github.com/shoet/blog/logging"
 	"github.com/shoet/blog/services"
-	"golang.org/x/net/context"
 )
 
 func NewCORSMiddleWare(cfg *config.Config) func(next http.Handler) http.Handler {
@@ -45,22 +44,6 @@ func originAllowed(origin string, whiteList []string) bool {
 	return false
 }
 
-const loggerKey = "log"
-
-func WithLoggerMiddleware(logger zerolog.Logger) func(next http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), loggerKey, logger)
-			logger.Info().Msgf("request: %s %s", r.Method, r.URL.Path)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		})
-	}
-}
-
-func GetLogger(ctx context.Context) zerolog.Logger {
-	return ctx.Value(loggerKey).(zerolog.Logger)
-}
-
 type AuthorizationMiddleware struct {
 	jwter services.JWTer
 }
@@ -74,7 +57,7 @@ func NewAuthorizationMiddleware(jwter services.JWTer) *AuthorizationMiddleware {
 func (a *AuthorizationMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		logger := GetLogger(ctx)
+		logger := logging.GetLogger(ctx)
 		token := r.Header.Get("Authorization")
 		if token == "" {
 			logger.Error().Msgf("failed to get authorization header")

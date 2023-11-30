@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/shoet/blog/logging"
 )
 
 type GenerateThumbnailImageSignedURLHandler struct {
@@ -13,7 +14,7 @@ type GenerateThumbnailImageSignedURLHandler struct {
 
 func (g *GenerateThumbnailImageSignedURLHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	logger := GetLogger(ctx)
+	logger := logging.GetLogger(ctx)
 	var reqBody struct {
 		FileName string `json:"fileName" validate:"required"`
 	}
@@ -56,7 +57,7 @@ type GenerateContentsImageSignedURLHandler struct {
 
 func (g *GenerateContentsImageSignedURLHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	logger := GetLogger(ctx)
+	logger := logging.GetLogger(ctx)
 	var reqBody struct {
 		FileName string `json:"fileName" validate:"required"`
 	}

@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/shoet/blog/logging"
 	"github.com/shoet/blog/options"
 )
 
@@ -12,7 +13,7 @@ type TagListHandler struct {
 
 func (t *TagListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	logger := GetLogger(ctx)
+	logger := logging.GetLogger(ctx)
 	option := options.ListTagsOptions{
 		Limit: 100,
 	}

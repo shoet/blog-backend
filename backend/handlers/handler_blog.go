@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
+	"github.com/shoet/blog/logging"
 	"github.com/shoet/blog/models"
 	"github.com/shoet/blog/options"
 	"github.com/shoet/blog/services"
@@ -18,7 +19,7 @@ type BlogListHandler struct {
 
 func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	logger := GetLogger(ctx)
+	logger := logging.GetLogger(ctx)
 	option := options.ListBlogOptions{
 		IsPublic: true,
 	}
@@ -47,7 +48,7 @@ type BlogGetHandler struct {
 
 func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	logger := GetLogger(ctx)
+	logger := logging.GetLogger(ctx)
 	id := chi.URLParam(r, "id")
 	if id == "" {
 		logger.Error().Msgf("failed to get id from url param")
@@ -100,7 +101,7 @@ type BlogAddHandler struct {
 
 func (a *BlogAddHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	logger := GetLogger(ctx)
+	logger := logging.GetLogger(ctx)
 	var reqBody struct {
 		Title                  string        `json:"title" validate:"required"`
 		Content                string        `json:"content" validate:"required"`
@@ -152,7 +153,7 @@ type BlogDeleteHandler struct {
 
 func (d *BlogDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	logger := GetLogger(ctx)
+	logger := logging.GetLogger(ctx)
 	var reqBody struct {
 		Id models.BlogId `json:"id" validate:"required"`
 	}
@@ -193,7 +194,7 @@ type BlogPutHandler struct {
 
 func (p *BlogPutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	logger := GetLogger(ctx)
+	logger := logging.GetLogger(ctx)
 	var reqBody struct {
 		Id                     models.BlogId `json:"id" validate:"required"`
 		AuthorId               models.UserId `json:"authorId" validate:"required"`
@@ -246,7 +247,7 @@ type BlogListAdminHandler struct {
 
 func (l *BlogListAdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	logger := GetLogger(ctx)
+	logger := logging.GetLogger(ctx)
 	option := options.ListBlogOptions{}
 	resp, err := l.Service.ListBlog(ctx, option)
 	if err != nil {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/shoet/blog/config"
+	"github.com/shoet/blog/logging"
 )
 
 type AuthLoginHandler struct {
@@ -29,7 +30,7 @@ func NewAuthLoginHandler(
 
 func (a *AuthLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	logger := GetLogger(ctx)
+	logger := logging.GetLogger(ctx)
 	var reqBody struct {
 		Email    string `json:"email" validate:"required"`
 		Password string `json:"password" validate:"required"`
@@ -87,7 +88,7 @@ func NewAuthSessionLoginHandler(
 
 func (a *AuthSessionLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	logger := GetLogger(ctx)
+	logger := logging.GetLogger(ctx)
 	token := r.Header.Get("Authorization")
 	if token == "" {
 		logger.Error().Msgf("failed to get authorization header")
@@ -129,7 +130,7 @@ func NewAuthLogoutHandler(
 
 func (a *AuthLogoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	logger := GetLogger(ctx)
+	logger := logging.GetLogger(ctx)
 	ClearCookie(a.Config, w, "authToken")
 	resp := struct {
 		Message string `json:"message"`
