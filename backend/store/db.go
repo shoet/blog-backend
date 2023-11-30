@@ -87,7 +87,7 @@ func (s *SQLQueryLoggerHooks) Before(
 	ctx context.Context, query string, args ...interface{},
 ) (context.Context, error) {
 	logger := logging.GetLogger(ctx)
-	logger.Info().Msgf("query: %s", query)
+	logger.Info().Msgf("query: %s\nargs: %v", query, args)
 	return ctx, nil
 }
 
