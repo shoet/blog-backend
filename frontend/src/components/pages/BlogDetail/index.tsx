@@ -12,7 +12,6 @@ import { MarkedOptions } from 'marked'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/monokai.css'
 import { useEffect } from 'react'
-import './style.module.css'
 
 type BlogDetailPageParams = {
   id: string
@@ -20,6 +19,7 @@ type BlogDetailPageParams = {
 
 const ImageWrapper = styled(Box)`
   img {
+    width: 100%;
     display: block;
     object-fit: fit;
   }
@@ -30,6 +30,12 @@ const TagsWrapper = styled(Box)`
     margin-right: 0.5rem;
   }
 `
+
+function addLinkTargetBlank(html: string): string {
+  const regex = /<a href="(.*?)"/g
+  const replacer = (_: string, p1: string) => `<a href="${p1}" target="_blank"`
+  return html.replace(regex, replacer)
+}
 
 const BadgeWrapper = styled.span.withConfig({
   shouldForwardProp: (prop) => !['paddingTop'].includes(prop),
@@ -66,6 +72,45 @@ export const BlogDetailPage = () => {
   } as MarkedOptions)
 
   const markedHtml = marked(blog?.content ?? '')
+  const markedHtmlWithTargetBlank = addLinkTargetBlank(markedHtml)
+
+  const MarkedWrapper = styled(Box)`
+    li {
+      list-style: inside;
+    }
+
+    a {
+      text-decoration: underline;
+      color: #b99976;
+      target: _blank;
+    }
+
+    h2 {
+      border-bottom: 1px solid #ccc;
+      border-left: 5px solid #ccc;
+      padding-left: 10px;
+    }
+
+    code:not([class]) {
+      margin: 0 2px;
+      padding: 0 5px;
+      border-radius: 3px;
+      background-color: #de6fa1;
+      color: white;
+    }
+
+    pre > code {
+      border-radius: 5px;
+    }
+
+    p {
+      font-size: 0.9rem;
+    }
+
+    h2 {
+      margin-top: 2rem;
+    }
+  `
 
   return (
     <>
@@ -103,13 +148,13 @@ export const BlogDetailPage = () => {
           <ImageWrapper marginTop={2}>
             <img src={blog.thumbnailImageFileName} alt={blog.title} />
           </ImageWrapper>
-          <Box marginTop={3}>
+          <MarkedWrapper marginTop={3}>
             <span
               dangerouslySetInnerHTML={{
-                __html: markedHtml,
+                __html: markedHtmlWithTargetBlank,
               }}
             />
-          </Box>
+          </MarkedWrapper>
         </>
       )}
     </>

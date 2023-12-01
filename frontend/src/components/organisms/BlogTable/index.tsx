@@ -1,6 +1,5 @@
 import { Button } from '@/components/atoms/Button'
 import { ApiContext, Blog } from '@/types/api'
-import './style.module.css'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { deleteBlog } from '@/services/blogs/delete-blog'
 import { parseCookie } from '@/utils/cookie'
@@ -38,47 +37,61 @@ export const BlogTable = (props: BlogTableProps) => {
     onClickDelete && onClickDelete()
   }
 
+  const TableWrapper = styled.div`
+    th,
+    td {
+      border: solid 1px;
+      padding: 10px;
+    }
+
+    table {
+      border-collapse: collapse;
+    }
+  `
+
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Title</th>
-          <th>Created</th>
-          <th>IsPublic</th>
-          <th>Edit</th>
-          <th>Delete</th>
-        </tr>
-      </thead>
-      <tbody>
-        {blogs.map((blog, idx) => (
-          <tr key={idx}>
-            <td>{blog.id}</td>
-            <td>
-              <TitleLink to={`/${blog.id}`} target="_blank">
-                {blog.title}
-              </TitleLink>
-            </td>
-            <td>{blog.created}</td>
-            <td style={{ textAlign: 'center' }}>
-              {blog.isPublic ? <IsPublicBadge /> : <IsNotPublicBadge />}
-            </td>
-            <td>
-              <Button variant="secondary" onClick={() => onEdit(blog.id)}>
-                Edit
-              </Button>
-            </td>
-            <td>
-              <Button
-                backgroundColor="dangerSoft"
-                onClick={() => onDelete(blog.id)}
-              >
-                Delete
-              </Button>
-            </td>
+    <TableWrapper>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Created</th>
+            <th>IsPublic</th>
+            <th>Edit</th>
+            <th>Delete</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {blogs.map((blog, idx) => (
+            <tr key={idx}>
+              <td>{blog.id}</td>
+              <td>
+                <TitleLink to={`/${blog.id}`} target="_blank">
+                  {blog.title}
+                </TitleLink>
+              </td>
+              <td>{blog.created}</td>
+              <td style={{ textAlign: 'center' }}>
+                {blog.isPublic ? <IsPublicBadge /> : <IsNotPublicBadge />}
+              </td>
+              <td>
+                <Button variant="secondary" onClick={() => onEdit(blog.id)}>
+                  Edit
+                </Button>
+              </td>
+              <td>
+                <Button
+                  backgroundColor="dangerSoft"
+                  onClick={() => onDelete(blog.id)}
+                >
+                  Delete
+                </Button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </TableWrapper>
   )
 }
