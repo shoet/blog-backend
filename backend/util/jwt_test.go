@@ -4,91 +4,141 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/shoet/blog/clocker"
-	"github.com/shoet/blog/config"
 	"github.com/shoet/blog/models"
 	"github.com/shoet/blog/services"
 )
 
 func Test_JWTService_GenerateToken(t *testing.T) {
-	ctx := context.Background()
-	wantUserId := 1
-
-	cfg, err := config.NewConfig()
-	if err != nil {
-		t.Fatalf("failed new config: %v", err)
-	}
-	kvs := services.KVSerMock{}
-	kvs.SaveFunc = func(ctx context.Context, key string, value string) error {
-		if value != strconv.Itoa(wantUserId) {
-			t.Fatalf("failed want user id: %v, got: %v", wantUserId, value)
-		}
-		return nil
-	}
-	c := clocker.FiexedClocker{}
-	sut := JWTer{
-		kvs:     &kvs,
-		cfg:     cfg,
-		clocker: &c,
+	type args struct {
+		user *models.User
 	}
 
-	user := &models.User{
-		Id: 1,
+	type want struct {
+		user *models.User
 	}
-	token, err := sut.GenerateToken(ctx, user)
-	if err != nil {
-		t.Fatalf("failed generate token: %v", err)
+
+	tests := []struct {
+		name    string
+		args    args
+		want    want
+		wantErr error
+	}{
+		{
+			name:    "success",
+			args:    args{user: &models.User{Id: 1}},
+			want:    want{user: &models.User{Id: 1}},
+			wantErr: nil,
+		},
 	}
-	fmt.Println(token)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			kvsMock := &services.KVSerMock{}
+			kvsMock.SaveFunc = func(ctx context.Context, key string, value string) error {
+				if value != strconv.Itoa(int(tt.args.user.Id)) {
+					t.Fatalf("failed want user id: %v, got: %v", tt.want.user.Id, value)
+				}
+				return nil
+			}
+			clockerMock := &clocker.FiexedClocker{}
+
+			testSecret := "12345678"
+			testTokenExpiresInSec := 60
+			sut := NewJWTer(kvsMock, clockerMock, []byte(testSecret), testTokenExpiresInSec)
+
+			token, err := sut.GenerateToken(ctx, tt.args.user)
+			if err != nil {
+				t.Fatalf("failed generate token: %v", err)
+			}
+			_ = token
+		})
+	}
 }
 
 func Test_JWTService_VerifyToken(t *testing.T) {
-	ctx := context.Background()
-	wantUserId := 1
-
-	cfg, err := config.NewConfig()
-	if err != nil {
-		t.Fatalf("failed new config: %v", err)
-	}
-	kvs := services.KVSerMock{}
-	var uuid string
-	kvs.SaveFunc = func(ctx context.Context, key string, value string) error {
-		uuid = key
-		if value != strconv.Itoa(wantUserId) {
-			t.Fatalf("failed want user id: %v, got: %v", wantUserId, value)
-		}
-		return nil
-	}
-	kvs.LoadFunc = func(ctx context.Context, key string) (string, error) {
-		if key != uuid {
-			t.Fatalf("failed want uuid: %v, got: %v", uuid, key)
-		}
-		return strconv.Itoa(wantUserId), nil
-	}
-	c := clocker.RealClocker{}
-	sut := JWTer{
-		kvs:     &kvs,
-		cfg:     cfg,
-		clocker: &c,
+	type args struct {
+		user             *models.User
+		tokenExpireInSec int
 	}
 
-	user := &models.User{
-		Id: 1,
-	}
-	token, err := sut.GenerateToken(ctx, user)
-	if err != nil {
-		t.Fatalf("failed generate token: %v", err)
+	type want struct {
+		user *models.User
 	}
 
-	userId, err := sut.VerifyToken(ctx, token)
-	if err != nil {
-		t.Fatalf("failed verify token: %v", err)
+	tests := []struct {
+		name    string
+		args    args
+		want    want
+		wantErr error
+	}{
+		{
+			name: "success",
+			args: args{
+				user:             &models.User{Id: 1},
+				tokenExpireInSec: 60,
+			},
+			want:    want{user: &models.User{Id: 1}},
+			wantErr: nil,
+		},
+		{
+			name: "failed expired token",
+			args: args{
+				user:             &models.User{Id: 1},
+				tokenExpireInSec: 0,
+			},
+			want:    want{user: &models.User{Id: 1}},
+			wantErr: fmt.Errorf("token is expired"),
+		},
 	}
 
-	if userId != models.UserId(wantUserId) {
-		t.Fatalf("failed want user id: %v, got: %v", wantUserId, userId)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			kvsMock := &services.KVSerMock{}
+			var uuid string
+			kvsMock.SaveFunc = func(ctx context.Context, key string, value string) error {
+				uuid = key // 発行されたuuidを保持しておく
+				if value != strconv.Itoa(int(tt.args.user.Id)) {
+					t.Fatalf("failed want user id: %v, got: %v", tt.want.user.Id, value)
+				}
+				return nil
+			}
+			kvsMock.LoadFunc = func(ctx context.Context, key string) (string, error) {
+				if key != uuid {
+					t.Fatalf("failed want uuid: %v, got: %v", uuid, key)
+				}
+				return strconv.Itoa(int(tt.args.user.Id)), nil
+			}
+			clockerMock := &clocker.RealClocker{}
+			testSecret := "12345678"
+			testTokenExpiresInSec := tt.args.tokenExpireInSec
+
+			sut := NewJWTer(kvsMock, clockerMock, []byte(testSecret), testTokenExpiresInSec)
+
+			token, err := sut.GenerateToken(ctx, tt.args.user)
+			if err != nil {
+				t.Fatalf("failed generate token: %v", err)
+			}
+
+			userId, err := sut.VerifyToken(ctx, token)
+			if err != nil {
+				if strings.Contains(err.Error(), tt.wantErr.Error()) {
+					return
+				} else {
+					t.Fatalf("failed verify token: %v", err)
+					return
+				}
+			}
+
+			if userId != tt.want.user.Id {
+				t.Fatalf("failed want user id: %v, got: %v", tt.want.user.Id, userId)
+			}
+		})
 	}
 
 }

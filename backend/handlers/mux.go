@@ -48,7 +48,7 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create redis kvs: %w", err)
 	}
-	jwter := util.NewJWTer(kvs, cfg, &c)
+	jwter := util.NewJWTer(kvs, &c, []byte(cfg.JWTSecret), cfg.JWTExpiresInSec)
 	authService, err := services.NewAuthService(db, &userRepo, jwter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create auth service: %w", err)
