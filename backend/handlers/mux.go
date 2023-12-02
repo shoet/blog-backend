@@ -31,12 +31,26 @@ func NewMux(
 	corsMiddleWare := NewCORSMiddleWare(deps.Config)
 	router.Use(logging.WithLoggerMiddleware(*deps.Logger), corsMiddleWare)
 
-	router.Route("/health", func(r chi.Router) {
+	setHealthRoute(router)
+	setBlogsRoute(router, deps, authMiddleWare)
+	setTagsRoute(router, deps)
+	setFilesRoute(router, deps, authMiddleWare)
+	setAuthRoute(router, deps)
+	setAdminRoute(router, deps, authMiddleWare)
+	return router, nil
+}
+
+func setHealthRoute(r chi.Router) {
+	r.Route("/health", func(r chi.Router) {
 		hh := &HealthCheckHandler{}
 		r.Get("/", hh.ServeHTTP)
 	})
+}
 
-	router.Route("/blogs", func(r chi.Router) {
+func setBlogsRoute(
+	r chi.Router, deps *MuxDependencies, authMiddleWare *AuthorizationMiddleware,
+) {
+	r.Route("/blogs", func(r chi.Router) {
 		blh := &BlogListHandler{
 			Service: deps.BlogService,
 		}
@@ -69,16 +83,21 @@ func NewMux(
 		}
 		r.With(authMiddleWare.Middleware).Put("/", buh.ServeHTTP)
 	})
+}
 
-	router.Route("/tags", func(r chi.Router) {
+func setTagsRoute(r chi.Router, deps *MuxDependencies) {
+	r.Route("/tags", func(r chi.Router) {
 		th := &TagListHandler{
 			Service: deps.BlogService,
 		}
 		r.Get("/", th.ServeHTTP)
 	})
+}
 
-	router.Route("/files", func(r chi.Router) {
-		// require login
+func setFilesRoute(
+	r chi.Router, deps *MuxDependencies, authMiddleWare *AuthorizationMiddleware,
+) {
+	r.Route("/files", func(r chi.Router) {
 		gt := GenerateThumbnailImageSignedURLHandler{
 			StorageService: deps.StorageService,
 			Validator:      deps.Validator,
@@ -91,8 +110,10 @@ func NewMux(
 		}
 		r.With(authMiddleWare.Middleware).Post("/content/new", gc.ServeHTTP)
 	})
+}
 
-	router.Route("/auth", func(r chi.Router) {
+func setAuthRoute(r chi.Router, deps *MuxDependencies) {
+	r.Route("/auth", func(r chi.Router) {
 		ah := NewAuthLoginHandler(deps.AuthService, deps.Validator, deps.Config)
 		r.Post("/signin", ah.ServeHTTP)
 
@@ -102,19 +123,15 @@ func NewMux(
 		alh := NewAuthLogoutHandler(deps.Config)
 		r.Post("/admin/signout", alh.ServeHTTP)
 	})
+}
 
-	router.Route("/admin", func(r chi.Router) {
+func setAdminRoute(
+	r chi.Router, deps *MuxDependencies, authMiddleWare *AuthorizationMiddleware,
+) {
+	r.Route("/admin", func(r chi.Router) {
 		bla := &BlogListAdminHandler{
 			Service: deps.BlogService,
 		}
 		r.With(authMiddleWare.Middleware).Get("/blogs", bla.ServeHTTP)
-	})
-	return router, nil
-}
-
-func setHealthRoute(r chi.Router) {
-	r.Route("/health", func(r chi.Router) {
-		hh := &HealthCheckHandler{}
-		r.Get("/", hh.ServeHTTP)
 	})
 }
