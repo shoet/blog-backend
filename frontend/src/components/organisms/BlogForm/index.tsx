@@ -227,8 +227,8 @@ export const BlogForm = (props: BlogFormProps) => {
               rules={{
                 validate: (value) => {
                   return (
-                    (0 <= value.length && value.length <= 3) ||
-                    '選択できるタグは3つまでです。'
+                    (0 <= value.length && value.length <= 5) ||
+                    '選択できるタグは5つまでです。'
                   )
                 },
               }}
