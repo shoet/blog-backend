@@ -10,13 +10,15 @@ import (
 
 const loggerKey = "log"
 
-func NewLogger() zerolog.Logger {
+type Logger = zerolog.Logger
+
+func NewLogger() *zerolog.Logger {
 	logger := zerolog.
 		New(os.Stdout).
 		With().
 		Timestamp().
 		Logger()
-	return logger
+	return &logger
 }
 
 func WithLoggerMiddleware(logger zerolog.Logger) func(next http.Handler) http.Handler {

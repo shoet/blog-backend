@@ -15,6 +15,8 @@ import (
 	"github.com/qustavo/sqlhooks/v2"
 )
 
+type DB = *sqlx.DB
+
 func NewDBSQLite3(ctx context.Context) (*sqlx.DB, error) {
 	db, err := sql.Open("sqlite3", "database.sqlite")
 	if err != nil {

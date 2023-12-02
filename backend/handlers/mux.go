@@ -2,11 +2,9 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
-	"github.com/shoet/blog/clocker"
 	"github.com/shoet/blog/config"
 	"github.com/shoet/blog/logging"
 	"github.com/shoet/blog/services"
@@ -14,51 +12,26 @@ import (
 	"github.com/shoet/blog/util"
 )
 
-func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
-	db, err := store.NewDBMySQL(ctx, cfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create db: %w", err)
-	}
-	c := clocker.RealClocker{}
-	blogRepo := store.BlogRepository{
-		Clocker: &c,
-	}
-	blogService := services.NewBlogService(db, &blogRepo)
-	validate := validator.New()
+type MuxDependencies struct {
+	Config         *config.Config
+	DB             store.DB
+	BlogService    *services.BlogService
+	AuthService    *services.AuthService
+	StorageService *services.AWSS3StorageService
+	JWTer          *util.JWTer
+	Logger         *logging.Logger
+	Validator      *validator.Validate
+}
 
-	logger := logging.NewLogger()
-
-	awsStorage, err := services.NewAWSS3StorageService(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create aws storage: %w", err)
-	}
-
-	userRepo := store.UserRepository{
-		Clocker: &c,
-	}
-	kvs, err := store.NewRedisKVS(
-		ctx,
-		cfg.KVSHost,
-		cfg.KVSPort,
-		cfg.KVSUser,
-		cfg.KVSPass,
-		cfg.JWTExpiresInSec,
-		cfg.KVSTlsEnabled,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create redis kvs: %w", err)
-	}
-	jwter := util.NewJWTer(kvs, &c, []byte(cfg.JWTSecret), cfg.JWTExpiresInSec)
-	authService, err := services.NewAuthService(db, &userRepo, jwter)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create auth service: %w", err)
-	}
-
+func NewMux(
+	ctx context.Context, deps *MuxDependencies,
+) (*chi.Mux, error) {
 	router := chi.NewRouter()
-	authMiddleWare := NewAuthorizationMiddleware(jwter)
-	corsMiddleWare := NewCORSMiddleWare(cfg)
+	authMiddleWare := NewAuthorizationMiddleware(deps.JWTer)
+	corsMiddleWare := NewCORSMiddleWare(deps.Config)
+	router.Use(logging.WithLoggerMiddleware(*deps.Logger))
+
 	router.Route("/", func(r chi.Router) {
-		r.Use(logging.WithLoggerMiddleware(logger))
 		r.Use(corsMiddleWare)
 		r.Route("/health", func(r chi.Router) {
 			hh := &HealthCheckHandler{}
@@ -67,41 +40,41 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 
 		r.Route("/blogs", func(r chi.Router) {
 			blh := &BlogListHandler{
-				Service: blogService,
+				Service: deps.BlogService,
 			}
 			r.Get("/", blh.ServeHTTP)
 
 			bgh := &BlogGetHandler{
-				Service: blogService,
-				jwter:   jwter,
+				Service: deps.BlogService,
+				jwter:   deps.JWTer,
 			}
 			r.Get("/{id}", bgh.ServeHTTP)
 
 			// require login
 			bah := &BlogAddHandler{
-				Service:   blogService,
-				Validator: validate,
+				Service:   deps.BlogService,
+				Validator: deps.Validator,
 			}
 			r.With(authMiddleWare.Middleware).Post("/", bah.ServeHTTP)
 
 			// require login
 			bdh := &BlogDeleteHandler{
-				Service:   blogService,
-				Validator: validate,
+				Service:   deps.BlogService,
+				Validator: deps.Validator,
 			}
 			r.With(authMiddleWare.Middleware).Delete("/", bdh.ServeHTTP)
 
 			// require login
 			buh := &BlogPutHandler{
-				Service:   blogService,
-				Validator: validate,
+				Service:   deps.BlogService,
+				Validator: deps.Validator,
 			}
 			r.With(authMiddleWare.Middleware).Put("/", buh.ServeHTTP)
 		})
 
 		r.Route("/tags", func(r chi.Router) {
 			th := &TagListHandler{
-				Service: blogService,
+				Service: deps.BlogService,
 			}
 			r.Get("/", th.ServeHTTP)
 		})
@@ -109,32 +82,32 @@ func NewMux(ctx context.Context, cfg *config.Config) (*chi.Mux, error) {
 		r.Route("/files", func(r chi.Router) {
 			// require login
 			gt := GenerateThumbnailImageSignedURLHandler{
-				StorageService: awsStorage,
-				Validator:      validate,
+				StorageService: deps.StorageService,
+				Validator:      deps.Validator,
 			}
 			r.With(authMiddleWare.Middleware).Post("/thumbnail/new", gt.ServeHTTP)
 
 			gc := GenerateContentsImageSignedURLHandler{
-				StorageService: awsStorage,
-				Validator:      validate,
+				StorageService: deps.StorageService,
+				Validator:      deps.Validator,
 			}
 			r.With(authMiddleWare.Middleware).Post("/content/new", gc.ServeHTTP)
 		})
 
 		r.Route("/auth", func(r chi.Router) {
-			ah := NewAuthLoginHandler(authService, validate, cfg)
+			ah := NewAuthLoginHandler(deps.AuthService, deps.Validator, deps.Config)
 			r.Post("/signin", ah.ServeHTTP)
 
-			ash := NewAuthSessionLoginHandler(authService, cfg)
+			ash := NewAuthSessionLoginHandler(deps.AuthService, deps.Config)
 			r.Get("/login/me", ash.ServeHTTP)
 
-			alh := NewAuthLogoutHandler(cfg)
+			alh := NewAuthLogoutHandler(deps.Config)
 			r.Post("/admin/signout", alh.ServeHTTP)
 		})
 
 		r.Route("/admin", func(r chi.Router) {
 			bla := &BlogListAdminHandler{
-				Service: blogService,
+				Service: deps.BlogService,
 			}
 			r.With(authMiddleWare.Middleware).Get("/blogs", bla.ServeHTTP)
 		})
