@@ -12,6 +12,16 @@ type GenerateThumbnailImageSignedURLHandler struct {
 	Validator      *validator.Validate
 }
 
+func NewGenerateThumbnailImageSignedURLHandler(
+	StorageService Storager,
+	Validator *validator.Validate,
+) *GenerateThumbnailImageSignedURLHandler {
+	return &GenerateThumbnailImageSignedURLHandler{
+		StorageService: StorageService,
+		Validator:      Validator,
+	}
+}
+
 func (g *GenerateThumbnailImageSignedURLHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)

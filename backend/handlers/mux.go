@@ -96,10 +96,7 @@ func setFilesRoute(
 	r chi.Router, deps *MuxDependencies, authMiddleWare *AuthorizationMiddleware,
 ) {
 	r.Route("/files", func(r chi.Router) {
-		gt := GenerateThumbnailImageSignedURLHandler{
-			StorageService: deps.StorageService,
-			Validator:      deps.Validator,
-		}
+		gt := NewGenerateThumbnailImageSignedURLHandler(deps.StorageService, deps.Validator)
 		r.With(authMiddleWare.Middleware).Post("/thumbnail/new", gt.ServeHTTP)
 
 		gc := GenerateContentsImageSignedURLHandler{
