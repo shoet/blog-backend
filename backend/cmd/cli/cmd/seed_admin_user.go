@@ -29,10 +29,12 @@ var seedAdminUserCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		c := clocker.RealClocker{}
-		userRepo := store.UserRepository{
-			Clocker: &c,
+		userRepo, err := store.NewUserRepository(&c)
+		if err != nil {
+			fmt.Printf("failed to create user repository: %v", err)
+			os.Exit(1)
 		}
-		adminService, err := services.NewAdminService(db, &userRepo)
+		adminService, err := services.NewAdminService(db, userRepo)
 		if err != nil {
 			fmt.Printf("failed to create admin service: %v", err)
 			os.Exit(1)
