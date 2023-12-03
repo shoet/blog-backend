@@ -21,6 +21,7 @@ type MuxDependencies struct {
 	JWTer          *util.JWTer
 	Logger         *logging.Logger
 	Validator      *validator.Validate
+	Cookie         *CookieManager
 }
 
 func NewMux(
@@ -109,13 +110,13 @@ func setFilesRoute(
 
 func setAuthRoute(r chi.Router, deps *MuxDependencies) {
 	r.Route("/auth", func(r chi.Router) {
-		ah := NewAuthLoginHandler(deps.AuthService, deps.Validator, deps.Config)
+		ah := NewAuthLoginHandler(deps.AuthService, deps.Validator, deps.Cookie)
 		r.Post("/signin", ah.ServeHTTP)
 
-		ash := NewAuthSessionLoginHandler(deps.AuthService, deps.Config)
+		ash := NewAuthSessionLoginHandler(deps.AuthService)
 		r.Get("/login/me", ash.ServeHTTP)
 
-		alh := NewAuthLogoutHandler(deps.Config)
+		alh := NewAuthLogoutHandler(deps.Cookie)
 		r.Post("/admin/signout", alh.ServeHTTP)
 	})
 }

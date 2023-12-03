@@ -6,25 +6,24 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/shoet/blog/config"
 	"github.com/shoet/blog/logging"
 )
 
 type AuthLoginHandler struct {
 	Service   AuthManager
 	Validator *validator.Validate
-	Config    *config.Config
+	Cookie    *CookieManager
 }
 
 func NewAuthLoginHandler(
 	service AuthManager,
 	validator *validator.Validate,
-	config *config.Config,
+	cookie *CookieManager,
 ) *AuthLoginHandler {
 	return &AuthLoginHandler{
 		Service:   service,
 		Validator: validator,
-		Config:    config,
+		Cookie:    cookie,
 	}
 }
 
@@ -59,9 +58,9 @@ func (a *AuthLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}{
 		AuthToken: token,
 	}
-	if err := SetCookie(a.Config, w, "authToken", resp.AuthToken); err != nil {
+	if err := a.Cookie.SetCookie(w, "authToken", resp.AuthToken); err != nil {
 		logger.Error().Msgf("failed to set cookie: %v", err)
-		RespondUnauthorized(w, r, err)
+		ResponsdInternalServerError(w, r, err)
 		return
 	}
 
@@ -73,16 +72,13 @@ func (a *AuthLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 type AuthSessionLoginHandler struct {
 	Service AuthManager
-	Config  *config.Config
 }
 
 func NewAuthSessionLoginHandler(
 	service AuthManager,
-	config *config.Config,
 ) *AuthSessionLoginHandler {
 	return &AuthSessionLoginHandler{
 		Service: service,
-		Config:  config,
 	}
 }
 
@@ -117,21 +113,21 @@ func (a *AuthSessionLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 }
 
 type AuthLogoutHandler struct {
-	Config *config.Config
+	Cookie *CookieManager
 }
 
 func NewAuthLogoutHandler(
-	config *config.Config,
+	cookie *CookieManager,
 ) *AuthLogoutHandler {
 	return &AuthLogoutHandler{
-		Config: config,
+		Cookie: cookie,
 	}
 }
 
 func (a *AuthLogoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)
-	ClearCookie(a.Config, w, "authToken")
+	a.Cookie.ClearCookie(w, "authToken")
 	resp := struct {
 		Message string `json:"message"`
 	}{

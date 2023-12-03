@@ -80,7 +80,9 @@ func Test_GenerateThumbnailImageSignedURLHandler(t *testing.T) {
 			sut := NewGenerateThumbnailImageSignedURLHandler(storageServiceMock, validator.New())
 
 			var buffer bytes.Buffer
-			json.NewEncoder(&buffer).Encode(tt.args)
+			if err := json.NewEncoder(&buffer).Encode(tt.args); err != nil {
+				t.Fatalf("failed to encode request body: %v", err)
+			}
 
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("POST", "/", &buffer)

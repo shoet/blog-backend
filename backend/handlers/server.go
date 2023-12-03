@@ -84,6 +84,7 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 
 	logger := logging.NewLogger()
 	validator := validator.New()
+	cookie := NewCookieManager(cfg.Env, cfg.SiteDomain)
 
 	return &MuxDependencies{
 		Config:         cfg,
@@ -94,6 +95,7 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 		JWTer:          jwter,
 		Logger:         logger,
 		Validator:      validator,
+		Cookie:         cookie,
 	}, nil
 }
 
