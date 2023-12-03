@@ -87,9 +87,7 @@ func setBlogsRoute(
 
 func setTagsRoute(r chi.Router, deps *MuxDependencies) {
 	r.Route("/tags", func(r chi.Router) {
-		th := &TagListHandler{
-			Service: deps.BlogService,
-		}
+		th := NewTagListHandler(deps.BlogService)
 		r.Get("/", th.ServeHTTP)
 	})
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-const loggerKey = "log"
+const LoggerKey = "log"
 
 type Logger = zerolog.Logger
 
@@ -24,7 +24,7 @@ func NewLogger() *zerolog.Logger {
 func WithLoggerMiddleware(logger zerolog.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), loggerKey, logger)
+			ctx := context.WithValue(r.Context(), LoggerKey, logger)
 			logger.Info().Msgf("request: %s %s", r.Method, r.URL.Path)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
@@ -32,5 +32,5 @@ func WithLoggerMiddleware(logger zerolog.Logger) func(next http.Handler) http.Ha
 }
 
 func GetLogger(ctx context.Context) zerolog.Logger {
-	return ctx.Value(loggerKey).(zerolog.Logger)
+	return ctx.Value(LoggerKey).(zerolog.Logger)
 }

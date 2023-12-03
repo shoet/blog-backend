@@ -11,6 +11,12 @@ type TagListHandler struct {
 	Service BlogManager
 }
 
+func NewTagListHandler(service BlogManager) *TagListHandler {
+	return &TagListHandler{
+		Service: service,
+	}
+}
+
 func (t *TagListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)
