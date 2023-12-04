@@ -118,6 +118,15 @@ type BlogAddHandler struct {
 	Validator *validator.Validate
 }
 
+func NewBlogAddHandler(
+	blogService BlogManager, validator *validator.Validate,
+) *BlogAddHandler {
+	return &BlogAddHandler{
+		Service:   blogService,
+		Validator: validator,
+	}
+}
+
 func (a *BlogAddHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)

@@ -58,11 +58,7 @@ func setBlogsRoute(
 		bgh := NewBlogGetHandler(deps.BlogService, deps.JWTer)
 		r.Get("/{id}", bgh.ServeHTTP)
 
-		// require login
-		bah := &BlogAddHandler{
-			Service:   deps.BlogService,
-			Validator: deps.Validator,
-		}
+		bah := NewBlogAddHandler(deps.BlogService, deps.Validator)
 		r.With(authMiddleWare.Middleware).Post("/", bah.ServeHTTP)
 
 		// require login
