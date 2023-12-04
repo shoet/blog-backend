@@ -10,7 +10,13 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/go-playground/validator/v10"
+	"github.com/shoet/blog/clocker"
 	"github.com/shoet/blog/config"
+	"github.com/shoet/blog/logging"
+	"github.com/shoet/blog/services"
+	"github.com/shoet/blog/store"
+	"github.com/shoet/blog/util"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -25,7 +31,11 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 		return nil, fmt.Errorf("failed to create listener in NewServer(): %w", err)
 	}
 	log.Printf("server listening on %s", l.Addr().String())
-	mux, err := NewMux(ctx, cfg)
+	deps, err := BuildMuxDependencies(ctx, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build mux dependencies in NewServer(): %w", err)
+	}
+	mux, err := NewMux(ctx, deps)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create mux in NewServer(): %w", err)
 	}
@@ -33,6 +43,60 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 		Handler: mux,
 	}
 	return &Server{srv: srv, l: l}, nil
+}
+
+func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependencies, error) {
+	db, err := store.NewDBMySQL(ctx, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create db: %w", err)
+	}
+	kvs, err := store.NewRedisKVS(
+		ctx,
+		cfg.KVSHost,
+		cfg.KVSPort,
+		cfg.KVSUser,
+		cfg.KVSPass,
+		cfg.JWTExpiresInSec,
+		cfg.KVSTlsEnabled,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create redis kvs: %w", err)
+	}
+	c := clocker.RealClocker{}
+	jwter := util.NewJWTer(kvs, &c, []byte(cfg.JWTSecret), cfg.JWTExpiresInSec)
+
+	blogRepo := store.BlogRepository{Clocker: &c}
+	blogService := services.NewBlogService(db, &blogRepo)
+
+	userRepo, err := store.NewUserRepository(&c)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create user repository: %w", err)
+	}
+
+	authService, err := services.NewAuthService(db, userRepo, jwter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create auth service: %w", err)
+	}
+	awsStorage, err := services.NewAWSS3StorageService(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create aws storage: %w", err)
+	}
+
+	logger := logging.NewLogger(os.Stdout)
+	validator := validator.New()
+	cookie := NewCookieManager(cfg.Env, cfg.SiteDomain)
+
+	return &MuxDependencies{
+		Config:         cfg,
+		DB:             db,
+		BlogService:    blogService,
+		AuthService:    authService,
+		StorageService: awsStorage,
+		JWTer:          jwter,
+		Logger:         logger,
+		Validator:      validator,
+		Cookie:         cookie,
+	}, nil
 }
 
 func (s *Server) Run(ctx context.Context) error {

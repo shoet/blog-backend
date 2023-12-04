@@ -11,35 +11,42 @@ import (
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/shoet/blog/clocker"
-	"github.com/shoet/blog/config"
 	"github.com/shoet/blog/models"
 	"github.com/shoet/blog/services"
 )
 
 type JWTer struct {
-	kvs     services.KVSer
-	cfg     *config.Config
-	clocker clocker.Clocker
+	kvs               services.KVSer
+	clocker           clocker.Clocker
+	secretKey         []byte
+	tokenExpiresInSec int
 }
 
-func NewJWTer(kvs services.KVSer, cfg *config.Config, clocker clocker.Clocker) *JWTer {
+func NewJWTer(
+	kvs services.KVSer,
+	clocker clocker.Clocker,
+	secretKey []byte,
+	tokenExpiresInSec int,
+) *JWTer {
 	return &JWTer{
-		kvs:     kvs,
-		cfg:     cfg,
-		clocker: clocker,
+		kvs:               kvs,
+		clocker:           clocker,
+		secretKey:         secretKey,
+		tokenExpiresInSec: tokenExpiresInSec,
 	}
 }
 
 func (j *JWTer) GenerateToken(ctx context.Context, u *models.User) (string, error) {
 	uuid := uuid.New().String()
 	claims := jwt.RegisteredClaims{
-		ID:        uuid,
-		Subject:   "blog",
-		IssuedAt:  jwt.NewNumericDate(j.clocker.Now()),
-		ExpiresAt: jwt.NewNumericDate(j.clocker.Now().Add(time.Duration(j.cfg.JWTExpiresInSec) * time.Second)),
+		ID:       uuid,
+		Subject:  "blog",
+		IssuedAt: jwt.NewNumericDate(j.clocker.Now()),
+		ExpiresAt: jwt.NewNumericDate(
+			j.clocker.Now().Add(time.Duration(j.tokenExpiresInSec) * time.Second)),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	ss, err := token.SignedString([]byte(j.cfg.JWTSecret))
+	ss, err := token.SignedString(j.secretKey)
 	if err != nil {
 		return "", fmt.Errorf("failed to sign token: %w", err)
 	}
@@ -50,11 +57,16 @@ func (j *JWTer) GenerateToken(ctx context.Context, u *models.User) (string, erro
 	return ss, nil
 }
 
+var ErrSessionNotFound = errors.New("session is not found")
+
 func (j *JWTer) VerifyToken(ctx context.Context, token string) (models.UserId, error) {
 	// parse token
-	parsed, err := jwt.ParseWithClaims(token, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(j.cfg.JWTSecret), nil
-	})
+	parsed, err := jwt.ParseWithClaims(
+		token,
+		&jwt.RegisteredClaims{},
+		func(token *jwt.Token) (interface{}, error) {
+			return j.secretKey, nil
+		})
 	if err != nil {
 		return 0, fmt.Errorf("failed to parse token: %w", err)
 	}
@@ -65,7 +77,7 @@ func (j *JWTer) VerifyToken(ctx context.Context, token string) (models.UserId, e
 	v, err := j.kvs.Load(ctx, claims.ID)
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return 0, fmt.Errorf("session is not found")
+			return 0, ErrSessionNotFound
 		}
 		return 0, fmt.Errorf("failed to load token: %w", err)
 	}

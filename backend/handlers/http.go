@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/shoet/blog/logging"
 )
 
 func RespondJSON(w http.ResponseWriter, r *http.Request, statusCode int, body any) error {
@@ -21,37 +23,37 @@ func RespondJSON(w http.ResponseWriter, r *http.Request, statusCode int, body an
 
 func ResponsdBadRequest(w http.ResponseWriter, r *http.Request, err error) {
 	ctx := r.Context()
-	logger := GetLogger(ctx)
+	logger := logging.GetLogger(ctx)
 	resp := ErrorResponse{Message: ErrMessageBadRequest}
 	if err := RespondJSON(w, r, http.StatusBadRequest, resp); err != nil {
-		logger.Error().Msgf("failed to respond json error: %v", err)
+		logger.Error(fmt.Sprintf("failed to respond json error: %v", err))
 	}
 }
 
 func ResponsdNotFound(w http.ResponseWriter, r *http.Request, err error) {
 	ctx := r.Context()
-	logger := GetLogger(ctx)
+	logger := logging.GetLogger(ctx)
 	resp := ErrorResponse{Message: ErrMessageNotFound}
 	if err := RespondJSON(w, r, http.StatusNotFound, resp); err != nil {
-		logger.Error().Msgf("failed to respond json error: %v", err)
+		logger.Error(fmt.Sprintf("failed to respond json error: %v", err))
 	}
 }
 
 func ResponsdInternalServerError(w http.ResponseWriter, r *http.Request, err error) {
 	ctx := r.Context()
-	logger := GetLogger(ctx)
+	logger := logging.GetLogger(ctx)
 	resp := ErrorResponse{Message: ErrMessageInternalServerError}
 	if err := RespondJSON(w, r, http.StatusInternalServerError, resp); err != nil {
-		logger.Error().Msgf("failed to respond json error: %v", err)
+		logger.Error(fmt.Sprintf("failed to respond json error: %v", err))
 	}
 }
 
 func RespondUnauthorized(w http.ResponseWriter, r *http.Request, err error) {
 	ctx := r.Context()
-	logger := GetLogger(ctx)
+	logger := logging.GetLogger(ctx)
 	resp := ErrorResponse{Message: ErrMessageUnauthorized}
 	if err := RespondJSON(w, r, http.StatusUnauthorized, resp); err != nil {
-		logger.Error().Msgf("failed to respond json error: %v", err)
+		logger.Error(fmt.Sprintf("failed to respond json error: %v", err))
 	}
 }
 

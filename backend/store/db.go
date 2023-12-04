@@ -6,13 +6,16 @@ import (
 	"fmt"
 	"time"
 
+	sql_driver "database/sql/driver"
 	"github.com/go-sql-driver/mysql"
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/shoet/blog/config"
+	"github.com/shoet/blog/logging"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/qustavo/sqlhooks/v2"
 )
+
+type DB = *sqlx.DB
 
 func NewDBSQLite3(ctx context.Context) (*sqlx.DB, error) {
 	db, err := sql.Open("sqlite3", "database.sqlite")
@@ -41,6 +44,12 @@ func NewDBMySQL(ctx context.Context, cfg *config.Config) (*sqlx.DB, error) {
 		tlsConfigString = "true"
 	}
 
+	// register sql query logger
+	withHooksDriverName, err := InitSQLDriverWithLogs("mysql", &mysql.MySQLDriver{})
+	if err != nil {
+		return nil, fmt.Errorf("failed init sql driver: %w", err)
+	}
+
 	config := mysql.Config{
 		Addr:                 fmt.Sprintf("%s:%d", cfg.DBHost, cfg.DBPort),
 		User:                 cfg.DBUser,
@@ -52,7 +61,7 @@ func NewDBMySQL(ctx context.Context, cfg *config.Config) (*sqlx.DB, error) {
 		AllowNativePasswords: true,
 		TLSConfig:            tlsConfigString,
 	}
-	db, err := sql.Open("mysql", config.FormatDSN())
+	db, err := sql.Open(withHooksDriverName, config.FormatDSN())
 	if err != nil {
 		return nil, fmt.Errorf("failed open mysql: %w", err)
 	}
@@ -62,3 +71,32 @@ func NewDBMySQL(ctx context.Context, cfg *config.Config) (*sqlx.DB, error) {
 	xdb := sqlx.NewDb(db, "mysql")
 	return xdb, nil
 }
+
+func InitSQLDriverWithLogs(driverName string, driver sql_driver.Driver) (string, error) {
+	hooksDriverName := fmt.Sprintf("%sWithLoggerHooks", driverName)
+	for _, existingDriverName := range sql.Drivers() {
+		if existingDriverName == hooksDriverName {
+			return hooksDriverName, fmt.Errorf("driver %s already exists", hooksDriverName)
+		}
+	}
+	sql.Register(hooksDriverName, sqlhooks.Wrap(driver, &SQLQueryLoggerHooks{}))
+	return hooksDriverName, nil
+}
+
+type SQLQueryLoggerHooks struct{}
+
+func (s *SQLQueryLoggerHooks) Before(
+	ctx context.Context, query string, args ...interface{},
+) (context.Context, error) {
+	logger := logging.GetLogger(ctx)
+	logger.Info(fmt.Sprintf("query: %s\nargs: %v", query, args))
+	return ctx, nil
+}
+
+func (s *SQLQueryLoggerHooks) After(
+	ctx context.Context, query string, args ...interface{},
+) (context.Context, error) {
+	return ctx, nil
+}
+
+var _ sqlhooks.Hooks = (*SQLQueryLoggerHooks)(nil)

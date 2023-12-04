@@ -7,6 +7,7 @@ import (
 	"github.com/shoet/blog/options"
 )
 
+//go:generate go run github.com/matryer/moq -out services_moq.go . BlogManager AuthManager Storager
 type BlogManager interface {
 	ListBlog(ctx context.Context, option options.ListBlogOptions) ([]*models.Blog, error)
 	AddBlog(ctx context.Context, blog *models.Blog) (*models.Blog, error)
@@ -20,9 +21,6 @@ type BlogManager interface {
 type AuthManager interface {
 	Login(ctx context.Context, email string, password string) (string, error)
 	LoginSession(ctx context.Context, token string) (*models.User, error)
-	// Signup(ctx context.Context, email string, password string) (string, error)
-	// Signout(ctx context.Context, token string) error
-	// Unsubscribe(ctx context.Context) error
 }
 
 type Storager interface {

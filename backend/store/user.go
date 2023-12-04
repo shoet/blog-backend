@@ -12,6 +12,10 @@ type UserRepository struct {
 	Clocker clocker.Clocker
 }
 
+func NewUserRepository(clocker clocker.Clocker) (*UserRepository, error) {
+	return &UserRepository{Clocker: clocker}, nil
+}
+
 func (t *UserRepository) Get(
 	ctx context.Context, db Queryer, id models.UserId,
 ) (*models.User, error) {
