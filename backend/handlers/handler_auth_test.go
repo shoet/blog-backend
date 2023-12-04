@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -15,20 +14,21 @@ import (
 )
 
 func Test_AuthLoginHandler(t *testing.T) {
+	type requestBody struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
 	wantToken := "authtoken"
 	tests := []struct {
 		name      string
-		args      any
+		args      requestBody
 		status    int
 		want      any
 		setCookie bool
 	}{
 		{
 			name: "success",
-			args: struct {
-				Email    string `json:"email"`
-				Password string `json:"password"`
-			}{
+			args: requestBody{
 				Email:    "test@example.com",
 				Password: "test",
 			},
@@ -42,9 +42,7 @@ func Test_AuthLoginHandler(t *testing.T) {
 		},
 		{
 			name: "validation error",
-			args: struct {
-				Email string `json:"email"`
-			}{
+			args: requestBody{
 				Email: "test@example.com",
 			},
 			status: 400,
@@ -57,10 +55,7 @@ func Test_AuthLoginHandler(t *testing.T) {
 		},
 		{
 			name: "unauthorized",
-			args: struct {
-				Email    string `json:"email"`
-				Password string `json:"password"`
-			}{
+			args: requestBody{
 				Email:    "test@example.com",
 				Password: "test",
 			},
@@ -83,10 +78,13 @@ func Test_AuthLoginHandler(t *testing.T) {
 				ctx context.Context, email string, password string,
 			) (string, error) {
 				if tt.status == 200 {
+					if email != tt.args.Email {
+						t.Errorf("email is invalid. got: %s, want: %s", email, tt.args.Email)
+					}
+					if password != tt.args.Password {
+						t.Errorf("password is invalid. got: %s, want: %s", password, tt.args.Password)
+					}
 					return wantToken, nil
-				}
-				if tt.status == 500 {
-					return "", fmt.Errorf("failed to login")
 				}
 				return "", errors.New("failed to login")
 			}

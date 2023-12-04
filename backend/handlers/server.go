@@ -82,7 +82,7 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 		return nil, fmt.Errorf("failed to create aws storage: %w", err)
 	}
 
-	logger := logging.NewLogger()
+	logger := logging.NewLogger(os.Stdout)
 	validator := validator.New()
 	cookie := NewCookieManager(cfg.Env, cfg.SiteDomain)
 

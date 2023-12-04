@@ -30,7 +30,7 @@ func NewMux(
 	router := chi.NewRouter()
 	authMiddleWare := NewAuthorizationMiddleware(deps.JWTer)
 	corsMiddleWare := NewCORSMiddleWare(deps.Config)
-	router.Use(logging.WithLoggerMiddleware(*deps.Logger), corsMiddleWare)
+	router.Use(logging.WithLoggerMiddleware(deps.Logger), corsMiddleWare)
 
 	setHealthRoute(router)
 	setBlogsRoute(router, deps, authMiddleWare)

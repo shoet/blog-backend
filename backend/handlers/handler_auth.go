@@ -36,20 +36,20 @@ func (a *AuthLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 	if err := JsonToStruct(r, &reqBody); err != nil {
-		logger.Error().Msgf("failed to parse request body: %v", err)
+		logger.Error(fmt.Sprintf("failed to parse request body: %v", err))
 		ResponsdBadRequest(w, r, err)
 		return
 	}
 
 	if err := a.Validator.Struct(reqBody); err != nil {
-		logger.Error().Msgf("failed to validate request body: %v", err)
+		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
 		ResponsdBadRequest(w, r, err)
 		return
 	}
 
 	token, err := a.Service.Login(ctx, reqBody.Email, reqBody.Password)
 	if err != nil {
-		logger.Error().Msgf("failed login: %v", err)
+		logger.Error(fmt.Sprintf("failed login: %v", err))
 		RespondUnauthorized(w, r, err)
 		return
 	}
@@ -59,13 +59,13 @@ func (a *AuthLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		AuthToken: token,
 	}
 	if err := a.Cookie.SetCookie(w, "authToken", resp.AuthToken); err != nil {
-		logger.Error().Msgf("failed to set cookie: %v", err)
+		logger.Error(fmt.Sprintf("failed to set cookie: %v", err))
 		ResponsdInternalServerError(w, r, err)
 		return
 	}
 
 	if err := RespondJSON(w, r, http.StatusOK, resp); err != nil {
-		logger.Error().Msgf("failed to respond json response: %v", err)
+		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
 	return
 }
@@ -87,13 +87,13 @@ func (a *AuthSessionLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	logger := logging.GetLogger(ctx)
 	token := r.Header.Get("Authorization")
 	if token == "" {
-		logger.Error().Msgf("failed to get authorization header")
+		logger.Error(fmt.Sprintf("failed to get authorization header"))
 		RespondUnauthorized(w, r, fmt.Errorf("failed to get authorization header"))
 		return
 	}
 
 	if !strings.HasPrefix(token, "Bearer ") {
-		logger.Error().Msgf("failed invalid authorization header")
+		logger.Error(fmt.Sprintf("failed to get authorization header"))
 		RespondUnauthorized(w, r, fmt.Errorf("failed to get authorization header"))
 		return
 	}
@@ -102,12 +102,12 @@ func (a *AuthSessionLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	u, err := a.Service.LoginSession(ctx, token)
 	if err != nil {
-		logger.Error().Msgf("failed login session: %v", err)
+		logger.Error(fmt.Sprintf("failed login: %v", err))
 		RespondUnauthorized(w, r, err)
 		return
 	}
 	if err := RespondJSON(w, r, http.StatusOK, u); err != nil {
-		logger.Error().Msgf("failed to respond json response: %v", err)
+		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
 	return
 }
@@ -134,7 +134,7 @@ func (a *AuthLogoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Message: "success",
 	}
 	if err := RespondJSON(w, r, http.StatusOK, resp); err != nil {
-		logger.Error().Msgf("failed to respond json response: %v", err)
+		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
 	return
 }

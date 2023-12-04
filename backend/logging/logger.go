@@ -2,35 +2,48 @@ package logging
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"net/http"
-	"os"
 
 	"github.com/rs/zerolog"
 )
 
 const LoggerKey = "log"
 
-type Logger = zerolog.Logger
-
-func NewLogger() *zerolog.Logger {
-	logger := zerolog.
-		New(os.Stdout).
-		With().
-		Timestamp().
-		Logger()
-	return &logger
-}
-
-func WithLoggerMiddleware(logger zerolog.Logger) func(next http.Handler) http.Handler {
+func WithLoggerMiddleware(logger *Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := context.WithValue(r.Context(), LoggerKey, logger)
-			logger.Info().Msgf("request: %s %s", r.Method, r.URL.Path)
+			logger.Info(fmt.Sprintf("request: %s %s", r.Method, r.URL.Path))
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }
 
-func GetLogger(ctx context.Context) zerolog.Logger {
-	return ctx.Value(LoggerKey).(zerolog.Logger)
+func GetLogger(ctx context.Context) *Logger {
+	return ctx.Value(LoggerKey).(*Logger)
+}
+
+type Logger struct {
+	logger *zerolog.Logger
+}
+
+func NewLogger(w io.Writer) *Logger {
+	logger := zerolog.
+		New(w).
+		With().
+		Timestamp().
+		Logger()
+	return &Logger{
+		logger: &logger,
+	}
+}
+
+func (l *Logger) Info(message string) {
+	l.logger.Info().Msg(message)
+}
+
+func (l *Logger) Error(message string) {
+	l.logger.Error().Msg(message)
 }
