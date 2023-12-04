@@ -87,14 +87,16 @@ func (a *AuthSessionLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	logger := logging.GetLogger(ctx)
 	token := r.Header.Get("Authorization")
 	if token == "" {
-		logger.Error(fmt.Sprintf("failed to get authorization header"))
-		RespondUnauthorized(w, r, fmt.Errorf("failed to get authorization header"))
+		msg := "failed to get authorization header"
+		logger.Error(fmt.Sprintf(msg))
+		RespondUnauthorized(w, r, fmt.Errorf(msg))
 		return
 	}
 
 	if !strings.HasPrefix(token, "Bearer ") {
-		logger.Error(fmt.Sprintf("failed to get authorization header"))
-		RespondUnauthorized(w, r, fmt.Errorf("failed to get authorization header"))
+		msg := "passing invalid authorization header format"
+		logger.Error(fmt.Sprintf(msg))
+		RespondUnauthorized(w, r, fmt.Errorf(msg))
 		return
 	}
 

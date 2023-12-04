@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/shoet/blog/models"
 	"github.com/shoet/blog/testutil"
 )
 
@@ -126,6 +127,155 @@ func Test_AuthLoginHandler(t *testing.T) {
 				if !errors.Is(err, http.ErrNoCookie) {
 					t.Errorf("cookie is set")
 				}
+			}
+		})
+	}
+
+}
+
+func Test_AuthSessionLoginHandler(t *testing.T) {
+	wantToken := "authtoken"
+	wantUser := &models.User{
+		Id:    1,
+		Name:  "test",
+		Email: "test@example.com",
+	}
+	type args struct {
+		authToken           string
+		setToken            bool
+		headerFormatInvalid bool
+	}
+	type want struct {
+		user      *models.User
+		authToken string
+		response  interface{}
+	}
+	tests := []struct {
+		name   string
+		args   args
+		status int
+		want   want
+	}{
+		{
+			name: "success",
+			args: args{
+				authToken: wantToken,
+				setToken:  true,
+			},
+			status: 200,
+			want: want{
+				user:      wantUser,
+				authToken: wantToken,
+				response:  wantUser,
+			},
+		},
+		{
+			name: "token no set",
+			args: args{
+				setToken: false,
+			},
+			status: 401,
+			want: want{
+				user:      nil,
+				authToken: "",
+				response: struct {
+					Message string `json:"message"`
+				}{
+					Message: "Unauthorized",
+				},
+			},
+		},
+		{
+			name: "token format invalid",
+			args: args{
+				setToken:            true,
+				headerFormatInvalid: true,
+			},
+			status: 401,
+			want: want{
+				user:      nil,
+				authToken: wantToken,
+				response: struct {
+					Message string `json:"message"`
+				}{
+					Message: "Unauthorized",
+				},
+			},
+		},
+		{
+			name: "token is empty",
+			args: args{
+				setToken:  true,
+				authToken: "",
+			},
+			status: 401,
+			want: want{
+				user:      nil,
+				authToken: "",
+				response: struct {
+					Message string `json:"message"`
+				}{
+					Message: "Unauthorized",
+				},
+			},
+		},
+		{
+			name: "login failed",
+			args: args{
+				setToken:  true,
+				authToken: wantToken,
+			},
+			status: 401,
+			want: want{
+				user:      nil,
+				authToken: wantToken,
+				response: struct {
+					Message string `json:"message"`
+				}{
+					Message: "Unauthorized",
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			authManagerMock := &AuthManagerMock{}
+			authManagerMock.LoginSessionFunc = func(
+				ctx context.Context, token string,
+			) (*models.User, error) {
+				if tt.status == 200 {
+					if token != tt.args.authToken {
+						t.Errorf("token is invalid. got: %s, want: %s", token, tt.args.authToken)
+					}
+					return tt.want.user, nil
+				}
+				return nil, errors.New("failed to login")
+			}
+
+			sut := NewAuthSessionLoginHandler(authManagerMock)
+
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/", nil)
+			r = testutil.SetLoggerContextToRequest(t, r)
+
+			if tt.args.setToken {
+				r.Header.Set("Authorization", "Bearer "+tt.args.authToken)
+			}
+			if tt.args.headerFormatInvalid {
+				r.Header.Set("Authorization", tt.args.authToken)
+			}
+
+			sut.ServeHTTP(w, r)
+
+			wb, err := json.Marshal(tt.want.response)
+			if err != nil {
+				t.Fatalf("cannot marshal want: %v", err)
+			}
+
+			resp := w.Result()
+			if err := testutil.AssertResponse(t, resp, tt.status, wb); err != nil {
+				t.Error(err)
 			}
 		})
 	}
