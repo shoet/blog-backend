@@ -229,6 +229,15 @@ type BlogPutHandler struct {
 	Validator *validator.Validate
 }
 
+func NewBlogPutHandler(
+	blogService BlogManager, validator *validator.Validate,
+) *BlogPutHandler {
+	return &BlogPutHandler{
+		Service:   blogService,
+		Validator: validator,
+	}
+}
+
 func (p *BlogPutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)

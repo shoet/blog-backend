@@ -561,3 +561,140 @@ func Test_BlogDeleteHandler(t *testing.T) {
 		})
 	}
 }
+
+func Test_BlogPutHandler(t *testing.T) {
+	wantBlog := &models.Blog{
+		Id:                     1,
+		AuthorId:               1,
+		Title:                  "test",
+		Content:                "test",
+		Description:            "test",
+		ThumbnailImageFileName: "test",
+		IsPublic:               false,
+		Tags:                   []string{"test"},
+	}
+
+	type requestBody struct {
+		Id                     models.BlogId `json:"id" validate:"required"`
+		AuthorId               models.UserId `json:"authorId" validate:"required"`
+		Title                  string        `json:"title"`
+		Content                string        `json:"content"`
+		Description            string        `json:"description"`
+		ThumbnailImageFileName string        `json:"thumbnailImageFileName"`
+		IsPublic               bool          `json:"isPublic"`
+		Tags                   []string      `json:"tags"`
+	}
+
+	type args struct {
+		requestBody requestBody
+	}
+
+	tests := []struct {
+		id     string
+		args   args
+		status int
+		want   interface{}
+	}{
+		{
+
+			id: "success_normal",
+			args: args{
+				requestBody: requestBody{
+					Id:                     wantBlog.Id,
+					AuthorId:               wantBlog.AuthorId,
+					Title:                  wantBlog.Title,
+					Content:                wantBlog.Content,
+					Description:            wantBlog.Description,
+					ThumbnailImageFileName: wantBlog.ThumbnailImageFileName,
+					IsPublic:               wantBlog.IsPublic,
+					Tags:                   wantBlog.Tags,
+				},
+			},
+			status: 200,
+			want:   wantBlog,
+		},
+		{
+			id: "failed_validation_error_description",
+			args: args{
+				requestBody: requestBody{
+					Id:                     wantBlog.Id,
+					Title:                  wantBlog.Title,
+					Content:                wantBlog.Content,
+					ThumbnailImageFileName: wantBlog.ThumbnailImageFileName,
+					IsPublic:               wantBlog.IsPublic,
+					Tags:                   wantBlog.Tags,
+				},
+			},
+			status: 400,
+			want: struct {
+				Message string `json:"message"`
+			}{
+				Message: "BadRequest",
+			},
+		},
+		{
+			id: "failed_internal_server_error",
+			args: args{
+				requestBody: requestBody{
+					Id:                     wantBlog.Id,
+					AuthorId:               wantBlog.AuthorId,
+					Title:                  wantBlog.Title,
+					Content:                wantBlog.Content,
+					Description:            wantBlog.Description,
+					ThumbnailImageFileName: wantBlog.ThumbnailImageFileName,
+					IsPublic:               wantBlog.IsPublic,
+					Tags:                   wantBlog.Tags,
+				},
+			},
+			status: 500,
+			want: struct {
+				Message string `json:"message"`
+			}{
+				Message: "InternalServerError",
+			},
+		},
+	}
+
+	validator := validator.New()
+	for _, tt := range tests {
+		t.Run(tt.id, func(t *testing.T) {
+
+			blogServiceMock := &BlogManagerMock{}
+			blogServiceMock.PutBlogFunc = func(
+				ctx context.Context, blog *models.Blog,
+			) (*models.Blog, error) {
+				if tt.id == "failed_internal_server_error" {
+					return nil, errors.New("internal server error")
+				}
+				if diff := cmp.Diff(tt.want, blog); diff != "" {
+					t.Errorf("want: %v, got: %v", tt.want, blog)
+				}
+				return tt.want.(*models.Blog), nil
+			}
+
+			sut := NewBlogPutHandler(blogServiceMock, validator)
+
+			var buffer bytes.Buffer
+			if err := json.NewEncoder(&buffer).Encode(tt.args.requestBody); err != nil {
+				t.Fatalf("failed to encode request body: %v", err)
+			}
+
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/", &buffer)
+			r = testutil.SetLoggerContextToRequest(t, r)
+
+			sut.ServeHTTP(w, r)
+
+			wb, err := json.Marshal(tt.want)
+			if err != nil {
+				t.Fatalf("cannot marshal want: %v", err)
+			}
+
+			resp := w.Result()
+			if err := testutil.AssertResponse(t, resp, tt.status, wb); err != nil {
+				t.Error(err)
+			}
+
+		})
+	}
+}
