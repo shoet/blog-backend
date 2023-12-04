@@ -21,9 +21,6 @@ type BlogManager interface {
 type AuthManager interface {
 	Login(ctx context.Context, email string, password string) (string, error)
 	LoginSession(ctx context.Context, token string) (*models.User, error)
-	// Signup(ctx context.Context, email string, password string) (string, error)
-	// Signout(ctx context.Context, token string) error
-	// Unsubscribe(ctx context.Context) error
 }
 
 type Storager interface {

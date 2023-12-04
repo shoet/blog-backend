@@ -455,5 +455,109 @@ func Test_BlogAddHandler(t *testing.T) {
 
 		})
 	}
+}
 
+func Test_BlogDeleteHandler(t *testing.T) {
+	wantBlogId := models.BlogId(1)
+
+	type requestBody struct {
+		Id      models.BlogId `json:"id"`
+		IdDummy models.BlogId `json:"idDummy,omitempty"`
+	}
+
+	type args struct {
+		requestBody requestBody
+	}
+
+	tests := []struct {
+		id     string
+		args   args
+		status int
+		want   interface{}
+	}{
+		{
+			id: "success_normal",
+			args: args{
+				requestBody: requestBody{
+					Id: wantBlogId,
+				},
+			},
+			status: 200,
+			want: struct {
+				BlogId models.BlogId `json:"id"`
+			}{
+				BlogId: wantBlogId,
+			},
+		},
+		{
+			id: "failed_validation_error_id",
+			args: args{
+				requestBody: requestBody{
+					IdDummy: wantBlogId,
+				},
+			},
+			status: 400,
+			want: struct {
+				Message string `json:"message"`
+			}{
+				Message: "BadRequest",
+			},
+		},
+		{
+			id: "failed_internal_server_error",
+			args: args{
+				requestBody: requestBody{
+					Id: wantBlogId,
+				},
+			},
+			status: 500,
+			want: struct {
+				Message string `json:"message"`
+			}{
+				Message: "InternalServerError",
+			},
+		},
+	}
+
+	validator := validator.New()
+
+	for _, tt := range tests {
+		t.Run(tt.id, func(t *testing.T) {
+			blogServiceMock := &BlogManagerMock{}
+			blogServiceMock.DeleteBlogFunc = func(ctx context.Context, id models.BlogId) error {
+				if tt.id == "success_normal" {
+					if id != wantBlogId {
+						t.Errorf("want: %v, got: %v", wantBlogId, id)
+					}
+				}
+				if tt.id == "failed_internal_server_error" {
+					return errors.New("internal server error")
+				}
+				return nil
+			}
+
+			sut := NewBlogDeleteHandler(blogServiceMock, validator)
+
+			var buffer bytes.Buffer
+			if err := json.NewEncoder(&buffer).Encode(tt.args.requestBody); err != nil {
+				t.Fatalf("failed to encode request body: %v", err)
+			}
+
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/", &buffer)
+			r = testutil.SetLoggerContextToRequest(t, r)
+
+			sut.ServeHTTP(w, r)
+
+			wb, err := json.Marshal(tt.want)
+			if err != nil {
+				t.Fatalf("cannot marshal want: %v", err)
+			}
+
+			resp := w.Result()
+			if err := testutil.AssertResponse(t, resp, tt.status, wb); err != nil {
+				t.Error(err)
+			}
+		})
+	}
 }

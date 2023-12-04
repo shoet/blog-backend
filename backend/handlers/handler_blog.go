@@ -179,6 +179,15 @@ type BlogDeleteHandler struct {
 	Validator *validator.Validate
 }
 
+func NewBlogDeleteHandler(
+	blogService BlogManager, validator *validator.Validate,
+) *BlogDeleteHandler {
+	return &BlogDeleteHandler{
+		Service:   blogService,
+		Validator: validator,
+	}
+}
+
 func (d *BlogDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)

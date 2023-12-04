@@ -61,11 +61,7 @@ func setBlogsRoute(
 		bah := NewBlogAddHandler(deps.BlogService, deps.Validator)
 		r.With(authMiddleWare.Middleware).Post("/", bah.ServeHTTP)
 
-		// require login
-		bdh := &BlogDeleteHandler{
-			Service:   deps.BlogService,
-			Validator: deps.Validator,
-		}
+		bdh := NewBlogDeleteHandler(deps.BlogService, deps.Validator)
 		r.With(authMiddleWare.Middleware).Delete("/", bdh.ServeHTTP)
 
 		// require login
