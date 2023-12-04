@@ -291,6 +291,12 @@ type BlogListAdminHandler struct {
 	Service BlogManager
 }
 
+func NewBlogListAdminHandler(blogService BlogManager) *BlogListAdminHandler {
+	return &BlogListAdminHandler{
+		Service: blogService,
+	}
+}
+
 func (l *BlogListAdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)

@@ -59,6 +59,9 @@ func Test_BlogListHandler(t *testing.T) {
 			blogServiceMock.ListBlogFunc = func(
 				ctx context.Context, option options.ListBlogOptions,
 			) ([]*models.Blog, error) {
+				if !option.IsPublic {
+					t.Errorf("want: %v, got: %v", true, option.IsPublic)
+				}
 				if tt.status == 200 {
 					return tt.want.([]*models.Blog), nil
 				}
@@ -695,6 +698,75 @@ func Test_BlogPutHandler(t *testing.T) {
 				t.Error(err)
 			}
 
+		})
+	}
+}
+
+func Test_BlogListAdminHandler(t *testing.T) {
+	clocker := &clocker.FiexedClocker{}
+
+	tests := []struct {
+		name   string
+		status int
+		want   interface{}
+	}{
+		{
+			name:   "success",
+			status: 200,
+			want: []*models.Blog{
+				{
+					Id:       1,
+					Title:    "test",
+					Content:  "test",
+					IsPublic: true,
+					Created:  clocker.Now(),
+					Modified: clocker.Now(),
+				},
+			},
+		},
+		{
+			name:   "internal server error",
+			status: 500,
+			want: struct {
+				Message string `json:"message"`
+			}{
+				Message: "InternalServerError",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			blogServiceMock := &BlogManagerMock{}
+			blogServiceMock.ListBlogFunc = func(
+				ctx context.Context, option options.ListBlogOptions,
+			) ([]*models.Blog, error) {
+				if option.IsPublic {
+					t.Errorf("want: %v, got: %v", false, option.IsPublic)
+				}
+				if tt.status == 200 {
+					return tt.want.([]*models.Blog), nil
+				}
+				return nil, errors.New("internal server error")
+			}
+
+			sut := NewBlogListAdminHandler(blogServiceMock)
+
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("GET", "/", nil)
+			r = testutil.SetLoggerContextToRequest(t, r)
+
+			sut.ServeHTTP(w, r)
+
+			wb, err := json.Marshal(tt.want)
+			if err != nil {
+				t.Fatalf("cannot marshal want: %v", err)
+			}
+
+			resp := w.Result()
+			if err := testutil.AssertResponse(t, resp, tt.status, wb); err != nil {
+				t.Error(err)
+			}
 		})
 	}
 }

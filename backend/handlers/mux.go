@@ -108,9 +108,7 @@ func setAdminRoute(
 	r chi.Router, deps *MuxDependencies, authMiddleWare *AuthorizationMiddleware,
 ) {
 	r.Route("/admin", func(r chi.Router) {
-		bla := &BlogListAdminHandler{
-			Service: deps.BlogService,
-		}
+		bla := NewBlogListAdminHandler(deps.BlogService)
 		r.With(authMiddleWare.Middleware).Get("/blogs", bla.ServeHTTP)
 	})
 }
