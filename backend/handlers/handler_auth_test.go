@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -279,5 +280,76 @@ func Test_AuthSessionLoginHandler(t *testing.T) {
 			}
 		})
 	}
+}
 
+func Test_AuthLogoutHandler(t *testing.T) {
+	t.Skip("TODO")
+
+	type response struct {
+		Message string `json:"message"`
+	}
+	wantToken := "authToken"
+	type want struct {
+		isSetCookie bool
+		response
+	}
+	tests := []struct {
+		name   string
+		args   interface{}
+		status int
+		want   want
+	}{
+		{
+			name:   "success",
+			args:   nil,
+			status: 200,
+			want: want{
+				isSetCookie: false,
+				response: response{
+					Message: "success",
+				},
+			},
+		},
+	}
+
+	cookie := NewCookieManager("test", "https://test.example.com")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sut := NewAuthLogoutHandler(cookie)
+
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/", nil)
+			r = testutil.SetLoggerContextToRequest(t, r)
+
+			cookie.SetCookie(w, "authToken", wantToken)
+			fmt.Println(w.Header().Get("Set-Cookie"))
+
+			sut.ServeHTTP(w, r)
+
+			fmt.Println(w.Header().Get("Set-Cookie"))
+			wb, err := json.Marshal(tt.want)
+			if err != nil {
+				t.Fatalf("cannot marshal want: %v", err)
+			}
+
+			resp := w.Result()
+			if err := testutil.AssertResponse(t, resp, tt.status, wb); err != nil {
+				t.Error(err)
+			}
+
+			parser := &http.Request{Header: http.Header{"Cookie": resp.Header["Set-Cookie"]}}
+			if !tt.want.isSetCookie {
+				token, err := parser.Cookie("authToken")
+				fmt.Println("### token")
+				fmt.Println(token)
+				fmt.Println(token.Value)
+				if err != nil {
+					t.Errorf("failed to get cookie: %v", err)
+				}
+				if token.Value == wantToken {
+					t.Errorf("cookie is not cleared")
+				}
+			}
+		})
+	}
 }

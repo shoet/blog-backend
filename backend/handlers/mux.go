@@ -52,15 +52,10 @@ func setBlogsRoute(
 	r chi.Router, deps *MuxDependencies, authMiddleWare *AuthorizationMiddleware,
 ) {
 	r.Route("/blogs", func(r chi.Router) {
-		blh := &BlogListHandler{
-			Service: deps.BlogService,
-		}
+		blh := NewBlogListHandler(deps.BlogService)
 		r.Get("/", blh.ServeHTTP)
 
-		bgh := &BlogGetHandler{
-			Service: deps.BlogService,
-			jwter:   deps.JWTer,
-		}
+		bgh := NewBlogGetHandler(deps.BlogService, deps.JWTer)
 		r.Get("/{id}", bgh.ServeHTTP)
 
 		// require login

@@ -22,6 +22,10 @@ func WithLoggerMiddleware(logger *Logger) func(next http.Handler) http.Handler {
 }
 
 func GetLogger(ctx context.Context) *Logger {
+	l := ctx.Value(LoggerKey)
+	if l == nil {
+		fmt.Println("logger is not set in context")
+	}
 	return ctx.Value(LoggerKey).(*Logger)
 }
 

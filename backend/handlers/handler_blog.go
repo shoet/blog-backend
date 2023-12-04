@@ -18,6 +18,12 @@ type BlogListHandler struct {
 	Service BlogManager
 }
 
+func NewBlogListHandler(blogService BlogManager) *BlogListHandler {
+	return &BlogListHandler{
+		Service: blogService,
+	}
+}
+
 func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)
@@ -47,6 +53,13 @@ type BlogGetHandler struct {
 	jwter   services.JWTer
 }
 
+func NewBlogGetHandler(blogService BlogManager, jwter services.JWTer) *BlogGetHandler {
+	return &BlogGetHandler{
+		Service: blogService,
+		jwter:   jwter,
+	}
+}
+
 func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)
@@ -63,6 +76,11 @@ func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	blog, err := l.Service.GetBlog(ctx, models.BlogId(idInt))
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to get blog: %v", err))
+		ResponsdInternalServerError(w, r, err)
+		return
+	}
 	if blog == nil {
 		ResponsdNotFound(w, r, err)
 		return
