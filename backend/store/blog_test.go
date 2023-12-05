@@ -409,11 +409,133 @@ func Test_BlogRepository_Get(t *testing.T) {
 
 			got, err := sut.Get(ctx, tx, blogId)
 			if err != nil {
-				t.Fatalf("failed to delete blog: %v", err)
+				t.Fatalf("failed to get blog: %v", err)
 			}
 
 			cmpOptions := cmpopts.IgnoreFields(models.Blog{}, "Id")
 			if diff := cmp.Diff(tt.want.blog, got, cmpOptions); diff != "" {
+				t.Errorf("differs: (-want +got)\n%s", diff)
+			}
+		})
+	}
+
+}
+func Test_BlogRepository_Put(t *testing.T) {
+	clocker := &clocker.FiexedClocker{}
+	ctx := context.Background()
+	db, err := testutil.NewDBMySQLForTest(t, ctx)
+	if err != nil {
+		t.Fatalf("failed to create db: %v", err)
+	}
+	testutil.RepositoryTestPrepare(t, ctx, db)
+
+	sut := NewBlogRepository(clocker)
+
+	type args struct {
+		prepareCreateBlog []*models.Blog
+		blog              *models.Blog
+	}
+
+	type want struct {
+		blog *models.Blog
+		err  error
+	}
+
+	tests := []struct {
+		id   string
+		args args
+		want want
+	}{
+		{
+			id: "success",
+			args: args{
+				prepareCreateBlog: []*models.Blog{
+					{
+						AuthorId:               1,
+						Title:                  "title",
+						Content:                "content",
+						Description:            "description",
+						ThumbnailImageFileName: "thumbnail_image_file_name",
+						IsPublic:               true,
+						Created:                clocker.Now(),
+						Modified:               clocker.Now(),
+					},
+				},
+				blog: &models.Blog{
+					AuthorId:               1,
+					Title:                  "titleeee",
+					Content:                "content",
+					Description:            "description",
+					ThumbnailImageFileName: "thumbnail_image_file_name",
+					IsPublic:               true,
+					Created:                clocker.Now(),
+					Modified:               clocker.Now(),
+				},
+			},
+			want: want{
+				blog: &models.Blog{
+					AuthorId:               1,
+					Title:                  "titleeee",
+					Content:                "content",
+					Description:            "description",
+					ThumbnailImageFileName: "thumbnail_image_file_name",
+					IsPublic:               true,
+					Created:                clocker.Now(),
+					Modified:               clocker.Now(),
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.id, func(t *testing.T) {
+			tx := db.MustBegin()
+			defer tx.Rollback()
+
+			var blogId models.BlogId
+			for _, b := range tt.args.prepareCreateBlog {
+				prepareTask := `
+				INSERT INTO blogs
+					(
+						author_id, title, content, description, 
+						thumbnail_image_file_name, is_public, created, modified)
+				VALUES
+					(?, ?, ?, ?, ?, ?, ?, ?)
+				`
+				res, err := tx.ExecContext(
+					ctx, prepareTask,
+					b.AuthorId, b.Title, b.Content, b.Description,
+					b.ThumbnailImageFileName, b.IsPublic, b.Created, b.Modified)
+				if err != nil {
+					t.Fatalf("failed to prepare task: %v", err)
+				}
+
+				id, err := res.LastInsertId()
+				if err != nil {
+					t.Fatalf("failed to get last insert id: %v", err)
+				}
+				blogId = models.BlogId(id)
+			}
+
+			tt.args.blog.Id = blogId
+
+			blogId, err := sut.Put(ctx, tx, tt.args.blog)
+			if err != nil {
+				t.Fatalf("failed to put blog: %v", err)
+			}
+
+			selectQuery := `SELECT * FROM blogs WHERE id = ?`
+			row := tx.QueryRowxContext(ctx, selectQuery, blogId)
+			var got models.Blog
+			if err := row.Scan(
+				&got.Id, &got.AuthorId, &got.Title, &got.Content, &got.Description,
+				&got.ThumbnailImageFileName, &got.IsPublic, &got.Created, &got.Modified,
+			); err != nil {
+				t.Fatalf("failed to scan row: %v", err)
+			}
+
+			cmpOptions := cmpopts.IgnoreFields(models.Blog{}, "Id")
+			if diff := cmp.Diff(tt.want.blog, &got, cmpOptions); diff != "" {
 				t.Errorf("differs: (-want +got)\n%s", diff)
 			}
 		})
