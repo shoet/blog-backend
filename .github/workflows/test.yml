@@ -9,6 +9,28 @@ name: test
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      BLOG_ENV: ${{ secrets.BLOG_ENV }}
+      BLOG_APP_PORT: ${{ secrets.BLOG_APP_PORT }}
+      BLOG_AWS_S3_BUCKET: ${{ secrets.BLOG_AWS_S3_BUCKET }}
+      BLOG_AWS_S3_THUMBNAIL_DIRECTORY: ${{ secrets.BLOG_AWS_S3_THUMBNAIL_DIRECTORY }}
+      BLOG_AWS_S3_CONTENT_IMAGE_DIRECTORY: ${{ secrets.BLOG_AWS_S3_CONTENT_IMAGE_DIRECTORY }}
+      ADMIN_NAME: ${{ secrets.ADMIN_NAME }}
+      ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      BLOG_DB_HOST: 127.0.0.1
+      BLOG_DB_PORT: 33061
+      BLOG_DB_USER: blog
+      BLOG_DB_PASS: blog
+      BLOG_DB_NAME: blog
+      BLOG_DB_TLS_ENABLED: false
+      BLOG_KVS_HOST: localhost
+      BLOG_KVS_PORT: 6379
+      BLOG_KVS_USER: default
+      BLOG_KVS_PASS: redispw
+      BLOG_KVS_TLS_ENABLED: false
+
     services:
       mysql:
         image: mysql:8.0.33
@@ -21,9 +43,9 @@ jobs:
           - 33061:3306
         env:
           MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-          MYSQL_USER: blog_user
-          MYSQL_PASSWORD: blog
-          MYSQL_DATABASE: blog
+          MYSQL_USER: ${{ secrets.BLOG_DB_USER }}
+          MYSQL_PASSWORD: ${{ secrets.BLOG_DB_PASS }}
+          MYSQL_DATABASE: ${{ secrets.BLOG_DB_NAME }}
       redis:
         image: redis:latest
         options: >-
