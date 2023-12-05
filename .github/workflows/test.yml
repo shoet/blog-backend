@@ -43,9 +43,9 @@ jobs:
           - 33061:3306
         env:
           MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-          MYSQL_USER: ${{ secrets.BLOG_DB_USER }}
-          MYSQL_PASSWORD: ${{ secrets.BLOG_DB_PASS }}
-          MYSQL_DATABASE: ${{ secrets.BLOG_DB_NAME }}
+          MYSQL_USER: blog
+          MYSQL_PASSWORD: blog
+          MYSQL_DATABASE: blog
       redis:
         image: redis:latest
         options: >-
