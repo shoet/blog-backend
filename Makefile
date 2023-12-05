@@ -43,11 +43,11 @@ generate: ## Generate codes
 
 .PHONY: create-migrate
 create-migrate: ## Create migrate file
-	sql-migrate new
+	cd _tools && sql-migrate new
 
-.PHONY: db-migrate
-db-migrate: ## Execute migrate
-	sql-migrate up
+.PHONY: migrate-dev
+migrate-dev: ## Execute migrate
+	cd _tools && sql-migrate up
 
 .PHONY: help
 help: ## Show options

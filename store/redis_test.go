@@ -7,7 +7,7 @@ import (
 
 func Test_NewRedisKVS(t *testing.T) {
 	ctx := context.Background()
-	_, err := NewRedisKVS(ctx, "127.0.0.1", 6379, "default", "redispw", 10, false, nil)
+	_, err := NewRedisKVS(ctx, "127.0.0.1", 6379, "default", "redispw", 10, false)
 	if err != nil {
 		t.Fatalf("failed to create redis kvs: %v", err)
 	}
@@ -15,7 +15,7 @@ func Test_NewRedisKVS(t *testing.T) {
 
 func Test_Save(t *testing.T) {
 	ctx := context.Background()
-	kvs, err := NewRedisKVS(ctx, "127.0.0.1", 6379, "default", "redispw", 10, false, nil)
+	kvs, err := NewRedisKVS(ctx, "127.0.0.1", 6379, "default", "redispw", 10, false)
 	if err != nil {
 		t.Fatalf("failed to create redis kvs: %v", err)
 	}
@@ -27,7 +27,7 @@ func Test_Save(t *testing.T) {
 
 func Test_Load(t *testing.T) {
 	ctx := context.Background()
-	kvs, err := NewRedisKVS(ctx, "127.0.0.1", 6379, "default", "redispw", 300, false, nil)
+	kvs, err := NewRedisKVS(ctx, "127.0.0.1", 6379, "default", "redispw", 300, false)
 	if err != nil {
 		t.Fatalf("failed to create redis kvs: %v", err)
 	}

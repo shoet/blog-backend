@@ -1,11 +1,6 @@
 development:
-  dialect: sqlite3
-  datasource: database.sqlite
-  dir: migrations/sqlite3
-
-staging:
   dialect: mysql
-  datasource: blog_user:blog@tcp(127.0.0.1)/blog?charset=utf8mb4&parseTime=true
+  datasource: blog:blog@tcp(127.0.0.1)/blog?charset=utf8mb4&parseTime=true
   dir: migrations/mysql
 
 production:

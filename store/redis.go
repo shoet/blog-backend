@@ -24,7 +24,6 @@ func NewRedisKVS(
 	password string,
 	expirationSec int,
 	enableTLS bool,
-	options ...RedisOption,
 ) (*RedisKVS, error) {
 	redisOpt := &redis.Options{
 		Network:  "tcp",
@@ -39,10 +38,6 @@ func NewRedisKVS(
 		}
 	}
 
-	for _, opt := range options {
-		opt(redisOpt)
-	}
-
 	cli := redis.NewClient(redisOpt)
 	if res := cli.Ping(ctx); res.Err() != nil {
 		return nil, fmt.Errorf("failed to ping redis: %w", res.Err())
@@ -52,14 +47,6 @@ func NewRedisKVS(
 		expirationSec: expirationSec,
 	}
 	return kvs, nil
-}
-
-func WithTlS() func(*redis.Options) {
-	return func(opt *redis.Options) {
-		opt.TLSConfig = &tls.Config{
-			MinVersion: tls.VersionTLS12,
-		}
-	}
 }
 
 func (r *RedisKVS) Save(ctx context.Context, key string, value string) error {

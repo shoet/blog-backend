@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   api:
-    container_name: blog-api
+    container_name: blog-backend
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -29,39 +29,39 @@ services:
       BLOG_KVS_USER: ${BLOG_KVS_USER:-default}
       BLOG_KVS_PASS: ${BLOG_KVS_PASS:-redispw}
       BLOG_KVS_TLS_ENABLED: ${BLOG_KVS_TLS_ENABLED:-false}
-      BLOG_DB_HOST: ${BLOG_DB_HOST:-blog-rdb}
+      BLOG_DB_HOST: ${BLOG_DB_HOST:-blog-db}
       BLOG_DB_PORT: ${BLOG_DB_PORT:-3306}
-      BLOG_DB_USER: ${BLOG_DB_USER:-blog_user}
+      BLOG_DB_USER: ${BLOG_DB_USER:-blog}
       BLOG_DB_PASS: ${BLOG_DB_PASS:-blog}
       BLOG_DB_NAME: ${BLOG_DB_NAME:-blog}
       BLOG_DB_TLS_ENABLED: ${BLOG_KVS_TLS_ENABLED:-false}
       CORS_WHITE_LIST: ${CORS_WHITE_LIST}
 
-  blog-rdb:
+  blog-db:
     image: mysql:latest
-    container_name: blog-rdb
+    container_name: blog-db
     ports:
       - "3306:3306"
     environment:
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-      MYSQL_USER: blog_user
+      MYSQL_USER: blog
       MYSQL_PASSWORD: blog
       MYSQL_DATABASE: blog
     volumes:
-      - blog-rdb-data:/var/lib/mysql
+      - blog-db-data:/var/lib/mysql
 
-  blog-rdb-test:
+  blog-db-test:
     image: mysql:latest
-    container_name: blog-rdb-test
+    container_name: blog-db-test
     ports:
       - "33061:3306"
     environment:
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-      MYSQL_USER: blog_user
+      MYSQL_USER: blog
       MYSQL_PASSWORD: blog
       MYSQL_DATABASE: blog
     volumes:
-      - blog-rdb-data-test:/var/lib/mysql
+      - blog-db-data-test:/var/lib/mysql
 
   blog-kvs:
     image: redis:latest
@@ -72,6 +72,6 @@ services:
       - blog-redis-data:/data
 
 volumes:
-  blog-rdb-data:
-  blog-rdb-data-test:
+  blog-db-data:
+  blog-db-data-test:
   blog-redis-data:

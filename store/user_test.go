@@ -56,42 +56,44 @@ func Test_UserRepository_Get(t *testing.T) {
 		t.Fatalf("failed to create db: %v", err)
 	}
 	for _, tt := range tests {
-		tx, err := db.Beginx()
+		t.Run(tt.name, func(t *testing.T) {
+			tx, err := db.Beginx()
 
-		if err != nil {
-			t.Fatalf("failed to create tx: %v", err)
-		}
-		defer tx.Rollback()
+			if err != nil {
+				t.Fatalf("failed to create tx: %v", err)
+			}
+			defer tx.Rollback()
 
-		sql := `
+			sql := `
 		INSERT INTO users
 			(name, email, password, created, modified)
 		VALUES
 			(?, ?, ?, ?, ?)
 		;
 		`
-		res, err := tx.ExecContext(
-			ctx,
-			sql,
-			tt.args.user.Name,
-			tt.args.user.Email,
-			tt.args.user.Password,
-			tt.args.user.Created,
-			tt.args.user.Modified)
-		gotId, err := res.LastInsertId()
-		if err != nil {
-			t.Fatalf("failed to insert user: %v", err)
-		}
+			res, err := tx.ExecContext(
+				ctx,
+				sql,
+				tt.args.user.Name,
+				tt.args.user.Email,
+				tt.args.user.Password,
+				tt.args.user.Created,
+				tt.args.user.Modified)
+			gotId, err := res.LastInsertId()
+			if err != nil {
+				t.Fatalf("failed to insert user: %v", err)
+			}
 
-		got, err := sut.Get(ctx, tx, models.UserId(gotId))
-		if err != nil {
-			t.Fatalf("failed to get user: %v", err)
-		}
+			got, err := sut.Get(ctx, tx, models.UserId(gotId))
+			if err != nil {
+				t.Fatalf("failed to get user: %v", err)
+			}
 
-		opt := cmpopts.IgnoreFields(models.User{}, "Id")
-		if diff := cmp.Diff(got, tt.want, opt); diff != "" {
-			t.Errorf("(-got +want)\n%s", diff)
-		}
+			opt := cmpopts.IgnoreFields(models.User{}, "Id")
+			if diff := cmp.Diff(got, tt.want, opt); diff != "" {
+				t.Errorf("(-got +want)\n%s", diff)
+			}
+		})
 	}
 }
 
@@ -166,47 +168,48 @@ func Test_UserRepository_GetByEmail(t *testing.T) {
 	testutil.RepositoryTestPrepare(t, ctx, db)
 
 	for _, tt := range tests {
-		tx, err := db.Beginx()
+		t.Run(tt.name, func(t *testing.T) {
+			tx, err := db.Beginx()
 
-		if err != nil {
-			t.Fatalf("failed to create tx: %v", err)
-		}
-		defer tx.Rollback()
+			if err != nil {
+				t.Fatalf("failed to create tx: %v", err)
+			}
+			defer tx.Rollback()
 
-		for _, u := range tt.args.prepareUser {
-			sql := `
+			for _, u := range tt.args.prepareUser {
+				sql := `
 			INSERT INTO users
 				(name, email, password, created, modified)
 			VALUES
 				(?, ?, ?, ?, ?)
 			;
 			`
-			_, err = tx.ExecContext(
-				ctx,
-				sql,
-				u.Name,
-				u.Email,
-				u.Password,
-				u.Created,
-				u.Modified,
-			)
+				_, err = tx.ExecContext(
+					ctx,
+					sql,
+					u.Name,
+					u.Email,
+					u.Password,
+					u.Created,
+					u.Modified,
+				)
+				if err != nil {
+					t.Fatalf("failed to insert user: %v", err)
+				}
+			}
+
+			got, err := sut.GetByEmail(ctx, tx, tt.args.email)
 			if err != nil {
-				t.Fatalf("failed to insert user: %v", err)
+				if !errors.Is(err, tt.want.error) {
+					t.Fatalf("failed GetByEmail")
+				}
 			}
-		}
 
-		got, err := sut.GetByEmail(ctx, tx, tt.args.email)
-		if err != nil {
-			if !errors.Is(err, tt.want.error) {
-				t.Fatalf("failed GetByEmail")
+			opt := cmpopts.IgnoreFields(models.User{}, "Id")
+			if diff := cmp.Diff(got, tt.want.user, opt); diff != "" {
+				t.Errorf("(-got +want)\n%s", diff)
 			}
-		}
-
-		opt := cmpopts.IgnoreFields(models.User{}, "Id")
-		if diff := cmp.Diff(got, tt.want.user, opt); diff != "" {
-			t.Errorf("(-got +want)\n%s", diff)
-		}
-
+		})
 	}
 }
 
@@ -263,27 +266,29 @@ func Test_UserRepository_Add(t *testing.T) {
 	testutil.RepositoryTestPrepare(t, ctx, db)
 
 	for _, tt := range tests {
-		tx, err := db.Beginx()
+		t.Run(tt.name, func(t *testing.T) {
+			tx, err := db.Beginx()
 
-		if err != nil {
-			t.Fatalf("failed to create tx: %v", err)
-		}
-		defer tx.Rollback()
+			if err != nil {
+				t.Fatalf("failed to create tx: %v", err)
+			}
+			defer tx.Rollback()
 
-		userId, err := sut.Add(ctx, tx, tt.args.user)
-		if err != nil {
-			t.Fatalf("failed to add user: %v", err)
-		}
+			user, err := sut.Add(ctx, tx, tt.args.user)
+			if err != nil {
+				t.Fatalf("failed to add user: %v", err)
+			}
 
-		selectSql := "SELECT * FROM users WHERE id = ?"
-		var gotUser models.User
-		if err := tx.QueryRowxContext(ctx, selectSql, userId).StructScan(&gotUser); err != nil {
-			t.Fatalf("failed to get user: %v", err)
-		}
+			selectSql := "SELECT * FROM users WHERE id = ?"
+			var gotUser models.User
+			if err := tx.QueryRowxContext(ctx, selectSql, user.Id).StructScan(&gotUser); err != nil {
+				t.Fatalf("failed to get user: %v", err)
+			}
 
-		opt := cmpopts.IgnoreFields(models.User{}, "Id")
-		if diff := cmp.Diff(gotUser, tt.want.user, opt); diff != "" {
-			t.Errorf("(-got +want)\n%s", diff)
-		}
+			opt := cmpopts.IgnoreFields(models.User{}, "Id")
+			if diff := cmp.Diff(&gotUser, tt.want.user, opt); diff != "" {
+				t.Errorf("(-got +want)\n%s", diff)
+			}
+		})
 	}
 }
