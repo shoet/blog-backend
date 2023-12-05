@@ -420,6 +420,7 @@ func Test_BlogRepository_Get(t *testing.T) {
 	}
 
 }
+
 func Test_BlogRepository_Put(t *testing.T) {
 	clocker := &clocker.FiexedClocker{}
 	ctx := context.Background()
@@ -542,3 +543,133 @@ func Test_BlogRepository_Put(t *testing.T) {
 	}
 
 }
+
+func Test_BlogRepository_AddBlogTag(t *testing.T) {
+	clocker := &clocker.FiexedClocker{}
+	ctx := context.Background()
+	db, err := testutil.NewDBMySQLForTest(t, ctx)
+	if err != nil {
+		t.Fatalf("failed to create db: %v", err)
+	}
+	testutil.RepositoryTestPrepare(t, ctx, db)
+
+	sut := NewBlogRepository(clocker)
+
+	type blogTag struct {
+		Id     int64         `db:"id"`
+		BlogId models.BlogId `db:"blog_id"`
+		TagId  models.TagId  `db:"tag_id"`
+	}
+
+	type args struct {
+		prepareBlogTag []*blogTag
+		blogTag        *blogTag
+	}
+
+	type want struct {
+		blogTag []*blogTag
+	}
+
+	tests := []struct {
+		id   string
+		args args
+		want want
+	}{
+		{
+			id: "success",
+			args: args{
+				prepareBlogTag: []*blogTag{},
+				blogTag: &blogTag{
+					BlogId: 1,
+					TagId:  1,
+				},
+			},
+			want: want{
+				blogTag: []*blogTag{
+					{
+						BlogId: 1,
+						TagId:  1,
+					},
+				},
+			},
+		},
+		{
+			id: "success_already_exists",
+			args: args{
+				prepareBlogTag: []*blogTag{
+					{
+						BlogId: 1,
+						TagId:  1,
+					},
+					{
+						BlogId: 2,
+						TagId:  2,
+					},
+				},
+				blogTag: &blogTag{
+					BlogId: 1,
+					TagId:  1,
+				},
+			},
+			want: want{
+				blogTag: []*blogTag{
+					{
+						BlogId: 1,
+						TagId:  1,
+					},
+					{
+						BlogId: 2,
+						TagId:  2,
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.id, func(t *testing.T) {
+			tx := db.MustBegin()
+			defer tx.Rollback()
+
+			for _, bt := range tt.args.prepareBlogTag {
+				prepareTask := `
+				INSERT INTO blogs_tags
+					(blog_id, tag_id)
+				VALUES
+					(?, ?)
+				`
+				_, err := tx.ExecContext(ctx, prepareTask, bt.BlogId, bt.TagId)
+				if err != nil {
+					t.Fatalf("failed to prepare task: %v", err)
+				}
+			}
+
+			_, err := sut.AddBlogTag(ctx, tx, tt.args.blogTag.BlogId, tt.args.blogTag.TagId)
+			if err != nil {
+				t.Fatalf("failed to put blog: %v", err)
+			}
+
+			selectQuery := `SELECT * FROM blogs_tags`
+			var got []*blogTag
+			if err := tx.SelectContext(ctx, &got, selectQuery); err != nil {
+				t.Fatalf("failed to scan row: %v", err)
+			}
+
+			cmpOption := cmpopts.IgnoreFields(blogTag{}, "Id")
+
+			if diff := cmp.Diff(tt.want.blogTag, got, cmpOption); diff != "" {
+				t.Errorf("differs: (-want +got)\n%s", diff)
+			}
+		})
+	}
+
+}
+
+// TODO
+func Test_BlogRepository_SelectBlogsTagsByOtherUsingBlog(t *testing.T) {}
+func Test_BlogRepository_SelectBlogsTags(t *testing.T)                 {}
+func Test_BlogRepository_DeleteBlogsTags(t *testing.T)                 {}
+func Test_BlogRepository_SelectTags(t *testing.T)                      {}
+func Test_BlogRepository_AddTag(t *testing.T)                          {}
+func Test_BlogRepository_DeleteTag(t *testing.T)                       {}
+func Test_BlogRepository_ListTags(t *testing.T)                        {}
