@@ -15,6 +15,12 @@ type BlogRepository struct {
 	Clocker clocker.Clocker
 }
 
+func NewBlogRepository(clocker clocker.Clocker) *BlogRepository {
+	return &BlogRepository{
+		Clocker: clocker,
+	}
+}
+
 func (r *BlogRepository) Add(ctx context.Context, db Execer, blog *models.Blog) (models.BlogId, error) {
 	sql := `
 	INSERT INTO blogs

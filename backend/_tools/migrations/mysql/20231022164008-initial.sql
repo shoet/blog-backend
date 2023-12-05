@@ -1,6 +1,6 @@
 
 -- +migrate Up
-CREATE TABLE `blogs` (
+CREATE TABLE IF NOT EXISTS `blogs` (
   `id`          INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `author_id`   INT NOT NULL,
   `title`       TEXT NOT NULL,
@@ -12,19 +12,19 @@ CREATE TABLE `blogs` (
   `modified`    DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL
 );
 
-CREATE TABLE `tags` (
+CREATE TABLE IF NOT EXISTS `tags` (
   `id`          INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `name`        VARCHAR(255) NOT NULL UNIQUE
 );
 
-CREATE TABLE blogs_tags (
+CREATE TABLE IF NOT EXISTS blogs_tags (
   id          INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   blog_id     INT NOT NULL,
   tag_id      INT NOT NULL,
   UNIQUE(blog_id, tag_id)
 );
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   `id`          INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `name`        TEXT NOT NULL,
   `email`       VARCHAR(255) NOT NULL UNIQUE,

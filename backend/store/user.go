@@ -36,6 +36,8 @@ func (t *UserRepository) Get(
 	return users[0], nil
 }
 
+var ErrUserNotFound = fmt.Errorf("user not found")
+
 func (u *UserRepository) GetByEmail(
 	ctx context.Context, db Queryer, email string,
 ) (*models.User, error) {
@@ -51,7 +53,7 @@ func (u *UserRepository) GetByEmail(
 		return nil, fmt.Errorf("failed to select users: %w", err)
 	}
 	if len(users) == 0 {
-		return nil, fmt.Errorf("user not found")
+		return nil, ErrUserNotFound
 	}
 	return users[0], nil
 }

@@ -1,4 +1,4 @@
-package util
+package services
 
 import (
 	"context"
@@ -9,7 +9,6 @@ import (
 
 	"github.com/shoet/blog/clocker"
 	"github.com/shoet/blog/models"
-	"github.com/shoet/blog/services"
 )
 
 func Test_JWTService_GenerateToken(t *testing.T) {
@@ -38,7 +37,7 @@ func Test_JWTService_GenerateToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
-			kvsMock := &services.KVSerMock{}
+			kvsMock := &KVSerMock{}
 			kvsMock.SaveFunc = func(ctx context.Context, key string, value string) error {
 				if value != strconv.Itoa(int(tt.args.user.Id)) {
 					t.Fatalf("failed want user id: %v, got: %v", tt.want.user.Id, value)
@@ -49,7 +48,7 @@ func Test_JWTService_GenerateToken(t *testing.T) {
 
 			testSecret := "12345678"
 			testTokenExpiresInSec := 60
-			sut := NewJWTer(kvsMock, clockerMock, []byte(testSecret), testTokenExpiresInSec)
+			sut := NewJWTManager(kvsMock, clockerMock, []byte(testSecret), testTokenExpiresInSec)
 
 			token, err := sut.GenerateToken(ctx, tt.args.user)
 			if err != nil {
@@ -99,7 +98,7 @@ func Test_JWTService_VerifyToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
-			kvsMock := &services.KVSerMock{}
+			kvsMock := &KVSerMock{}
 			var uuid string
 			kvsMock.SaveFunc = func(ctx context.Context, key string, value string) error {
 				uuid = key // 発行されたuuidを保持しておく
@@ -118,7 +117,7 @@ func Test_JWTService_VerifyToken(t *testing.T) {
 			testSecret := "12345678"
 			testTokenExpiresInSec := tt.args.tokenExpireInSec
 
-			sut := NewJWTer(kvsMock, clockerMock, []byte(testSecret), testTokenExpiresInSec)
+			sut := NewJWTManager(kvsMock, clockerMock, []byte(testSecret), testTokenExpiresInSec)
 
 			token, err := sut.GenerateToken(ctx, tt.args.user)
 			if err != nil {
