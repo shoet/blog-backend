@@ -16,7 +16,6 @@ import (
 	"github.com/shoet/blog/logging"
 	"github.com/shoet/blog/services"
 	"github.com/shoet/blog/store"
-	"github.com/shoet/blog/util"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -63,7 +62,7 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 		return nil, fmt.Errorf("failed to create redis kvs: %w", err)
 	}
 	c := clocker.RealClocker{}
-	jwter := util.NewJWTer(kvs, &c, []byte(cfg.JWTSecret), cfg.JWTExpiresInSec)
+	jwter := services.NewJWTManager(kvs, &c, []byte(cfg.JWTSecret), cfg.JWTExpiresInSec)
 
 	blogRepo := store.NewBlogRepository(&c)
 	blogService := services.NewBlogService(db, blogRepo)

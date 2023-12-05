@@ -9,7 +9,6 @@ import (
 	"github.com/shoet/blog/logging"
 	"github.com/shoet/blog/services"
 	"github.com/shoet/blog/store"
-	"github.com/shoet/blog/util"
 )
 
 type MuxDependencies struct {
@@ -18,7 +17,7 @@ type MuxDependencies struct {
 	BlogService    *services.BlogService
 	AuthService    *services.AuthService
 	StorageService *services.AWSS3StorageService
-	JWTer          *util.JWTer
+	JWTer          *services.JWTManager
 	Logger         *logging.Logger
 	Validator      *validator.Validate
 	Cookie         *CookieManager

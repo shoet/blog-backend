@@ -1,4 +1,4 @@
-package util
+package services
 
 import (
 	"context"
@@ -12,23 +12,22 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/shoet/blog/clocker"
 	"github.com/shoet/blog/models"
-	"github.com/shoet/blog/services"
 )
 
-type JWTer struct {
-	kvs               services.KVSer
+type JWTManager struct {
+	kvs               KVSer
 	clocker           clocker.Clocker
 	secretKey         []byte
 	tokenExpiresInSec int
 }
 
-func NewJWTer(
-	kvs services.KVSer,
+func NewJWTManager(
+	kvs KVSer,
 	clocker clocker.Clocker,
 	secretKey []byte,
 	tokenExpiresInSec int,
-) *JWTer {
-	return &JWTer{
+) *JWTManager {
+	return &JWTManager{
 		kvs:               kvs,
 		clocker:           clocker,
 		secretKey:         secretKey,
@@ -36,7 +35,7 @@ func NewJWTer(
 	}
 }
 
-func (j *JWTer) GenerateToken(ctx context.Context, u *models.User) (string, error) {
+func (j *JWTManager) GenerateToken(ctx context.Context, u *models.User) (string, error) {
 	uuid := uuid.New().String()
 	claims := jwt.RegisteredClaims{
 		ID:       uuid,
@@ -59,7 +58,7 @@ func (j *JWTer) GenerateToken(ctx context.Context, u *models.User) (string, erro
 
 var ErrSessionNotFound = errors.New("session is not found")
 
-func (j *JWTer) VerifyToken(ctx context.Context, token string) (models.UserId, error) {
+func (j *JWTManager) VerifyToken(ctx context.Context, token string) (models.UserId, error) {
 	// parse token
 	parsed, err := jwt.ParseWithClaims(
 		token,
