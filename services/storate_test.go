@@ -1,15 +1,15 @@
 package services
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/shoet/blog/config"
+	"github.com/shoet/blog/testutil"
 )
 
 func Test_AWSStorageService_GenerateThumbnailPutURL(t *testing.T) {
-	// TODO: 自動テストの際にサービス連携部分はどうするのか考える
+	testutil.LoadDotenvForTest(t)
 	cfg, err := config.NewConfig()
 	if err != nil {
 		t.Fatalf("failed to create config: %v", err)
@@ -23,9 +23,10 @@ func Test_AWSStorageService_GenerateThumbnailPutURL(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to generate url: %v", err)
 	}
-	if strings.HasSuffix(signedUrl, wantFileName) {
+	if !strings.Contains(objectUrl, wantFileName) {
+		t.Fatalf("object url is not expected: %v", objectUrl)
+	}
+	if !strings.Contains(signedUrl, wantFileName) {
 		t.Fatalf("signed url is not expected: %v", signedUrl)
 	}
-	fmt.Println(signedUrl)
-	fmt.Println(objectUrl)
 }

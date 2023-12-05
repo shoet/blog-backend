@@ -14,6 +14,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.3.1
 	github.com/jmoiron/sqlx v1.3.5
+	github.com/joho/godotenv v1.5.1
 	github.com/matryer/moq v0.3.3
 	github.com/qustavo/sqlhooks/v2 v2.1.0
 	github.com/redis/go-redis/v9 v9.2.1
