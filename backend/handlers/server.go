@@ -65,8 +65,8 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 	c := clocker.RealClocker{}
 	jwter := util.NewJWTer(kvs, &c, []byte(cfg.JWTSecret), cfg.JWTExpiresInSec)
 
-	blogRepo := store.BlogRepository{Clocker: &c}
-	blogService := services.NewBlogService(db, &blogRepo)
+	blogRepo := store.NewBlogRepository(&c)
+	blogService := services.NewBlogService(db, blogRepo)
 
 	userRepo, err := store.NewUserRepository(&c)
 	if err != nil {
