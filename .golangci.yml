@@ -7,7 +7,7 @@ linters-settings:
     locale: US
 
 linters:
-  disable-all: true
+  disable-all: false
 
 enable:
   - goimports
