@@ -42,7 +42,7 @@ func NewDBMySQLForTest(t *testing.T, ctx context.Context) (*sqlx.DB, error) {
 	}
 	config := mysql.Config{
 		Addr:                 "127.0.0.1:33061",
-		User:                 "blog_user",
+		User:                 "blog",
 		Passwd:               "blog",
 		DBName:               "blog",
 		Net:                  "tcp",
