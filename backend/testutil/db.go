@@ -4,11 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	"github.com/rubenv/sql-migrate"
+	"github.com/shoet/blog/util"
 )
 
 func NewDBSQLite3ForTest(t *testing.T, ctx context.Context) (*sqlx.DB, error) {
@@ -37,7 +42,7 @@ func NewDBMySQLForTest(t *testing.T, ctx context.Context) (*sqlx.DB, error) {
 		return nil, fmt.Errorf("failed load location: %w", err)
 	}
 	config := mysql.Config{
-		Addr:                 "127.0.0.1:3306",
+		Addr:                 "127.0.0.1:33061",
 		User:                 "blog_user",
 		Passwd:               "blog",
 		DBName:               "blog",
@@ -58,4 +63,31 @@ func NewDBMySQLForTest(t *testing.T, ctx context.Context) (*sqlx.DB, error) {
 	}
 	xdb := sqlx.NewDb(db, "mysql")
 	return xdb, nil
+}
+
+func RepositoryTestPrepare(t *testing.T, ctx context.Context, db *sqlx.DB) {
+	t.Helper()
+
+	curDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("failed to get current directory: %v", err)
+	}
+	cwd, err := util.GetProjectRoot(curDir)
+	if err != nil {
+		t.Fatalf("failed to get project root: %v", err)
+	}
+
+	sqlDir := filepath.Join(cwd, "_tools/migrations/mysql")
+	migrations := &migrate.FileMigrationSource{
+		Dir: sqlDir,
+	}
+
+	_, err = migrate.ExecContext(ctx, db.DB, "mysql", migrations, migrate.Up)
+	if err != nil {
+		if strings.Contains(err.Error(), "Error 1050:") {
+			t.Logf("table already exists. skip migration : %v", err)
+			return
+		}
+		t.Fatalf("failed to migrate: %v", err)
+	}
 }
