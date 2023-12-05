@@ -238,3 +238,78 @@ func Test_BlogRepository_List(t *testing.T) {
 		})
 	}
 }
+
+func Test_BlogRepository_Delete(t *testing.T) {
+	clocker := &clocker.FiexedClocker{}
+	ctx := context.Background()
+	db, err := testutil.NewDBMySQLForTest(t, ctx)
+	if err != nil {
+		t.Fatalf("failed to create db: %v", err)
+	}
+	testutil.RepositoryTestPrepare(t, ctx, db)
+
+	sut := NewBlogRepository(clocker)
+
+	type args struct {
+		prepareCreateBlog []*models.Blog
+	}
+
+	type want struct {
+		count int
+	}
+
+	tests := []struct {
+		id   string
+		args args
+		want want
+	}{
+		{
+			id: "success delete 1",
+			args: args{
+				prepareCreateBlog: generateTestBlogs(t, 10, clocker.Now()),
+			},
+			want: want{
+				count: 9,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.id, func(t *testing.T) {
+			tx := db.MustBegin()
+			defer tx.Rollback()
+
+			for _, b := range tt.args.prepareCreateBlog {
+				prepareTask := `
+				INSERT INTO blogs
+					(
+						author_id, title, content, description, 
+						thumbnail_image_file_name, is_public, created, modified)
+				VALUES
+					(?, ?, ?, ?, ?, ?, ?, ?)
+				`
+				_, err := tx.ExecContext(
+					ctx, prepareTask,
+					b.AuthorId, b.Title, b.Content, b.Description,
+					b.ThumbnailImageFileName, b.IsPublic, b.Created, b.Modified)
+				if err != nil {
+					t.Fatalf("failed to prepare task: %v", err)
+				}
+
+			}
+
+			selectSQL := `SELECT id FROM blogs LIMIT 1;`
+			row := tx.QueryRowxContext(ctx, selectSQL)
+			var blog models.Blog
+			if err := row.Scan(&blog.Id); err != nil {
+				t.Fatalf("failed to scan row: %v", err)
+			}
+
+			if err := sut.Delete(ctx, tx, blog.Id); err != nil {
+				t.Fatalf("failed to delete blog: %v", err)
+			}
+		})
+	}
+
+}
+

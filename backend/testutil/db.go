@@ -85,7 +85,7 @@ func RepositoryTestPrepare(t *testing.T, ctx context.Context, db *sqlx.DB) {
 	_, err = migrate.ExecContext(ctx, db.DB, "mysql", migrations, migrate.Up)
 	if err != nil {
 		if strings.Contains(err.Error(), "Error 1050:") {
-			t.Logf("table already exists. skip migration : %v", err)
+			t.Log("table already exists. skip migration")
 			return
 		}
 		t.Fatalf("failed to migrate: %v", err)
