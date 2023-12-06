@@ -1,0 +1,9 @@
+development:
+  dialect: mysql
+  datasource: blog:blog@tcp(127.0.0.1)/blog?charset=utf8mb4&parseTime=true
+  dir: migrations/mysql
+
+production:
+  dialect: mysql
+  datasource: ${DBDSN}
+  dir: migrations/mysql
