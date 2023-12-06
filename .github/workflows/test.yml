@@ -12,6 +12,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      pull-requests: write
     env:
       BLOG_ENV: ${{ secrets.BLOG_ENV }}
       BLOG_APP_PORT: ${{ secrets.BLOG_APP_PORT }}
