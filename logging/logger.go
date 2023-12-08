@@ -33,9 +33,19 @@ type Logger struct {
 	logger *zerolog.Logger
 }
 
-func NewLogger(w io.Writer) *Logger {
+func NewLogger(w io.Writer, logLevel string) *Logger {
+	level := zerolog.InfoLevel
+	switch logLevel {
+	case "debug":
+		level = zerolog.DebugLevel
+	case "info":
+		level = zerolog.InfoLevel
+	case "warn":
+		level = zerolog.WarnLevel
+	}
 	logger := zerolog.
 		New(w).
+		Level(level).
 		With().
 		Timestamp().
 		Logger()
@@ -50,4 +60,8 @@ func (l *Logger) Info(message string) {
 
 func (l *Logger) Error(message string) {
 	l.logger.Error().Msg(message)
+}
+
+func (l *Logger) Debug(message string) {
+	l.logger.Debug().Msg(message)
 }

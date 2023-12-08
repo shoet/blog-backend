@@ -45,6 +45,10 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 }
 
 func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependencies, error) {
+	logger := logging.NewLogger(os.Stdout, cfg.LogLevel)
+	validator := validator.New()
+	cookie := NewCookieManager(cfg.Env, cfg.SiteDomain)
+
 	db, err := store.NewDBMySQL(ctx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create db: %w", err)
@@ -80,10 +84,6 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 	if err != nil {
 		return nil, fmt.Errorf("failed to create aws storage: %w", err)
 	}
-
-	logger := logging.NewLogger(os.Stdout)
-	validator := validator.New()
-	cookie := NewCookieManager(cfg.Env, cfg.SiteDomain)
 
 	return &MuxDependencies{
 		Config:         cfg,

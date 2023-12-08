@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -18,7 +17,7 @@ var seedAdminUserCmd = &cobra.Command{
 	Use:   "add-admin",
 	Short: "Add admin user",
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := context.Background()
+		ctx := cmd.Context()
 		cfg, err := config.NewConfig()
 		if err != nil {
 			log.Fatalf("failed to create config: %v", err)
@@ -48,7 +47,7 @@ func init() {
 }
 
 type authService interface {
-	SeedAdminUser(ctx context.Context, cfg *config.Config) (*models.User, error)
+	SeedAdminUser(cfg *config.Config) (*models.User, error)
 }
 
 type AuthController struct {
@@ -56,12 +55,11 @@ type AuthController struct {
 }
 
 func (ac *AuthController) addAdminUser() error {
-	ctx := context.Background()
 	cfg, err := config.NewConfig()
 	if err != nil {
 		return fmt.Errorf("failed to create config: %w", err)
 	}
-	admin, err := ac.service.SeedAdminUser(ctx, cfg)
+	admin, err := ac.service.SeedAdminUser(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to seed admin user: %w", err)
 	}
