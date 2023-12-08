@@ -14,6 +14,7 @@ services:
     environment:
       BLOG_ENV: dev
       BLOG_APP_PORT: 3000
+      BLOG_LOG_LEVEL: debug
       BLOG_AWS_S3_BUCKET: ${BLOG_AWS_S3_BUCKET:?err}
       BLOG_AWS_S3_THUMBNAIL_DIRECTORY: ${BLOG_AWS_S3_THUMBNAIL_DIRECTORY:?err}
       BLOG_AWS_S3_CONTENT_IMAGE_DIRECTORY: ${BLOG_AWS_S3_CONTENT_IMAGE_DIRECTORY:?err}
@@ -36,9 +37,13 @@ services:
       BLOG_DB_NAME: ${BLOG_DB_NAME:-blog}
       BLOG_DB_TLS_ENABLED: ${BLOG_KVS_TLS_ENABLED:-false}
       CORS_WHITE_LIST: ${CORS_WHITE_LIST}
+    depends_on:
+      - blog-db
+      - blog-db-test
+      - blog-kvs
 
   blog-db:
-    image: mysql:latest
+    image: mysql:8.0.33
     container_name: blog-db
     ports:
       - "3306:3306"
@@ -51,7 +56,7 @@ services:
       - blog-db-data:/var/lib/mysql
 
   blog-db-test:
-    image: mysql:latest
+    image: mysql:8.0.33
     container_name: blog-db-test
     ports:
       - "33061:3306"

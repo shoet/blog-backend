@@ -68,7 +68,7 @@ func NewDBMySQL(ctx context.Context, cfg *config.Config) (*sqlx.DB, error) {
 	if err := db.PingContext(ctx); err != nil {
 		return nil, fmt.Errorf("failed connect mysql: %w", err)
 	}
-	xdb := sqlx.NewDb(db, "mysql")
+	xdb := sqlx.NewDb(db, withHooksDriverName)
 	return xdb, nil
 }
 
@@ -76,7 +76,8 @@ func InitSQLDriverWithLogs(driverName string, driver sql_driver.Driver) (string,
 	hooksDriverName := fmt.Sprintf("%sWithLoggerHooks", driverName)
 	for _, existingDriverName := range sql.Drivers() {
 		if existingDriverName == hooksDriverName {
-			return hooksDriverName, fmt.Errorf("driver %s already exists", hooksDriverName)
+			fmt.Printf("driver %s already exists\n", hooksDriverName)
+			return hooksDriverName, nil
 		}
 	}
 	sql.Register(hooksDriverName, sqlhooks.Wrap(driver, &SQLQueryLoggerHooks{}))
@@ -89,7 +90,7 @@ func (s *SQLQueryLoggerHooks) Before(
 	ctx context.Context, query string, args ...interface{},
 ) (context.Context, error) {
 	logger := logging.GetLogger(ctx)
-	logger.Info(fmt.Sprintf("query: %s\nargs: %v", query, args))
+	logger.Debug(fmt.Sprintf("query: %s\nargs: %v", query, args))
 	return ctx, nil
 }
 

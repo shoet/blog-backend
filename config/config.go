@@ -7,6 +7,7 @@ import (
 type Config struct {
 	Env                         string `env:"BLOG_ENV,required"`
 	AppPort                     int64  `env:"BLOG_APP_PORT,required"`
+	LogLevel                    string `env:"BLOG_LOG_LEVEL" envDefault:"info"`
 	DBHost                      string `env:"BLOG_DB_HOST,required"`
 	DBPort                      int64  `env:"BLOG_DB_PORT,required"`
 	DBUser                      string `env:"BLOG_DB_USER,required"`
