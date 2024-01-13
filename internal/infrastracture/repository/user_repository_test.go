@@ -80,6 +80,9 @@ func Test_UserRepository_Get(t *testing.T) {
 				tt.args.user.Password,
 				tt.args.user.Created,
 				tt.args.user.Modified)
+			if err != nil {
+				t.Fatalf("failed to insert user: %v", err)
+			}
 			gotId, err := res.LastInsertId()
 			if err != nil {
 				t.Fatalf("failed to insert user: %v", err)

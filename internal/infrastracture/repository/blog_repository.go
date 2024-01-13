@@ -225,19 +225,10 @@ func (r *BlogRepository) AddBlogTag(
 		return 0, fmt.Errorf("failed to insert blogs_tags: %w", err)
 	}
 	id, err := res.LastInsertId()
-	return id, nil
-}
-
-type tagResult []*struct {
-	TagId models.TagId `db:"tag_id"`
-}
-
-func (t tagResult) Flatten() []models.TagId {
-	var ids []models.TagId
-	for _, row := range t {
-		ids = append(ids, row.TagId)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get last insert id: %w", err)
 	}
-	return ids
+	return id, nil
 }
 
 func (r *BlogRepository) SelectBlogsTagsByOtherUsingBlog(
@@ -345,6 +336,9 @@ func (r *BlogRepository) AddTag(ctx context.Context, db Execer, tag string) (mod
 		return 0, fmt.Errorf("failed to insert tags: %w", err)
 	}
 	id, err := res.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get last insert id: %w", err)
+	}
 	return models.TagId(id), nil
 }
 

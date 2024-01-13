@@ -194,7 +194,9 @@ func (b *BlogService) PutBlog(ctx context.Context, blog *models.Blog) (*models.B
 				tagId = tags[0].Id
 			}
 			// add blogs_tags
-			b.blog.AddBlogTag(ctx, tx, blog.Id, tagId)
+			if _, err := b.blog.AddBlogTag(ctx, tx, blog.Id, tagId); err != nil {
+				return nil, fmt.Errorf("failed to add blogs_tags: %w", err)
+			}
 		}
 	}
 
@@ -204,8 +206,12 @@ func (b *BlogService) PutBlog(ctx context.Context, blog *models.Blog) (*models.B
 		}
 		if !isUsing(tag.Name) {
 			// delete tags
-			b.blog.DeleteTag(ctx, tx, tag.TagId)
-			b.blog.DeleteBlogsTags(ctx, tx, blog.Id, tag.TagId)
+			if err := b.blog.DeleteTag(ctx, tx, tag.TagId); err != nil {
+				return nil, fmt.Errorf("failed to delete tags: %w", err)
+			}
+			if err := b.blog.DeleteBlogsTags(ctx, tx, blog.Id, tag.TagId); err != nil {
+				return nil, fmt.Errorf("failed to delete blogs_tags: %w", err)
+			}
 		}
 	}
 

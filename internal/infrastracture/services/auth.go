@@ -58,5 +58,8 @@ func (a *AuthService) LoginSession(
 		return nil, fmt.Errorf("failed to verify token: %w", err)
 	}
 	u, err := a.user.Get(ctx, a.db, userId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
 	return u, nil
 }

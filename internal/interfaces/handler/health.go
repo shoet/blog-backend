@@ -16,6 +16,8 @@ func (hh *HealthCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	resp := &ResponseHealthCheck{Message: "OK"}
 	if err := response.RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		errResp := &response.ErrorResponse{Message: "NG"}
-		response.RespondJSON(w, r, http.StatusInternalServerError, errResp)
+		if err := response.RespondJSON(w, r, http.StatusInternalServerError, errResp); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}
 }

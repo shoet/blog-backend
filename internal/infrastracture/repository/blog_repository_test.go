@@ -153,7 +153,6 @@ func Test_BlogRepository_List(t *testing.T) {
 	}
 
 	type want struct {
-		blogs []*models.Blog
 		count int
 	}
 
@@ -331,7 +330,6 @@ func Test_BlogRepository_Get(t *testing.T) {
 
 	type want struct {
 		blog *models.Blog
-		err  error
 	}
 
 	tests := []struct {
@@ -440,7 +438,6 @@ func Test_BlogRepository_Put(t *testing.T) {
 
 	type want struct {
 		blog *models.Blog
-		err  error
 	}
 
 	tests := []struct {

@@ -323,7 +323,9 @@ func Test_AuthLogoutHandler(t *testing.T) {
 			r := httptest.NewRequest("POST", "/", nil)
 			r = testutil.SetLoggerContextToRequest(t, r)
 
-			cookie.SetCookie(w, "authToken", wantToken)
+			if err := cookie.SetCookie(w, "authToken", wantToken); err != nil {
+				t.Fatalf("failed to set cookie: %v", err)
+			}
 			fmt.Println(w.Header().Get("Set-Cookie"))
 
 			sut.ServeHTTP(w, r)

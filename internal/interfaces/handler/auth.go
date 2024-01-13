@@ -73,7 +73,6 @@ func (a *AuthLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := response.RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
-	return
 }
 
 type AuthSessionLoginHandler struct {
@@ -94,14 +93,14 @@ func (a *AuthSessionLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	token := r.Header.Get("Authorization")
 	if token == "" {
 		msg := "failed to get authorization header"
-		logger.Error(fmt.Sprintf(msg))
+		logger.Error(msg)
 		response.RespondUnauthorized(w, r, fmt.Errorf(msg))
 		return
 	}
 
 	if !strings.HasPrefix(token, "Bearer ") {
 		msg := "passing invalid authorization header format"
-		logger.Error(fmt.Sprintf(msg))
+		logger.Error(msg)
 		response.RespondUnauthorized(w, r, fmt.Errorf(msg))
 		return
 	}
@@ -117,7 +116,6 @@ func (a *AuthSessionLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	if err := response.RespondJSON(w, r, http.StatusOK, u); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
-	return
 }
 
 type AuthLogoutHandler struct {
@@ -144,5 +142,4 @@ func (a *AuthLogoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := response.RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
-	return
 }

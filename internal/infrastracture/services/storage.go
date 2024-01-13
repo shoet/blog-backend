@@ -86,8 +86,8 @@ func (s *AWSS3StorageService) GenerateSignedURL(
 			opts.Expires = time.Duration(s.config.AWSS3PresignPutExpiresSec * int64(time.Second))
 		})
 	if err != nil {
-		fmt.Errorf("Couldn't get a presigned request to put %v:%v. Here's why: %v\n",
-			bucketName, objectKey, err)
+		return nil, fmt.Errorf(
+			"couldn't get a presigned request to put %s:%s. Here's why: %v", bucketName, objectKey, err)
 	}
 	return request, err
 }
