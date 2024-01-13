@@ -1,4 +1,4 @@
-package handlers
+package handler_test
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/interfaces/handler"
 	"github.com/shoet/blog/internal/options"
 	"github.com/shoet/blog/testutil"
 )
@@ -52,7 +53,7 @@ func Test_TagListHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			blogServiceMock := &BlogManagerMock{}
+			blogServiceMock := &handler.BlogManagerMock{}
 			blogServiceMock.ListTagsFunc = func(
 				ctx context.Context, option options.ListTagsOptions,
 			) ([]*models.Tag, error) {
@@ -63,7 +64,7 @@ func Test_TagListHandler(t *testing.T) {
 				}
 			}
 
-			sut := NewTagListHandler(blogServiceMock)
+			sut := handler.NewTagListHandler(blogServiceMock)
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("GET", "/", nil)
 			r = testutil.SetLoggerContextToRequest(t, r)

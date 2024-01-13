@@ -1,4 +1,4 @@
-package handlers
+package handler_test
 
 import (
 	"bytes"
@@ -15,6 +15,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/shoet/blog/internal/clocker"
 	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/interfaces/handler"
 	"github.com/shoet/blog/internal/options"
 	"github.com/shoet/blog/services"
 	"github.com/shoet/blog/testutil"
@@ -55,7 +56,7 @@ func Test_BlogListHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			blogServiceMock := &BlogManagerMock{}
+			blogServiceMock := &handler.BlogManagerMock{}
 			blogServiceMock.ListBlogFunc = func(
 				ctx context.Context, option options.ListBlogOptions,
 			) ([]*models.Blog, error) {
@@ -68,7 +69,7 @@ func Test_BlogListHandler(t *testing.T) {
 				return nil, errors.New("internal server error")
 			}
 
-			sut := NewBlogListHandler(blogServiceMock)
+			sut := handler.NewBlogListHandler(blogServiceMock)
 
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("GET", "/", nil)
@@ -171,7 +172,7 @@ func Test_BlogGetHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			blogServiceMock := &BlogManagerMock{}
+			blogServiceMock := &handler.BlogManagerMock{}
 			blogServiceMock.GetBlogFunc = func(
 				ctx context.Context, id models.BlogId,
 			) (*models.Blog, error) {
@@ -193,7 +194,7 @@ func Test_BlogGetHandler(t *testing.T) {
 				return tt.want.(*models.Blog), nil
 			}
 
-			sut := NewBlogGetHandler(blogServiceMock, jwter)
+			sut := handler.NewBlogGetHandler(blogServiceMock, jwter)
 
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("GET", "/", nil)
@@ -266,7 +267,7 @@ func Test_BlogGetHandlerWithSecret(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			blogServiceMock := &BlogManagerMock{}
+			blogServiceMock := &handler.BlogManagerMock{}
 			blogServiceMock.GetBlogFunc = func(
 				ctx context.Context, id models.BlogId,
 			) (*models.Blog, error) {
@@ -296,7 +297,7 @@ func Test_BlogGetHandlerWithSecret(t *testing.T) {
 				return tt.want.(*models.Blog).AuthorId, nil
 			}
 
-			sut := NewBlogGetHandler(blogServiceMock, jwter)
+			sut := handler.NewBlogGetHandler(blogServiceMock, jwter)
 
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("GET", "/", nil)
@@ -419,7 +420,7 @@ func Test_BlogAddHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.id, func(t *testing.T) {
 
-			blogServiceMock := &BlogManagerMock{}
+			blogServiceMock := &handler.BlogManagerMock{}
 			blogServiceMock.AddBlogFunc = func(
 				ctx context.Context, blog *models.Blog,
 			) (*models.Blog, error) {
@@ -433,7 +434,7 @@ func Test_BlogAddHandler(t *testing.T) {
 				return tt.want.(*models.Blog), nil
 			}
 
-			sut := NewBlogAddHandler(blogServiceMock, validator)
+			sut := handler.NewBlogAddHandler(blogServiceMock, validator)
 
 			var buffer bytes.Buffer
 			if err := json.NewEncoder(&buffer).Encode(tt.args.requestBody); err != nil {
@@ -526,7 +527,7 @@ func Test_BlogDeleteHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.id, func(t *testing.T) {
-			blogServiceMock := &BlogManagerMock{}
+			blogServiceMock := &handler.BlogManagerMock{}
 			blogServiceMock.DeleteBlogFunc = func(ctx context.Context, id models.BlogId) error {
 				if tt.id == "success_normal" {
 					if id != wantBlogId {
@@ -539,7 +540,7 @@ func Test_BlogDeleteHandler(t *testing.T) {
 				return nil
 			}
 
-			sut := NewBlogDeleteHandler(blogServiceMock, validator)
+			sut := handler.NewBlogDeleteHandler(blogServiceMock, validator)
 
 			var buffer bytes.Buffer
 			if err := json.NewEncoder(&buffer).Encode(tt.args.requestBody); err != nil {
@@ -662,7 +663,7 @@ func Test_BlogPutHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.id, func(t *testing.T) {
 
-			blogServiceMock := &BlogManagerMock{}
+			blogServiceMock := &handler.BlogManagerMock{}
 			blogServiceMock.PutBlogFunc = func(
 				ctx context.Context, blog *models.Blog,
 			) (*models.Blog, error) {
@@ -675,7 +676,7 @@ func Test_BlogPutHandler(t *testing.T) {
 				return tt.want.(*models.Blog), nil
 			}
 
-			sut := NewBlogPutHandler(blogServiceMock, validator)
+			sut := handler.NewBlogPutHandler(blogServiceMock, validator)
 
 			var buffer bytes.Buffer
 			if err := json.NewEncoder(&buffer).Encode(tt.args.requestBody); err != nil {
@@ -737,7 +738,7 @@ func Test_BlogListAdminHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			blogServiceMock := &BlogManagerMock{}
+			blogServiceMock := &handler.BlogManagerMock{}
 			blogServiceMock.ListBlogFunc = func(
 				ctx context.Context, option options.ListBlogOptions,
 			) ([]*models.Blog, error) {
@@ -750,7 +751,7 @@ func Test_BlogListAdminHandler(t *testing.T) {
 				return nil, errors.New("internal server error")
 			}
 
-			sut := NewBlogListAdminHandler(blogServiceMock)
+			sut := handler.NewBlogListAdminHandler(blogServiceMock)
 
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("GET", "/", nil)

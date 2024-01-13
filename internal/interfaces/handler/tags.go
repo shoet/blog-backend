@@ -1,9 +1,10 @@
-package handlers
+package handler
 
 import (
 	"fmt"
 	"net/http"
 
+	"github.com/shoet/blog/internal/interfaces"
 	"github.com/shoet/blog/internal/logging"
 	"github.com/shoet/blog/internal/options"
 )
@@ -27,16 +28,16 @@ func (t *TagListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	resp, err := t.Service.ListTags(ctx, option)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to list tags: %v", err))
-		ResponsdInternalServerError(w, r, err)
+		interfaces.ResponsdInternalServerError(w, r, err)
 		return
 	}
 	if resp == nil {
-		if err := RespondJSON(w, r, http.StatusOK, []interface{}{}); err != nil {
+		if err := interfaces.RespondJSON(w, r, http.StatusOK, []interface{}{}); err != nil {
 			logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 		}
 		return
 	}
-	if err := RespondJSON(w, r, http.StatusOK, resp); err != nil {
+	if err := interfaces.RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
 	return

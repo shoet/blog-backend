@@ -1,4 +1,4 @@
-package handlers
+package handler_test
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/shoet/blog/internal/interfaces/handler"
 	"github.com/shoet/blog/testutil"
 )
 
@@ -69,7 +70,7 @@ func Test_GenerateThumbnailImageSignedURLHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			storageServiceMock := &StoragerMock{}
+			storageServiceMock := &handler.StoragerMock{}
 			storageServiceMock.GenerateThumbnailPutURLFunc = func(fileName string) (string, string, error) {
 				if tt.status == 500 {
 					return "", "", fmt.Errorf("InternalServerError")
@@ -77,7 +78,7 @@ func Test_GenerateThumbnailImageSignedURLHandler(t *testing.T) {
 				return "signed url", "put url", nil
 			}
 
-			sut := NewGenerateThumbnailImageSignedURLHandler(storageServiceMock, validator.New())
+			sut := handler.NewGenerateThumbnailImageSignedURLHandler(storageServiceMock, validator.New())
 
 			var buffer bytes.Buffer
 			if err := json.NewEncoder(&buffer).Encode(tt.args); err != nil {

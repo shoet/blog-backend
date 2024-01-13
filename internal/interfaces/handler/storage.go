@@ -1,10 +1,11 @@
-package handlers
+package handler
 
 import (
 	"fmt"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/shoet/blog/internal/interfaces"
 	"github.com/shoet/blog/internal/logging"
 )
 
@@ -30,22 +31,22 @@ func (g *GenerateThumbnailImageSignedURLHandler) ServeHTTP(w http.ResponseWriter
 		FileName string `json:"fileName" validate:"required"`
 	}
 	defer r.Body.Close()
-	if err := JsonToStruct(r, &reqBody); err != nil {
+	if err := interfaces.JsonToStruct(r, &reqBody); err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
-		ResponsdBadRequest(w, r, err)
+		interfaces.ResponsdBadRequest(w, r, err)
 		return
 	}
 
 	if err := g.Validator.Struct(reqBody); err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
-		ResponsdBadRequest(w, r, err)
+		interfaces.ResponsdBadRequest(w, r, err)
 		return
 	}
 
 	signedUrl, destinationUrl, err := g.StorageService.GenerateThumbnailPutURL(reqBody.FileName)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
-		ResponsdInternalServerError(w, r, err)
+		interfaces.ResponsdInternalServerError(w, r, err)
 		return
 	}
 
@@ -56,7 +57,7 @@ func (g *GenerateThumbnailImageSignedURLHandler) ServeHTTP(w http.ResponseWriter
 		SignedUrl: signedUrl,
 		PutedUrl:  destinationUrl,
 	}
-	if err := RespondJSON(w, r, http.StatusOK, resp); err != nil {
+	if err := interfaces.RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
 	}
 }
@@ -73,22 +74,22 @@ func (g *GenerateContentsImageSignedURLHandler) ServeHTTP(w http.ResponseWriter,
 		FileName string `json:"fileName" validate:"required"`
 	}
 	defer r.Body.Close()
-	if err := JsonToStruct(r, &reqBody); err != nil {
+	if err := interfaces.JsonToStruct(r, &reqBody); err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
-		ResponsdBadRequest(w, r, err)
+		interfaces.ResponsdBadRequest(w, r, err)
 		return
 	}
 
 	if err := g.Validator.Struct(reqBody); err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
-		ResponsdBadRequest(w, r, err)
+		interfaces.ResponsdBadRequest(w, r, err)
 		return
 	}
 
 	signedUrl, destinationUrl, err := g.StorageService.GenerateContentImagePutURL(reqBody.FileName)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
-		ResponsdInternalServerError(w, r, err)
+		interfaces.ResponsdInternalServerError(w, r, err)
 		return
 	}
 
@@ -99,7 +100,7 @@ func (g *GenerateContentsImageSignedURLHandler) ServeHTTP(w http.ResponseWriter,
 		SignedUrl: signedUrl,
 		PutedUrl:  destinationUrl,
 	}
-	if err := RespondJSON(w, r, http.StatusOK, resp); err != nil {
+	if err := interfaces.RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
 	}
 }

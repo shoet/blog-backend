@@ -1,10 +1,11 @@
-package handlers
+package handler_test
 
 import (
 	"encoding/json"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/shoet/blog/internal/interfaces/handler"
 	"github.com/shoet/blog/testutil"
 )
 
@@ -31,7 +32,7 @@ func Test_HealthCheckHandler(t *testing.T) {
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("GET", "/", nil)
 
-			sut := &HealthCheckHandler{}
+			sut := &handler.HealthCheckHandler{}
 			sut.ServeHTTP(w, r)
 
 			wb, err := json.Marshal(tt.want)

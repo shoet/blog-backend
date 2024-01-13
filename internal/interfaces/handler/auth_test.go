@@ -1,4 +1,4 @@
-package handlers
+package handler_test
 
 import (
 	"bytes"
@@ -12,6 +12,8 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/interfaces"
+	"github.com/shoet/blog/internal/interfaces/handler"
 	"github.com/shoet/blog/testutil"
 )
 
@@ -72,10 +74,10 @@ func Test_AuthLoginHandler(t *testing.T) {
 	}
 
 	validator := validator.New()
-	cookie := NewCookieManager("test", "https://test.example.com")
+	cookie := interfaces.NewCookieManager("test", "https://test.example.com")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			authManagerMock := &AuthManagerMock{}
+			authManagerMock := &handler.AuthManagerMock{}
 			authManagerMock.LoginFunc = func(
 				ctx context.Context, email string, password string,
 			) (string, error) {
@@ -91,7 +93,7 @@ func Test_AuthLoginHandler(t *testing.T) {
 				return "", errors.New("failed to login")
 			}
 
-			sut := NewAuthLoginHandler(authManagerMock, validator, cookie)
+			sut := handler.NewAuthLoginHandler(authManagerMock, validator, cookie)
 
 			var buffer bytes.Buffer
 			if err := json.NewEncoder(&buffer).Encode(tt.args); err != nil {
@@ -241,7 +243,7 @@ func Test_AuthSessionLoginHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			authManagerMock := &AuthManagerMock{}
+			authManagerMock := &handler.AuthManagerMock{}
 			authManagerMock.LoginSessionFunc = func(
 				ctx context.Context, token string,
 			) (*models.User, error) {
@@ -254,7 +256,7 @@ func Test_AuthSessionLoginHandler(t *testing.T) {
 				return nil, errors.New("failed to login")
 			}
 
-			sut := NewAuthSessionLoginHandler(authManagerMock)
+			sut := handler.NewAuthSessionLoginHandler(authManagerMock)
 
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("POST", "/", nil)
@@ -312,10 +314,10 @@ func Test_AuthLogoutHandler(t *testing.T) {
 		},
 	}
 
-	cookie := NewCookieManager("test", "https://test.example.com")
+	cookie := interfaces.NewCookieManager("test", "https://test.example.com")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			sut := NewAuthLogoutHandler(cookie)
+			sut := handler.NewAuthLogoutHandler(cookie)
 
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("POST", "/", nil)

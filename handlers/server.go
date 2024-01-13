@@ -15,6 +15,7 @@ import (
 	"github.com/shoet/blog/internal/config"
 	"github.com/shoet/blog/internal/infrastracture"
 	"github.com/shoet/blog/internal/infrastracture/repository"
+	"github.com/shoet/blog/internal/interfaces"
 	"github.com/shoet/blog/internal/logging"
 	"github.com/shoet/blog/services"
 	"golang.org/x/sync/errgroup"
@@ -48,7 +49,7 @@ func NewServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependencies, error) {
 	logger := logging.NewLogger(os.Stdout, cfg.LogLevel)
 	validator := validator.New()
-	cookie := NewCookieManager(cfg.Env, cfg.SiteDomain)
+	cookie := interfaces.NewCookieManager(cfg.Env, cfg.SiteDomain)
 
 	db, err := infrastracture.NewDBMySQL(ctx, cfg)
 	if err != nil {
