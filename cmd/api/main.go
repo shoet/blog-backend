@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/shoet/blog/handlers"
 	"github.com/shoet/blog/internal/config"
+	"github.com/shoet/blog/internal/interfaces"
 )
 
 func main() {
@@ -14,7 +14,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to create config: %v", err)
 	}
-	server, err := handlers.NewServer(ctx, cfg)
+	server, err := interfaces.NewServer(ctx, cfg)
 	if err != nil {
 		log.Fatalf("failed to create server: %v", err)
 	}

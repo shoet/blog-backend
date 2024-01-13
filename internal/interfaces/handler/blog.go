@@ -9,7 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/shoet/blog/internal/infrastracture/models"
-	"github.com/shoet/blog/internal/interfaces"
+	"github.com/shoet/blog/internal/interfaces/response"
 	"github.com/shoet/blog/internal/logging"
 
 	"github.com/shoet/blog/internal/options"
@@ -35,16 +35,16 @@ func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	resp, err := l.Service.ListBlog(ctx, option)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to list blog: %v", err))
-		interfaces.ResponsdInternalServerError(w, r, err)
+		response.ResponsdInternalServerError(w, r, err)
 		return
 	}
 	if resp == nil {
-		if err := interfaces.RespondJSON(w, r, http.StatusOK, []interface{}{}); err != nil {
+		if err := response.RespondJSON(w, r, http.StatusOK, []interface{}{}); err != nil {
 			logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 		}
 		return
 	}
-	if err := interfaces.RespondJSON(w, r, http.StatusOK, resp); err != nil {
+	if err := response.RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
 	return
@@ -68,36 +68,36 @@ func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	if id == "" {
 		logger.Error(fmt.Sprintf("failed to get id from url"))
-		interfaces.ResponsdBadRequest(w, r, nil)
+		response.ResponsdBadRequest(w, r, nil)
 		return
 	}
 	idInt, err := strconv.Atoi(strings.TrimSpace(id))
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to convert id to int: %v", err))
-		interfaces.ResponsdBadRequest(w, r, err)
+		response.ResponsdBadRequest(w, r, err)
 		return
 	}
 	blog, err := l.Service.GetBlog(ctx, models.BlogId(idInt))
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to get blog: %v", err))
-		interfaces.ResponsdInternalServerError(w, r, err)
+		response.ResponsdInternalServerError(w, r, err)
 		return
 	}
 	if blog == nil {
-		interfaces.ResponsdNotFound(w, r, err)
+		response.ResponsdNotFound(w, r, err)
 		return
 	}
 	if !blog.IsPublic {
 		token := r.Header.Get("Authorization")
 		if token == "" {
 			logger.Error(fmt.Sprintf("failed to get authorization header"))
-			interfaces.ResponsdNotFound(w, r, err)
+			response.ResponsdNotFound(w, r, err)
 			return
 		}
 
 		if !strings.HasPrefix(token, "Bearer ") {
 			logger.Error(fmt.Sprintf("failed to get authorization header"))
-			interfaces.ResponsdNotFound(w, r, err)
+			response.ResponsdNotFound(w, r, err)
 			return
 		}
 
@@ -105,11 +105,11 @@ func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		_, err := l.jwter.VerifyToken(ctx, token)
 		if err != nil {
 			logger.Error(fmt.Sprintf("failed to verify token: %v", err))
-			interfaces.ResponsdNotFound(w, r, err)
+			response.ResponsdNotFound(w, r, err)
 			return
 		}
 	}
-	if err := interfaces.RespondJSON(w, r, http.StatusOK, blog); err != nil {
+	if err := response.RespondJSON(w, r, http.StatusOK, blog); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
 	return
@@ -142,15 +142,15 @@ func (a *BlogAddHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Tags                   []string      `json:"tags" default:"[]"`
 	}
 	defer r.Body.Close()
-	if err := interfaces.JsonToStruct(r, &reqBody); err != nil {
+	if err := response.JsonToStruct(r, &reqBody); err != nil {
 		logger.Error(fmt.Sprintf("failed to parse request body: %v", err))
-		interfaces.ResponsdBadRequest(w, r, err)
+		response.ResponsdBadRequest(w, r, err)
 		return
 	}
 
 	if err := a.Validator.Struct(reqBody); err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
-		interfaces.ResponsdBadRequest(w, r, err)
+		response.ResponsdBadRequest(w, r, err)
 		return
 	}
 
@@ -167,10 +167,10 @@ func (a *BlogAddHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	newBlog, err := a.Service.AddBlog(ctx, blog)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to add blog: %v", err))
-		interfaces.ResponsdInternalServerError(w, r, err)
+		response.ResponsdInternalServerError(w, r, err)
 		return
 	}
-	if err := interfaces.RespondJSON(w, r, http.StatusOK, newBlog); err != nil {
+	if err := response.RespondJSON(w, r, http.StatusOK, newBlog); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
 	return
@@ -197,22 +197,22 @@ func (d *BlogDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Id models.BlogId `json:"id" validate:"required"`
 	}
 	defer r.Body.Close()
-	if err := interfaces.JsonToStruct(r, &reqBody); err != nil {
+	if err := response.JsonToStruct(r, &reqBody); err != nil {
 		logger.Error(fmt.Sprintf("failed to parse request body: %v", err))
-		interfaces.ResponsdBadRequest(w, r, err)
+		response.ResponsdBadRequest(w, r, err)
 		return
 	}
 
 	if err := d.Validator.Struct(reqBody); err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
-		interfaces.ResponsdBadRequest(w, r, err)
+		response.ResponsdBadRequest(w, r, err)
 		return
 	}
 
 	err := d.Service.DeleteBlog(ctx, reqBody.Id)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to delete blog: %v", err))
-		interfaces.ResponsdInternalServerError(w, r, err)
+		response.ResponsdInternalServerError(w, r, err)
 		return
 	}
 	resp := struct {
@@ -220,7 +220,7 @@ func (d *BlogDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}{
 		Id: int(reqBody.Id),
 	}
-	if err := interfaces.RespondJSON(w, r, http.StatusOK, resp); err != nil {
+	if err := response.RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
 	return
@@ -254,15 +254,15 @@ func (p *BlogPutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Tags                   []string      `json:"tags"`
 	}
 	defer r.Body.Close()
-	if err := interfaces.JsonToStruct(r, &reqBody); err != nil {
+	if err := response.JsonToStruct(r, &reqBody); err != nil {
 		logger.Error(fmt.Sprintf("failed to parse request body: %v", err))
-		interfaces.ResponsdBadRequest(w, r, err)
+		response.ResponsdBadRequest(w, r, err)
 		return
 	}
 
 	if err := p.Validator.Struct(reqBody); err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
-		interfaces.ResponsdBadRequest(w, r, err)
+		response.ResponsdBadRequest(w, r, err)
 		return
 	}
 
@@ -280,10 +280,10 @@ func (p *BlogPutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	newBlog, err := p.Service.PutBlog(ctx, blog)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to put blog: %v", err))
-		interfaces.ResponsdInternalServerError(w, r, err)
+		response.ResponsdInternalServerError(w, r, err)
 		return
 	}
-	if err := interfaces.RespondJSON(w, r, http.StatusOK, newBlog); err != nil {
+	if err := response.RespondJSON(w, r, http.StatusOK, newBlog); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
 	return
@@ -306,16 +306,16 @@ func (l *BlogListAdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	resp, err := l.Service.ListBlog(ctx, option)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to list blog: %v", err))
-		interfaces.ResponsdInternalServerError(w, r, err)
+		response.ResponsdInternalServerError(w, r, err)
 		return
 	}
 	if resp == nil {
-		if err := interfaces.RespondJSON(w, r, http.StatusOK, []interface{}{}); err != nil {
+		if err := response.RespondJSON(w, r, http.StatusOK, []interface{}{}); err != nil {
 			logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 		}
 		return
 	}
-	if err := interfaces.RespondJSON(w, r, http.StatusOK, resp); err != nil {
+	if err := response.RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
 	return

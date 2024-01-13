@@ -1,4 +1,4 @@
-package handlers
+package interfaces
 
 import (
 	"context"
@@ -7,8 +7,9 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/shoet/blog/internal/config"
 	"github.com/shoet/blog/internal/infrastracture"
-	"github.com/shoet/blog/internal/interfaces"
+	"github.com/shoet/blog/internal/interfaces/cookie"
 	"github.com/shoet/blog/internal/interfaces/handler"
+	"github.com/shoet/blog/internal/interfaces/middleware"
 	"github.com/shoet/blog/internal/logging"
 	"github.com/shoet/blog/services"
 )
@@ -22,15 +23,15 @@ type MuxDependencies struct {
 	JWTer          *services.JWTManager
 	Logger         *logging.Logger
 	Validator      *validator.Validate
-	Cookie         *interfaces.CookieManager
+	Cookie         *cookie.CookieController
 }
 
 func NewMux(
 	ctx context.Context, deps *MuxDependencies,
 ) (*chi.Mux, error) {
 	router := chi.NewRouter()
-	authMiddleWare := NewAuthorizationMiddleware(deps.JWTer)
-	corsMiddleWare := NewCORSMiddleWare(deps.Config)
+	authMiddleWare := middleware.NewAuthorizationMiddleware(deps.JWTer)
+	corsMiddleWare := middleware.NewCORSMiddleWare(deps.Config)
 	router.Use(logging.WithLoggerMiddleware(deps.Logger), corsMiddleWare)
 
 	setHealthRoute(router)
@@ -50,7 +51,7 @@ func setHealthRoute(r chi.Router) {
 }
 
 func setBlogsRoute(
-	r chi.Router, deps *MuxDependencies, authMiddleWare *AuthorizationMiddleware,
+	r chi.Router, deps *MuxDependencies, authMiddleWare *middleware.AuthorizationMiddleware,
 ) {
 	r.Route("/blogs", func(r chi.Router) {
 		blh := handler.NewBlogListHandler(deps.BlogService)
@@ -78,7 +79,7 @@ func setTagsRoute(r chi.Router, deps *MuxDependencies) {
 }
 
 func setFilesRoute(
-	r chi.Router, deps *MuxDependencies, authMiddleWare *AuthorizationMiddleware,
+	r chi.Router, deps *MuxDependencies, authMiddleWare *middleware.AuthorizationMiddleware,
 ) {
 	r.Route("/files", func(r chi.Router) {
 		gt := handler.NewGenerateThumbnailImageSignedURLHandler(deps.StorageService, deps.Validator)
@@ -106,7 +107,7 @@ func setAuthRoute(r chi.Router, deps *MuxDependencies) {
 }
 
 func setAdminRoute(
-	r chi.Router, deps *MuxDependencies, authMiddleWare *AuthorizationMiddleware,
+	r chi.Router, deps *MuxDependencies, authMiddleWare *middleware.AuthorizationMiddleware,
 ) {
 	r.Route("/admin", func(r chi.Router) {
 		bla := handler.NewBlogListAdminHandler(deps.BlogService)

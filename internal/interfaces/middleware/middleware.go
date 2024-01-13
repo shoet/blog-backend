@@ -1,4 +1,4 @@
-package handlers
+package middleware
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/shoet/blog/internal/config"
+	"github.com/shoet/blog/internal/interfaces/response"
 	"github.com/shoet/blog/internal/logging"
 	"github.com/shoet/blog/services"
 )
@@ -61,13 +62,13 @@ func (a *AuthorizationMiddleware) Middleware(next http.Handler) http.Handler {
 		token := r.Header.Get("Authorization")
 		if token == "" {
 			logger.Error(fmt.Sprintf("failed to get authorization header"))
-			RespondUnauthorized(w, r, fmt.Errorf("failed to get authorization header"))
+			response.RespondUnauthorized(w, r, fmt.Errorf("failed to get authorization header"))
 			return
 		}
 
 		if !strings.HasPrefix(token, "Bearer ") {
 			logger.Error(fmt.Sprintf("failed invalid authorization header"))
-			RespondUnauthorized(w, r, fmt.Errorf("failed to get authorization header"))
+			response.RespondUnauthorized(w, r, fmt.Errorf("failed to get authorization header"))
 			return
 		}
 
@@ -75,7 +76,7 @@ func (a *AuthorizationMiddleware) Middleware(next http.Handler) http.Handler {
 		userId, err := a.jwter.VerifyToken(ctx, token)
 		if err != nil {
 			logger.Error(fmt.Sprintf("failed to verify token: %v", err))
-			RespondUnauthorized(w, r, fmt.Errorf("failed to verify token"))
+			response.RespondUnauthorized(w, r, fmt.Errorf("failed to verify token"))
 			return
 		}
 

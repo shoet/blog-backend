@@ -1,23 +1,23 @@
-package interfaces
+package cookie
 
 import (
 	"fmt"
 	"net/http"
 )
 
-type CookieManager struct {
+type CookieController struct {
 	Env        string
 	SiteDomain string
 }
 
-func NewCookieManager(env string, siteDomain string) *CookieManager {
-	return &CookieManager{
+func NewCookieController(env string, siteDomain string) *CookieController {
+	return &CookieController{
 		Env:        env,
 		SiteDomain: siteDomain,
 	}
 }
 
-func (c *CookieManager) SetCookie(w http.ResponseWriter, key string, value string) error {
+func (c *CookieController) SetCookie(w http.ResponseWriter, key string, value string) error {
 	cookie := &http.Cookie{
 		Name:     key,
 		Value:    value,
@@ -38,7 +38,7 @@ func (c *CookieManager) SetCookie(w http.ResponseWriter, key string, value strin
 	return nil
 }
 
-func (c *CookieManager) ClearCookie(w http.ResponseWriter, key string) {
+func (c *CookieController) ClearCookie(w http.ResponseWriter, key string) {
 	cookie := &http.Cookie{
 		Name:     key,
 		Value:    "",

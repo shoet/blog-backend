@@ -3,7 +3,7 @@ package handler
 import (
 	"net/http"
 
-	"github.com/shoet/blog/internal/interfaces"
+	"github.com/shoet/blog/internal/interfaces/response"
 )
 
 type HealthCheckHandler struct{}
@@ -14,8 +14,8 @@ type ResponseHealthCheck struct {
 
 func (hh *HealthCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	resp := &ResponseHealthCheck{Message: "OK"}
-	if err := interfaces.RespondJSON(w, r, http.StatusOK, resp); err != nil {
-		errResp := &interfaces.ErrorResponse{Message: "NG"}
-		interfaces.RespondJSON(w, r, http.StatusInternalServerError, errResp)
+	if err := response.RespondJSON(w, r, http.StatusOK, resp); err != nil {
+		errResp := &response.ErrorResponse{Message: "NG"}
+		response.RespondJSON(w, r, http.StatusInternalServerError, errResp)
 	}
 }

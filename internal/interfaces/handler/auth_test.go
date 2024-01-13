@@ -12,7 +12,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/shoet/blog/internal/infrastracture/models"
-	"github.com/shoet/blog/internal/interfaces"
+	"github.com/shoet/blog/internal/interfaces/cookie"
 	"github.com/shoet/blog/internal/interfaces/handler"
 	"github.com/shoet/blog/testutil"
 )
@@ -74,7 +74,7 @@ func Test_AuthLoginHandler(t *testing.T) {
 	}
 
 	validator := validator.New()
-	cookie := interfaces.NewCookieManager("test", "https://test.example.com")
+	cookie := cookie.NewCookieController("test", "https://test.example.com")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			authManagerMock := &handler.AuthManagerMock{}
@@ -314,7 +314,7 @@ func Test_AuthLogoutHandler(t *testing.T) {
 		},
 	}
 
-	cookie := interfaces.NewCookieManager("test", "https://test.example.com")
+	cookie := cookie.NewCookieController("test", "https://test.example.com")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sut := handler.NewAuthLogoutHandler(cookie)

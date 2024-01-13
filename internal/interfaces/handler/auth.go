@@ -6,20 +6,25 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/shoet/blog/internal/interfaces"
+	"github.com/shoet/blog/internal/interfaces/response"
 	"github.com/shoet/blog/internal/logging"
 )
+
+type Cookier interface {
+	SetCookie(w http.ResponseWriter, key string, value string) error
+	ClearCookie(w http.ResponseWriter, key string)
+}
 
 type AuthLoginHandler struct {
 	Service   AuthManager
 	Validator *validator.Validate
-	Cookie    *interfaces.CookieManager
+	Cookie    Cookier
 }
 
 func NewAuthLoginHandler(
 	service AuthManager,
 	validator *validator.Validate,
-	cookie *interfaces.CookieManager,
+	cookie Cookier,
 ) *AuthLoginHandler {
 	return &AuthLoginHandler{
 		Service:   service,
@@ -36,22 +41,22 @@ func (a *AuthLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Password string `json:"password" validate:"required"`
 	}
 	defer r.Body.Close()
-	if err := interfaces.JsonToStruct(r, &reqBody); err != nil {
+	if err := response.JsonToStruct(r, &reqBody); err != nil {
 		logger.Error(fmt.Sprintf("failed to parse request body: %v", err))
-		interfaces.ResponsdBadRequest(w, r, err)
+		response.ResponsdBadRequest(w, r, err)
 		return
 	}
 
 	if err := a.Validator.Struct(reqBody); err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
-		interfaces.ResponsdBadRequest(w, r, err)
+		response.ResponsdBadRequest(w, r, err)
 		return
 	}
 
 	token, err := a.Service.Login(ctx, reqBody.Email, reqBody.Password)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed login: %v", err))
-		interfaces.RespondUnauthorized(w, r, err)
+		response.RespondUnauthorized(w, r, err)
 		return
 	}
 	resp := struct {
@@ -61,11 +66,11 @@ func (a *AuthLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := a.Cookie.SetCookie(w, "authToken", resp.AuthToken); err != nil {
 		logger.Error(fmt.Sprintf("failed to set cookie: %v", err))
-		interfaces.ResponsdInternalServerError(w, r, err)
+		response.ResponsdInternalServerError(w, r, err)
 		return
 	}
 
-	if err := interfaces.RespondJSON(w, r, http.StatusOK, resp); err != nil {
+	if err := response.RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
 	return
@@ -90,14 +95,14 @@ func (a *AuthSessionLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	if token == "" {
 		msg := "failed to get authorization header"
 		logger.Error(fmt.Sprintf(msg))
-		interfaces.RespondUnauthorized(w, r, fmt.Errorf(msg))
+		response.RespondUnauthorized(w, r, fmt.Errorf(msg))
 		return
 	}
 
 	if !strings.HasPrefix(token, "Bearer ") {
 		msg := "passing invalid authorization header format"
 		logger.Error(fmt.Sprintf(msg))
-		interfaces.RespondUnauthorized(w, r, fmt.Errorf(msg))
+		response.RespondUnauthorized(w, r, fmt.Errorf(msg))
 		return
 	}
 
@@ -106,21 +111,21 @@ func (a *AuthSessionLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	u, err := a.Service.LoginSession(ctx, token)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed login: %v", err))
-		interfaces.RespondUnauthorized(w, r, err)
+		response.RespondUnauthorized(w, r, err)
 		return
 	}
-	if err := interfaces.RespondJSON(w, r, http.StatusOK, u); err != nil {
+	if err := response.RespondJSON(w, r, http.StatusOK, u); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
 	return
 }
 
 type AuthLogoutHandler struct {
-	Cookie *interfaces.CookieManager
+	Cookie Cookier
 }
 
 func NewAuthLogoutHandler(
-	cookie *interfaces.CookieManager,
+	cookie Cookier,
 ) *AuthLogoutHandler {
 	return &AuthLogoutHandler{
 		Cookie: cookie,
@@ -136,7 +141,7 @@ func (a *AuthLogoutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}{
 		Message: "success",
 	}
-	if err := interfaces.RespondJSON(w, r, http.StatusOK, resp); err != nil {
+	if err := response.RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
 	return
