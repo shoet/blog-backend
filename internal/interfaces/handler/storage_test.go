@@ -13,9 +13,6 @@ import (
 )
 
 func Test_GenerateThumbnailImageSignedURLHandler(t *testing.T) {
-	type args struct {
-		FileName string
-	}
 	tests := []struct {
 		name   string
 		args   interface{}

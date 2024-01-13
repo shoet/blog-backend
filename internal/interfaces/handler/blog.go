@@ -47,7 +47,6 @@ func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := response.RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
-	return
 }
 
 type BlogGetHandler struct {
@@ -67,7 +66,7 @@ func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger(ctx)
 	id := chi.URLParam(r, "id")
 	if id == "" {
-		logger.Error(fmt.Sprintf("failed to get id from url"))
+		logger.Error("failed to get id from url")
 		response.ResponsdBadRequest(w, r, nil)
 		return
 	}
@@ -90,13 +89,13 @@ func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !blog.IsPublic {
 		token := r.Header.Get("Authorization")
 		if token == "" {
-			logger.Error(fmt.Sprintf("failed to get authorization header"))
+			logger.Error("failed to get authorization header")
 			response.ResponsdNotFound(w, r, err)
 			return
 		}
 
 		if !strings.HasPrefix(token, "Bearer ") {
-			logger.Error(fmt.Sprintf("failed to get authorization header"))
+			logger.Error("failed to get authorization token")
 			response.ResponsdNotFound(w, r, err)
 			return
 		}
@@ -112,7 +111,6 @@ func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := response.RespondJSON(w, r, http.StatusOK, blog); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
-	return
 }
 
 type BlogAddHandler struct {
@@ -173,7 +171,6 @@ func (a *BlogAddHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := response.RespondJSON(w, r, http.StatusOK, newBlog); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
-	return
 }
 
 type BlogDeleteHandler struct {
@@ -223,7 +220,6 @@ func (d *BlogDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := response.RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
-	return
 }
 
 type BlogPutHandler struct {
@@ -286,7 +282,6 @@ func (p *BlogPutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := response.RespondJSON(w, r, http.StatusOK, newBlog); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
-	return
 }
 
 type BlogListAdminHandler struct {
@@ -318,5 +313,4 @@ func (l *BlogListAdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	if err := response.RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
-	return
 }
