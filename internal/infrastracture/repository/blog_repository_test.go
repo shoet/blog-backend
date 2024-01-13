@@ -1,4 +1,4 @@
-package store
+package repository_test
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/shoet/blog/clocker"
+	"github.com/shoet/blog/internal/infrastracture/repository"
 	"github.com/shoet/blog/models"
 	"github.com/shoet/blog/options"
 	"github.com/shoet/blog/testutil"
@@ -23,7 +24,7 @@ func Test_BlogRepository_Add(t *testing.T) {
 	}
 	testutil.RepositoryTestPrepare(t, ctx, db)
 
-	sut := NewBlogRepository(clocker)
+	sut := repository.NewBlogRepository(clocker)
 
 	type args struct {
 		blog *models.Blog
@@ -143,7 +144,7 @@ func Test_BlogRepository_List(t *testing.T) {
 	}
 	testutil.RepositoryTestPrepare(t, ctx, db)
 
-	sut := NewBlogRepository(clocker)
+	sut := repository.NewBlogRepository(clocker)
 
 	type args struct {
 		blogs    []*models.Blog
@@ -248,7 +249,7 @@ func Test_BlogRepository_Delete(t *testing.T) {
 	}
 	testutil.RepositoryTestPrepare(t, ctx, db)
 
-	sut := NewBlogRepository(clocker)
+	sut := repository.NewBlogRepository(clocker)
 
 	type args struct {
 		prepareCreateBlog []*models.Blog
@@ -322,7 +323,7 @@ func Test_BlogRepository_Get(t *testing.T) {
 	}
 	testutil.RepositoryTestPrepare(t, ctx, db)
 
-	sut := NewBlogRepository(clocker)
+	sut := repository.NewBlogRepository(clocker)
 
 	type args struct {
 		prepareCreateBlog []*models.Blog
@@ -430,7 +431,7 @@ func Test_BlogRepository_Put(t *testing.T) {
 	}
 	testutil.RepositoryTestPrepare(t, ctx, db)
 
-	sut := NewBlogRepository(clocker)
+	sut := repository.NewBlogRepository(clocker)
 
 	type args struct {
 		prepareCreateBlog []*models.Blog
@@ -553,7 +554,7 @@ func Test_BlogRepository_AddBlogTag(t *testing.T) {
 	}
 	testutil.RepositoryTestPrepare(t, ctx, db)
 
-	sut := NewBlogRepository(clocker)
+	sut := repository.NewBlogRepository(clocker)
 
 	type blogTag struct {
 		Id     int64         `db:"id"`

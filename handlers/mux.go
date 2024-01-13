@@ -6,14 +6,14 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/shoet/blog/config"
+	"github.com/shoet/blog/internal/infrastracture"
 	"github.com/shoet/blog/logging"
 	"github.com/shoet/blog/services"
-	"github.com/shoet/blog/store"
 )
 
 type MuxDependencies struct {
 	Config         *config.Config
-	DB             store.DB
+	DB             infrastracture.DB
 	BlogService    *services.BlogService
 	AuthService    *services.AuthService
 	StorageService *services.AWSS3StorageService

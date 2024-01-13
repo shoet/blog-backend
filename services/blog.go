@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/shoet/blog/internal/infrastracture/repository"
 	"github.com/shoet/blog/models"
 	"github.com/shoet/blog/options"
-	"github.com/shoet/blog/store"
 	"golang.org/x/exp/slices"
 )
 
@@ -144,7 +144,7 @@ func (b *BlogService) DeleteBlog(ctx context.Context, id models.BlogId) error {
 }
 
 func (b *BlogService) SelectTag(
-	ctx context.Context, db store.Execer, tag string,
+	ctx context.Context, db repository.Execer, tag string,
 ) (*models.Tag, error) {
 	tags, err := b.blog.SelectTags(ctx, db, tag)
 	if err != nil {

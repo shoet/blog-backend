@@ -2,35 +2,36 @@ package services
 
 import (
 	"context"
+
+	"github.com/shoet/blog/internal/infrastracture/repository"
 	"github.com/shoet/blog/models"
 	"github.com/shoet/blog/options"
-	"github.com/shoet/blog/store"
 )
 
 //go:generate go run github.com/matryer/moq -out service_moq.go . JWTer KVSer
 
 type BlogRepository interface {
-	Add(ctx context.Context, db store.Execer, blog *models.Blog) (models.BlogId, error)
-	List(ctx context.Context, db store.Queryer, option options.ListBlogOptions) ([]*models.Blog, error)
-	Get(ctx context.Context, db store.Queryer, id models.BlogId) (*models.Blog, error)
-	Delete(ctx context.Context, db store.Execer, id models.BlogId) error
-	Put(ctx context.Context, db store.Execer, blog *models.Blog) (models.BlogId, error)
+	Add(ctx context.Context, db repository.Execer, blog *models.Blog) (models.BlogId, error)
+	List(ctx context.Context, db repository.Queryer, option options.ListBlogOptions) ([]*models.Blog, error)
+	Get(ctx context.Context, db repository.Queryer, id models.BlogId) (*models.Blog, error)
+	Delete(ctx context.Context, db repository.Execer, id models.BlogId) error
+	Put(ctx context.Context, db repository.Execer, blog *models.Blog) (models.BlogId, error)
 
-	AddBlogTag(ctx context.Context, db store.Execer, blogId models.BlogId, tagId models.TagId) (int64, error)
-	SelectBlogsTagsByOtherUsingBlog(ctx context.Context, db store.Execer, blogId models.BlogId) ([]*models.BlogsTags, error)
-	SelectBlogsTags(ctx context.Context, db store.Queryer, blogId models.BlogId) ([]*models.BlogsTags, error)
-	DeleteBlogsTags(ctx context.Context, db store.Execer, blogId models.BlogId, tagId models.TagId) error
+	AddBlogTag(ctx context.Context, db repository.Execer, blogId models.BlogId, tagId models.TagId) (int64, error)
+	SelectBlogsTagsByOtherUsingBlog(ctx context.Context, db repository.Execer, blogId models.BlogId) ([]*models.BlogsTags, error)
+	SelectBlogsTags(ctx context.Context, db repository.Queryer, blogId models.BlogId) ([]*models.BlogsTags, error)
+	DeleteBlogsTags(ctx context.Context, db repository.Execer, blogId models.BlogId, tagId models.TagId) error
 
-	SelectTags(ctx context.Context, db store.Queryer, tag string) ([]*models.Tag, error)
-	AddTag(ctx context.Context, db store.Execer, tag string) (models.TagId, error)
-	DeleteTag(ctx context.Context, db store.Execer, tagId models.TagId) error
-	ListTags(ctx context.Context, db store.Queryer, option options.ListTagsOptions) ([]*models.Tag, error)
+	SelectTags(ctx context.Context, db repository.Queryer, tag string) ([]*models.Tag, error)
+	AddTag(ctx context.Context, db repository.Execer, tag string) (models.TagId, error)
+	DeleteTag(ctx context.Context, db repository.Execer, tagId models.TagId) error
+	ListTags(ctx context.Context, db repository.Queryer, option options.ListTagsOptions) ([]*models.Tag, error)
 }
 
 type UserRepository interface {
-	Add(ctx context.Context, db store.Execer, user *models.User) (*models.User, error)
-	Get(ctx context.Context, db store.Queryer, id models.UserId) (*models.User, error)
-	GetByEmail(ctx context.Context, db store.Queryer, email string) (*models.User, error)
+	Add(ctx context.Context, db repository.Execer, user *models.User) (*models.User, error)
+	Get(ctx context.Context, db repository.Queryer, id models.UserId) (*models.User, error)
+	GetByEmail(ctx context.Context, db repository.Queryer, email string) (*models.User, error)
 	// Delete(ctx context.Context, db store.Execer, id models.UserId) error
 	// Put(ctx context.Context, db store.Execer, user *models.User) error
 }

@@ -13,9 +13,10 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/shoet/blog/clocker"
 	"github.com/shoet/blog/config"
+	"github.com/shoet/blog/internal/infrastracture"
+	"github.com/shoet/blog/internal/infrastracture/repository"
 	"github.com/shoet/blog/logging"
 	"github.com/shoet/blog/services"
-	"github.com/shoet/blog/store"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -49,11 +50,11 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 	validator := validator.New()
 	cookie := NewCookieManager(cfg.Env, cfg.SiteDomain)
 
-	db, err := store.NewDBMySQL(ctx, cfg)
+	db, err := infrastracture.NewDBMySQL(ctx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create db: %w", err)
 	}
-	kvs, err := store.NewRedisKVS(
+	kvs, err := infrastracture.NewRedisKVS(
 		ctx,
 		cfg.KVSHost,
 		cfg.KVSPort,
@@ -68,10 +69,10 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 	c := clocker.RealClocker{}
 	jwter := services.NewJWTManager(kvs, &c, []byte(cfg.JWTSecret), cfg.JWTExpiresInSec)
 
-	blogRepo := store.NewBlogRepository(&c)
+	blogRepo := repository.NewBlogRepository(&c)
 	blogService := services.NewBlogService(db, blogRepo)
 
-	userRepo, err := store.NewUserRepository(&c)
+	userRepo, err := repository.NewUserRepository(&c)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user repository: %w", err)
 	}

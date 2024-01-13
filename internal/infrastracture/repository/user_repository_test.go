@@ -1,4 +1,4 @@
-package store
+package repository_test
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/shoet/blog/clocker"
+	"github.com/shoet/blog/internal/infrastracture/repository"
 	"github.com/shoet/blog/models"
 	"github.com/shoet/blog/testutil"
 )
@@ -46,7 +47,7 @@ func Test_UserRepository_Get(t *testing.T) {
 
 	ctx := context.Background()
 
-	sut, err := NewUserRepository(clocker)
+	sut, err := repository.NewUserRepository(clocker)
 	if err != nil {
 		t.Fatalf("failed to create user repository: %v", err)
 	}
@@ -149,14 +150,14 @@ func Test_UserRepository_GetByEmail(t *testing.T) {
 			},
 			want: want{
 				user:  nil,
-				error: ErrUserNotFound,
+				error: repository.ErrUserNotFound,
 			},
 		},
 	}
 
 	ctx := context.Background()
 
-	sut, err := NewUserRepository(clocker)
+	sut, err := repository.NewUserRepository(clocker)
 	if err != nil {
 		t.Fatalf("failed to create user repository: %v", err)
 	}
@@ -254,7 +255,7 @@ func Test_UserRepository_Add(t *testing.T) {
 
 	ctx := context.Background()
 
-	sut, err := NewUserRepository(clocker)
+	sut, err := repository.NewUserRepository(clocker)
 	if err != nil {
 		t.Fatalf("failed to create user repository: %v", err)
 	}

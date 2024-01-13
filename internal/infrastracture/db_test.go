@@ -1,4 +1,4 @@
-package store
+package infrastracture_test
 
 import (
 	"context"
