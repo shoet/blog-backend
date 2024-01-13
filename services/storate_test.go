@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/shoet/blog/config"
+	"github.com/shoet/blog/internal/config"
 	"github.com/shoet/blog/testutil"
 )
 

@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/shoet/blog/models"
-	"github.com/shoet/blog/options"
+	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/options"
 	"github.com/shoet/blog/testutil"
 )
 

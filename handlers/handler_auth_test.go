@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/shoet/blog/models"
+	"github.com/shoet/blog/internal/infrastracture/models"
 	"github.com/shoet/blog/testutil"
 )
 

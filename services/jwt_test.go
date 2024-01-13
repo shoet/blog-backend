@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/shoet/blog/clocker"
-	"github.com/shoet/blog/models"
+	"github.com/shoet/blog/internal/clocker"
+	"github.com/shoet/blog/internal/infrastracture/models"
 )
 
 func Test_JWTService_GenerateToken(t *testing.T) {

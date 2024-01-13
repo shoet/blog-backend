@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/shoet/blog/logging"
+	"github.com/shoet/blog/internal/logging"
 )
 
 func RespondJSON(w http.ResponseWriter, r *http.Request, statusCode int, body any) error {

@@ -7,7 +7,7 @@ import (
 	"context"
 	"os"
 
-	"github.com/shoet/blog/logging"
+	"github.com/shoet/blog/internal/logging"
 	"github.com/spf13/cobra"
 )
 

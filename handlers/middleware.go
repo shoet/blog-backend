@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/shoet/blog/config"
-	"github.com/shoet/blog/logging"
+	"github.com/shoet/blog/internal/config"
+	"github.com/shoet/blog/internal/logging"
 	"github.com/shoet/blog/services"
 )
 

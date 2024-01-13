@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/shoet/blog/logging"
-	"github.com/shoet/blog/options"
+	"github.com/shoet/blog/internal/logging"
+	"github.com/shoet/blog/internal/options"
 )
 
 type TagListHandler struct {

@@ -8,10 +8,10 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/shoet/blog/clocker"
+	"github.com/shoet/blog/internal/clocker"
+	"github.com/shoet/blog/internal/infrastracture/models"
 	"github.com/shoet/blog/internal/infrastracture/repository"
-	"github.com/shoet/blog/models"
-	"github.com/shoet/blog/options"
+	"github.com/shoet/blog/internal/options"
 	"github.com/shoet/blog/testutil"
 )
 

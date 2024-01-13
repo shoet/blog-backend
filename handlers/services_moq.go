@@ -6,7 +6,7 @@ package handlers
 import (
 	"context"
 	"github.com/shoet/blog/internal/infrastracture/models"
-	"github.com/shoet/blog/options"
+	"github.com/shoet/blog/internal/options"
 	"sync"
 )
 

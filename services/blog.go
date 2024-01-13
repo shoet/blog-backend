@@ -7,7 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/shoet/blog/internal/infrastracture/models"
 	"github.com/shoet/blog/internal/infrastracture/repository"
-	"github.com/shoet/blog/options"
+	"github.com/shoet/blog/internal/options"
 	"golang.org/x/exp/slices"
 )
 

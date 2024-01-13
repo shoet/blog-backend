@@ -10,7 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
-	"github.com/shoet/blog/clocker"
+	"github.com/shoet/blog/internal/clocker"
 	"github.com/shoet/blog/internal/infrastracture/models"
 )
 

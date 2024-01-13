@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/shoet/blog/clocker"
+	"github.com/shoet/blog/internal/clocker"
 	"github.com/shoet/blog/internal/infrastracture/models"
-	"github.com/shoet/blog/options"
+	"github.com/shoet/blog/internal/options"
 )
 
 type BlogRepository struct {

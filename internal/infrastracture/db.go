@@ -9,8 +9,8 @@ import (
 	sql_driver "database/sql/driver"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/shoet/blog/config"
-	"github.com/shoet/blog/logging"
+	"github.com/shoet/blog/internal/config"
+	"github.com/shoet/blog/internal/logging"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/qustavo/sqlhooks/v2"

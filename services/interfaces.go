@@ -5,7 +5,7 @@ import (
 
 	"github.com/shoet/blog/internal/infrastracture/models"
 	"github.com/shoet/blog/internal/infrastracture/repository"
-	"github.com/shoet/blog/options"
+	"github.com/shoet/blog/internal/options"
 )
 
 //go:generate go run github.com/matryer/moq -out service_moq.go . JWTer KVSer

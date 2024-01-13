@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/shoet/blog/clocker"
+	"github.com/shoet/blog/internal/clocker"
 	"github.com/shoet/blog/internal/infrastracture/models"
 )
 

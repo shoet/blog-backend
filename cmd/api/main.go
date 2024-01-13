@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/shoet/blog/config"
 	"github.com/shoet/blog/handlers"
+	"github.com/shoet/blog/internal/config"
 )
 
 func main() {

@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/shoet/blog/logging"
+	"github.com/shoet/blog/internal/logging"
 )
 
 func SetLoggerContextToRequest(t *testing.T, request *http.Request) *http.Request {

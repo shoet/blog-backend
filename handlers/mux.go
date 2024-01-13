@@ -5,9 +5,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
-	"github.com/shoet/blog/config"
+	"github.com/shoet/blog/internal/config"
 	"github.com/shoet/blog/internal/infrastracture"
-	"github.com/shoet/blog/logging"
+	"github.com/shoet/blog/internal/logging"
 	"github.com/shoet/blog/services"
 )
 

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/shoet/blog/logging"
+	"github.com/shoet/blog/internal/logging"
 )
 
 type AuthLoginHandler struct {
