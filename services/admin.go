@@ -6,7 +6,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/shoet/blog/config"
-	"github.com/shoet/blog/models"
+	"github.com/shoet/blog/internal/infrastracture/models"
 	"golang.org/x/crypto/bcrypt"
 )
 

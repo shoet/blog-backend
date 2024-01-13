@@ -5,7 +5,7 @@ package services
 
 import (
 	"context"
-	"github.com/shoet/blog/models"
+	"github.com/shoet/blog/internal/infrastracture/models"
 	"sync"
 )
 

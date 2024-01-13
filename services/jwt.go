@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/shoet/blog/clocker"
-	"github.com/shoet/blog/models"
+	"github.com/shoet/blog/internal/infrastracture/models"
 )
 
 type JWTManager struct {

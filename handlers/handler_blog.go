@@ -8,8 +8,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
+	"github.com/shoet/blog/internal/infrastracture/models"
 	"github.com/shoet/blog/logging"
-	"github.com/shoet/blog/models"
+
 	"github.com/shoet/blog/options"
 	"github.com/shoet/blog/services"
 )
