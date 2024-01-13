@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/shoet/blog/testutil"
+	"github.com/shoet/blog/internal/testutil"
 )
 
 func Test_NewDBMySQL(t *testing.T) {

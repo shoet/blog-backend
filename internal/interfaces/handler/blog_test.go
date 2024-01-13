@@ -18,7 +18,7 @@ import (
 	"github.com/shoet/blog/internal/infrastracture/services"
 	"github.com/shoet/blog/internal/interfaces/handler"
 	"github.com/shoet/blog/internal/options"
-	"github.com/shoet/blog/testutil"
+	"github.com/shoet/blog/internal/testutil"
 )
 
 func Test_BlogListHandler(t *testing.T) {

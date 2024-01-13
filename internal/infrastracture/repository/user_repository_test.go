@@ -10,7 +10,7 @@ import (
 	"github.com/shoet/blog/internal/clocker"
 	"github.com/shoet/blog/internal/infrastracture/models"
 	"github.com/shoet/blog/internal/infrastracture/repository"
-	"github.com/shoet/blog/testutil"
+	"github.com/shoet/blog/internal/testutil"
 )
 
 func Test_UserRepository_Get(t *testing.T) {

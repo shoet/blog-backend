@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/shoet/blog/internal/interfaces/handler"
-	"github.com/shoet/blog/testutil"
+	"github.com/shoet/blog/internal/testutil"
 )
 
 func Test_HealthCheckHandler(t *testing.T) {

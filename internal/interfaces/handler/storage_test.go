@@ -9,7 +9,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/shoet/blog/internal/interfaces/handler"
-	"github.com/shoet/blog/testutil"
+	"github.com/shoet/blog/internal/testutil"
 )
 
 func Test_GenerateThumbnailImageSignedURLHandler(t *testing.T) {

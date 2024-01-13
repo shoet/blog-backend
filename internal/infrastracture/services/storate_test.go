@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/shoet/blog/internal/config"
-	"github.com/shoet/blog/testutil"
+	"github.com/shoet/blog/internal/testutil"
 )
 
 func Test_AWSStorageService_GenerateThumbnailPutURL(t *testing.T) {
