@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/joho/godotenv"
-	"github.com/shoet/blog/util"
+	"github.com/shoet/blog/internal/util"
 )
 
 func LoadDotenvForTest(t *testing.T) {

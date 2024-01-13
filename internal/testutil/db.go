@@ -11,8 +11,8 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
-	"github.com/rubenv/sql-migrate"
-	"github.com/shoet/blog/util"
+	migrate "github.com/rubenv/sql-migrate"
+	"github.com/shoet/blog/internal/util"
 )
 
 func NewDBSQLite3ForTest(t *testing.T, ctx context.Context) (*sqlx.DB, error) {
