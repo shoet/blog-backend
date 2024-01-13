@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/shoet/blog/internal/config"
+	"github.com/shoet/blog/internal/infrastracture/services"
 	"github.com/shoet/blog/internal/interfaces/response"
 	"github.com/shoet/blog/internal/logging"
-	"github.com/shoet/blog/services"
 )
 
 func NewCORSMiddleWare(cfg *config.Config) func(next http.Handler) http.Handler {

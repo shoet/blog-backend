@@ -7,11 +7,11 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/shoet/blog/internal/config"
 	"github.com/shoet/blog/internal/infrastracture"
+	"github.com/shoet/blog/internal/infrastracture/services"
 	"github.com/shoet/blog/internal/interfaces/cookie"
 	"github.com/shoet/blog/internal/interfaces/handler"
 	"github.com/shoet/blog/internal/interfaces/middleware"
 	"github.com/shoet/blog/internal/logging"
-	"github.com/shoet/blog/services"
 )
 
 type MuxDependencies struct {

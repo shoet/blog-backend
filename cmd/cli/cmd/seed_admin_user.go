@@ -10,7 +10,7 @@ import (
 	"github.com/shoet/blog/internal/infrastracture"
 	"github.com/shoet/blog/internal/infrastracture/models"
 	"github.com/shoet/blog/internal/infrastracture/repository"
-	"github.com/shoet/blog/services"
+	"github.com/shoet/blog/internal/infrastracture/services"
 	"github.com/spf13/cobra"
 )
 
