@@ -182,7 +182,7 @@ func (r *BlogRepository) Delete(ctx context.Context, tx infrastracture.TX, id mo
 }
 
 func (r *BlogRepository) Put(
-	ctx context.Context, db Execer, blog *models.Blog,
+	ctx context.Context, tx infrastracture.TX, blog *models.Blog,
 ) (models.BlogId, error) {
 	sql := `
 	UPDATE blogs
@@ -200,7 +200,7 @@ func (r *BlogRepository) Put(
 	`
 	now := r.Clocker.Now()
 	blog.Modified = now
-	_, err := db.ExecContext(
+	_, err := tx.ExecContext(
 		ctx,
 		sql,
 		blog.AuthorId, blog.Title, blog.Content, blog.Description,

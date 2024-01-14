@@ -16,7 +16,7 @@ type BlogRepository interface {
 	List(ctx context.Context, tx infrastracture.TX, option options.ListBlogOptions) ([]*models.Blog, error)
 	Get(ctx context.Context, tx infrastracture.TX, id models.BlogId) (*models.Blog, error)
 	Delete(ctx context.Context, tx infrastracture.TX, id models.BlogId) error
-	Put(ctx context.Context, db repository.Execer, blog *models.Blog) (models.BlogId, error)
+	Put(ctx context.Context, tx infrastracture.TX, blog *models.Blog) (models.BlogId, error)
 
 	AddBlogTag(ctx context.Context, tx infrastracture.TX, blogId models.BlogId, tagId models.TagId) (int64, error)
 	SelectBlogsTagsByOtherUsingBlog(ctx context.Context, tx infrastracture.TX, blogId models.BlogId) ([]*models.BlogsTags, error)

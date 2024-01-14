@@ -15,6 +15,7 @@ import (
 	"github.com/shoet/blog/internal/usecase/delete_blog"
 	"github.com/shoet/blog/internal/usecase/get_blog_detail"
 	"github.com/shoet/blog/internal/usecase/get_blogs"
+	"github.com/shoet/blog/internal/usecase/put_blog"
 
 	"github.com/shoet/blog/internal/infrastracture/services"
 )
@@ -228,15 +229,16 @@ func (d *BlogDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type BlogPutHandler struct {
-	Service   BlogManager
+	Usecase   *put_blog.Usecase
 	Validator *validator.Validate
 }
 
 func NewBlogPutHandler(
-	blogService BlogManager, validator *validator.Validate,
+	usecase *put_blog.Usecase,
+	validator *validator.Validate,
 ) *BlogPutHandler {
 	return &BlogPutHandler{
-		Service:   blogService,
+		Usecase:   usecase,
 		Validator: validator,
 	}
 }
@@ -278,7 +280,7 @@ func (p *BlogPutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Tags:                   reqBody.Tags,
 	}
 
-	newBlog, err := p.Service.PutBlog(ctx, blog)
+	newBlog, err := p.Usecase.Run(ctx, blog)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to put blog: %v", err))
 		response.ResponsdInternalServerError(w, r, err)

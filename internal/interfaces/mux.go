@@ -17,6 +17,7 @@ import (
 	"github.com/shoet/blog/internal/usecase/delete_blog"
 	"github.com/shoet/blog/internal/usecase/get_blog_detail"
 	"github.com/shoet/blog/internal/usecase/get_blogs"
+	"github.com/shoet/blog/internal/usecase/put_blog"
 )
 
 type MuxDependencies struct {
@@ -77,7 +78,9 @@ func setBlogsRoute(
 			deps.Validator)
 		r.With(authMiddleWare.Middleware).Delete("/", bdh.ServeHTTP)
 
-		buh := handler.NewBlogPutHandler(deps.BlogService, deps.Validator)
+		buh := handler.NewBlogPutHandler(
+			put_blog.NewUsecase(deps.DB, deps.BlogRepository),
+			deps.Validator)
 		r.With(authMiddleWare.Middleware).Put("/", buh.ServeHTTP)
 	})
 }
