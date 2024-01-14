@@ -166,7 +166,7 @@ func (r *BlogRepository) Get(
 	return blogs[0], nil
 }
 
-func (r *BlogRepository) Delete(ctx context.Context, db Execer, id models.BlogId) error {
+func (r *BlogRepository) Delete(ctx context.Context, tx infrastracture.TX, id models.BlogId) error {
 	sql := `
 	DELETE FROM
 		blogs
@@ -174,12 +174,13 @@ func (r *BlogRepository) Delete(ctx context.Context, db Execer, id models.BlogId
 		id = ?
 	;
 	`
-	_, err := db.ExecContext(ctx, sql, id)
+	_, err := tx.ExecContext(ctx, sql, id)
 	if err != nil {
 		return fmt.Errorf("failed to delete blog: %w", err)
 	}
 	return nil
 }
+
 func (r *BlogRepository) Put(
 	ctx context.Context, db Execer, blog *models.Blog,
 ) (models.BlogId, error) {
@@ -232,7 +233,7 @@ func (r *BlogRepository) AddBlogTag(
 }
 
 func (r *BlogRepository) SelectBlogsTagsByOtherUsingBlog(
-	ctx context.Context, db Execer, blogId models.BlogId,
+	ctx context.Context, tx infrastracture.TX, blogId models.BlogId,
 ) ([]*models.BlogsTags, error) {
 	var result []*models.BlogsTags
 	sql := `
@@ -258,14 +259,14 @@ func (r *BlogRepository) SelectBlogsTagsByOtherUsingBlog(
 	LEFT OUTER JOIN tags
 		ON a.tag_id = tags.id
 	`
-	if err := db.SelectContext(ctx, &result, sql, blogId); err != nil {
+	if err := tx.SelectContext(ctx, &result, sql, blogId); err != nil {
 		return nil, fmt.Errorf("failed to select using tags: %w", err)
 	}
 	return result, nil
 }
 
 func (r *BlogRepository) SelectBlogsTags(
-	ctx context.Context, db Queryer, blogId models.BlogId,
+	ctx context.Context, tx infrastracture.TX, blogId models.BlogId,
 ) ([]*models.BlogsTags, error) {
 	var result []*models.BlogsTags
 	sql := `
@@ -281,14 +282,14 @@ func (r *BlogRepository) SelectBlogsTags(
 		blog_id = ?
 	;
 	`
-	if err := db.SelectContext(ctx, &result, sql, blogId); err != nil {
+	if err := tx.SelectContext(ctx, &result, sql, blogId); err != nil {
 		return nil, fmt.Errorf("failed to select tags: %w", err)
 	}
 	return result, nil
 }
 
 func (r *BlogRepository) DeleteBlogsTags(
-	ctx context.Context, db Execer, blogId models.BlogId, tagId models.TagId,
+	ctx context.Context, tx infrastracture.TX, blogId models.BlogId, tagId models.TagId,
 ) error {
 	sql := `
 	DELETE FROM
@@ -298,7 +299,7 @@ func (r *BlogRepository) DeleteBlogsTags(
 		AND tag_id = ?
 	;
 	`
-	if _, err := db.ExecContext(ctx, sql, blogId, tagId); err != nil {
+	if _, err := tx.ExecContext(ctx, sql, blogId, tagId); err != nil {
 		return fmt.Errorf("failed to delete blogs_tags: %w", err)
 	}
 	return nil
@@ -343,7 +344,7 @@ func (r *BlogRepository) AddTag(ctx context.Context, tx infrastracture.TX, tag s
 }
 
 func (r *BlogRepository) DeleteTag(
-	ctx context.Context, db Execer, tagId models.TagId,
+	ctx context.Context, tx infrastracture.TX, tagId models.TagId,
 ) error {
 	sql := `
 	DELETE FROM	
@@ -352,7 +353,7 @@ func (r *BlogRepository) DeleteTag(
 		id = ?
 	;
 	`
-	if _, err := db.ExecContext(ctx, sql, tagId); err != nil {
+	if _, err := tx.ExecContext(ctx, sql, tagId); err != nil {
 		return fmt.Errorf("failed to delete tag: %w", err)
 	}
 	return nil

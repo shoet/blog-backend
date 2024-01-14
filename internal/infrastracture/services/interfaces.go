@@ -15,17 +15,17 @@ type BlogRepository interface {
 	Add(ctx context.Context, tx infrastracture.TX, blog *models.Blog) (models.BlogId, error)
 	List(ctx context.Context, tx infrastracture.TX, option options.ListBlogOptions) ([]*models.Blog, error)
 	Get(ctx context.Context, tx infrastracture.TX, id models.BlogId) (*models.Blog, error)
-	Delete(ctx context.Context, db repository.Execer, id models.BlogId) error
+	Delete(ctx context.Context, tx infrastracture.TX, id models.BlogId) error
 	Put(ctx context.Context, db repository.Execer, blog *models.Blog) (models.BlogId, error)
 
 	AddBlogTag(ctx context.Context, tx infrastracture.TX, blogId models.BlogId, tagId models.TagId) (int64, error)
-	SelectBlogsTagsByOtherUsingBlog(ctx context.Context, db repository.Execer, blogId models.BlogId) ([]*models.BlogsTags, error)
-	SelectBlogsTags(ctx context.Context, db repository.Queryer, blogId models.BlogId) ([]*models.BlogsTags, error)
-	DeleteBlogsTags(ctx context.Context, db repository.Execer, blogId models.BlogId, tagId models.TagId) error
+	SelectBlogsTagsByOtherUsingBlog(ctx context.Context, tx infrastracture.TX, blogId models.BlogId) ([]*models.BlogsTags, error)
+	SelectBlogsTags(ctx context.Context, tx infrastracture.TX, blogId models.BlogId) ([]*models.BlogsTags, error)
+	DeleteBlogsTags(ctx context.Context, tx infrastracture.TX, blogId models.BlogId, tagId models.TagId) error
 
 	SelectTags(ctx context.Context, tx infrastracture.TX, tag string) ([]*models.Tag, error)
 	AddTag(ctx context.Context, tx infrastracture.TX, tag string) (models.TagId, error)
-	DeleteTag(ctx context.Context, db repository.Execer, tagId models.TagId) error
+	DeleteTag(ctx context.Context, tx infrastracture.TX, tagId models.TagId) error
 	ListTags(ctx context.Context, db repository.Queryer, option options.ListTagsOptions) ([]*models.Tag, error)
 }
 

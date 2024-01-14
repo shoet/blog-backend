@@ -12,6 +12,7 @@ import (
 	"github.com/shoet/blog/internal/interfaces/response"
 	"github.com/shoet/blog/internal/logging"
 	"github.com/shoet/blog/internal/usecase/create_blog"
+	"github.com/shoet/blog/internal/usecase/delete_blog"
 	"github.com/shoet/blog/internal/usecase/get_blog_detail"
 	"github.com/shoet/blog/internal/usecase/get_blogs"
 
@@ -177,15 +178,16 @@ func (a *BlogAddHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type BlogDeleteHandler struct {
-	Service   BlogManager
+	Usecase   *delete_blog.Usecase
 	Validator *validator.Validate
 }
 
 func NewBlogDeleteHandler(
-	blogService BlogManager, validator *validator.Validate,
+	usecase *delete_blog.Usecase,
+	validator *validator.Validate,
 ) *BlogDeleteHandler {
 	return &BlogDeleteHandler{
-		Service:   blogService,
+		Usecase:   usecase,
 		Validator: validator,
 	}
 }
@@ -209,7 +211,7 @@ func (d *BlogDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := d.Service.DeleteBlog(ctx, reqBody.Id)
+	blogId, err := d.Usecase.Run(ctx, reqBody.Id)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to delete blog: %v", err))
 		response.ResponsdInternalServerError(w, r, err)
@@ -218,7 +220,7 @@ func (d *BlogDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	resp := struct {
 		Id int `json:"id"`
 	}{
-		Id: int(reqBody.Id),
+		Id: int(blogId),
 	}
 	if err := response.RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
