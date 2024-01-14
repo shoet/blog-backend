@@ -128,7 +128,7 @@ func (r *BlogRepository) List(
 }
 
 func (r *BlogRepository) Get(
-	ctx context.Context, db Queryer, id models.BlogId,
+	ctx context.Context, tx infrastracture.TX, id models.BlogId,
 ) (*models.Blog, error) {
 	sqlBlog := `
 	SELECT
@@ -139,7 +139,7 @@ func (r *BlogRepository) Get(
 	;
 	`
 	var blogs []*models.Blog
-	if err := db.SelectContext(ctx, &blogs, sqlBlog, id); err != nil {
+	if err := tx.SelectContext(ctx, &blogs, sqlBlog, id); err != nil {
 		return nil, fmt.Errorf("failed to select blog: %w", err)
 	}
 	if len(blogs) == 0 {
@@ -159,7 +159,7 @@ func (r *BlogRepository) Get(
 		ON b_t.tag_id = tags.id
 	`
 	var tags []string
-	if err := db.SelectContext(ctx, &tags, sqlTags, id); err != nil {
+	if err := tx.SelectContext(ctx, &tags, sqlTags, id); err != nil {
 		return nil, fmt.Errorf("failed to select tag: %w", err)
 	}
 	blogs[0].Tags = tags

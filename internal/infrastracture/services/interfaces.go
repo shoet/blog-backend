@@ -14,7 +14,7 @@ import (
 type BlogRepository interface {
 	Add(ctx context.Context, db repository.Execer, blog *models.Blog) (models.BlogId, error)
 	List(ctx context.Context, tx infrastracture.TX, option options.ListBlogOptions) ([]*models.Blog, error)
-	Get(ctx context.Context, db repository.Queryer, id models.BlogId) (*models.Blog, error)
+	Get(ctx context.Context, tx infrastracture.TX, id models.BlogId) (*models.Blog, error)
 	Delete(ctx context.Context, db repository.Execer, id models.BlogId) error
 	Put(ctx context.Context, db repository.Execer, blog *models.Blog) (models.BlogId, error)
 

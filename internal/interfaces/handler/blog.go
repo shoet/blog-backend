@@ -11,10 +11,10 @@ import (
 	"github.com/shoet/blog/internal/infrastracture/models"
 	"github.com/shoet/blog/internal/interfaces/response"
 	"github.com/shoet/blog/internal/logging"
+	"github.com/shoet/blog/internal/usecase/get_blog_detail"
 	"github.com/shoet/blog/internal/usecase/get_blogs"
 
 	"github.com/shoet/blog/internal/infrastracture/services"
-	"github.com/shoet/blog/internal/options"
 )
 
 type BlogListHandler struct {
@@ -50,13 +50,13 @@ func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type BlogGetHandler struct {
-	Service BlogManager
+	Usecase *get_blog_detail.Usecase
 	jwter   services.JWTer
 }
 
-func NewBlogGetHandler(blogService BlogManager, jwter services.JWTer) *BlogGetHandler {
+func NewBlogGetHandler(usecase *get_blog_detail.Usecase, jwter services.JWTer) *BlogGetHandler {
 	return &BlogGetHandler{
-		Service: blogService,
+		Usecase: usecase,
 		jwter:   jwter,
 	}
 }
@@ -76,7 +76,7 @@ func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		response.ResponsdBadRequest(w, r, err)
 		return
 	}
-	blog, err := l.Service.GetBlog(ctx, models.BlogId(idInt))
+	blog, err := l.Usecase.Run(ctx, models.BlogId(idInt))
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to get blog: %v", err))
 		response.ResponsdInternalServerError(w, r, err)
@@ -86,6 +86,7 @@ func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		response.ResponsdNotFound(w, r, err)
 		return
 	}
+	// 非公開のBlogは認証が必要
 	if !blog.IsPublic {
 		token := r.Header.Get("Authorization")
 		if token == "" {
@@ -285,20 +286,19 @@ func (p *BlogPutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type BlogListAdminHandler struct {
-	Service BlogManager
+	Usecase *get_blogs.Usecase
 }
 
-func NewBlogListAdminHandler(blogService BlogManager) *BlogListAdminHandler {
+func NewBlogListAdminHandler(usecase *get_blogs.Usecase) *BlogListAdminHandler {
 	return &BlogListAdminHandler{
-		Service: blogService,
+		Usecase: usecase,
 	}
 }
 
 func (l *BlogListAdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)
-	option := options.ListBlogOptions{}
-	resp, err := l.Service.ListBlog(ctx, option)
+	resp, err := l.Usecase.Run(ctx, false)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to list blog: %v", err))
 		response.ResponsdInternalServerError(w, r, err)

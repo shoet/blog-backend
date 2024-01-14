@@ -10,7 +10,7 @@ import (
 )
 
 type BlogRepository interface {
-	List(ctx context.Context, db infrastracture.TX, option options.ListBlogOptions) ([]*models.Blog, error)
+	List(ctx context.Context, tx infrastracture.TX, option options.ListBlogOptions) ([]*models.Blog, error)
 }
 
 type Usecase struct {

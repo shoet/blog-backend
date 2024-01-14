@@ -13,6 +13,7 @@ import (
 	"github.com/shoet/blog/internal/interfaces/handler"
 	"github.com/shoet/blog/internal/interfaces/middleware"
 	"github.com/shoet/blog/internal/logging"
+	"github.com/shoet/blog/internal/usecase/get_blog_detail"
 	"github.com/shoet/blog/internal/usecase/get_blogs"
 )
 
@@ -60,7 +61,8 @@ func setBlogsRoute(
 		blh := handler.NewBlogListHandler(get_blogs.NewUsecase(deps.DB, deps.BlogRepository))
 		r.Get("/", blh.ServeHTTP)
 
-		bgh := handler.NewBlogGetHandler(deps.BlogService, deps.JWTer)
+		bgh := handler.NewBlogGetHandler(
+			get_blog_detail.NewUsecase(deps.DB, deps.BlogRepository), deps.JWTer)
 		r.Get("/{id}", bgh.ServeHTTP)
 
 		bah := handler.NewBlogAddHandler(deps.BlogService, deps.Validator)
@@ -113,7 +115,7 @@ func setAdminRoute(
 	r chi.Router, deps *MuxDependencies, authMiddleWare *middleware.AuthorizationMiddleware,
 ) {
 	r.Route("/admin", func(r chi.Router) {
-		bla := handler.NewBlogListAdminHandler(deps.BlogService)
+		bla := handler.NewBlogListAdminHandler(get_blogs.NewUsecase(deps.DB, deps.BlogRepository))
 		r.With(authMiddleWare.Middleware).Get("/blogs", bla.ServeHTTP)
 	})
 }

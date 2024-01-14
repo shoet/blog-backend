@@ -62,33 +62,17 @@ func (b *BlogService) AddBlog(ctx context.Context, blog *models.Blog) (*models.B
 		}
 	}
 
+	newBlog, err := b.blog.Get(ctx, tx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get blog: %w", err)
+	}
+
 	/// commit
 	if err := tx.Commit(); err != nil {
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	newBlog, err := b.GetBlog(ctx, id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get blog: %w", err)
-	}
-
 	return newBlog, nil
-}
-
-func (b *BlogService) ListBlog(ctx context.Context, option options.ListBlogOptions) ([]*models.Blog, error) {
-	blogs, err := b.blog.List(ctx, b.db, option)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list blog: %w", err)
-	}
-	return blogs, err
-}
-
-func (b *BlogService) GetBlog(ctx context.Context, id models.BlogId) (*models.Blog, error) {
-	blog, err := b.blog.Get(ctx, b.db, id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get blog: %w", err)
-	}
-	return blog, nil
 }
 
 func (b *BlogService) DeleteBlog(ctx context.Context, id models.BlogId) error {
@@ -221,14 +205,14 @@ func (b *BlogService) PutBlog(ctx context.Context, blog *models.Blog) (*models.B
 		return nil, fmt.Errorf("failed to put blog: %w", err)
 	}
 
+	newBlog, err := b.blog.Get(ctx, tx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get blog: %w", err)
+	}
+
 	// commit
 	if err := tx.Commit(); err != nil {
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
-	}
-
-	newBlog, err := b.GetBlog(ctx, id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get blog: %w", err)
 	}
 
 	return newBlog, nil
