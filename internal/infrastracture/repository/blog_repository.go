@@ -360,7 +360,7 @@ func (r *BlogRepository) DeleteTag(
 }
 
 func (r *BlogRepository) ListTags(
-	ctx context.Context, db Queryer, option options.ListTagsOptions,
+	ctx context.Context, tx infrastracture.TX, option options.ListTagsOptions,
 ) ([]*models.Tag, error) {
 	sql := `
 	SELECT
@@ -373,7 +373,7 @@ func (r *BlogRepository) ListTags(
 	;
 	`
 	var tags []*models.Tag
-	if err := db.SelectContext(ctx, &tags, sql, option.Limit); err != nil {
+	if err := tx.SelectContext(ctx, &tags, sql, option.Limit); err != nil {
 		return nil, fmt.Errorf("failed to select tags: %w", err)
 	}
 	return tags, nil

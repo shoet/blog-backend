@@ -7,15 +7,18 @@ import (
 	"github.com/shoet/blog/internal/interfaces/response"
 	"github.com/shoet/blog/internal/logging"
 	"github.com/shoet/blog/internal/options"
+	"github.com/shoet/blog/internal/usecase/get_tags"
 )
 
 type TagListHandler struct {
-	Service BlogManager
+	Usecase get_tags.Usecase
 }
 
-func NewTagListHandler(service BlogManager) *TagListHandler {
+func NewTagListHandler(
+	usecase get_tags.Usecase,
+) *TagListHandler {
 	return &TagListHandler{
-		Service: service,
+		Usecase: usecase,
 	}
 }
 
@@ -25,7 +28,7 @@ func (t *TagListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	option := options.ListTagsOptions{
 		Limit: 100,
 	}
-	resp, err := t.Service.ListTags(ctx, option)
+	resp, err := t.Usecase.Run(ctx, option)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to list tags: %v", err))
 		response.ResponsdInternalServerError(w, r, err)

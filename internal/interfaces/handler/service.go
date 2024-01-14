@@ -4,13 +4,11 @@ import (
 	"context"
 
 	"github.com/shoet/blog/internal/infrastracture/models"
-	"github.com/shoet/blog/internal/options"
 )
 
 //go:generate go run github.com/matryer/moq -out services_moq.go . BlogManager AuthManager Storager
 type BlogManager interface {
 	Export(ctx context.Context) error
-	ListTags(ctx context.Context, option options.ListTagsOptions) ([]*models.Tag, error)
 }
 
 type AuthManager interface {

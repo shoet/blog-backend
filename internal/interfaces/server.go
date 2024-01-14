@@ -71,7 +71,7 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 	jwter := services.NewJWTManager(kvs, &c, []byte(cfg.JWTSecret), cfg.JWTExpiresInSec)
 
 	blogRepo := repository.NewBlogRepository(&c)
-	blogService := services.NewBlogService(db, blogRepo)
+	blogService := services.NewBlogService()
 
 	userRepo, err := repository.NewUserRepository(&c)
 	if err != nil {
@@ -90,6 +90,7 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 	return &MuxDependencies{
 		Config:         cfg,
 		DB:             db,
+		BlogRepository: blogRepo,
 		BlogService:    blogService,
 		AuthService:    authService,
 		StorageService: awsStorage,
@@ -97,7 +98,6 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 		Logger:         logger,
 		Validator:      validator,
 		Cookie:         cookie,
-		BlogRepository: blogRepo,
 	}, nil
 }
 

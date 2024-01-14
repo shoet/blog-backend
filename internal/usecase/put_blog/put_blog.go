@@ -116,6 +116,10 @@ func (u *Usecase) Run(ctx context.Context, blog *models.Blog) (*models.Blog, err
 		return newBlog, nil
 	})
 
+	if err != nil {
+		return nil, fmt.Errorf("failed to update blog: %w", err)
+	}
+
 	blog, ok := result.(*models.Blog)
 	if !ok {
 		return nil, fmt.Errorf("failed to type assertion: %w", err)

@@ -3,31 +3,11 @@ package services
 import (
 	"context"
 
-	"github.com/shoet/blog/internal/infrastracture"
 	"github.com/shoet/blog/internal/infrastracture/models"
 	"github.com/shoet/blog/internal/infrastracture/repository"
-	"github.com/shoet/blog/internal/options"
 )
 
 //go:generate go run github.com/matryer/moq -out service_moq.go . JWTer KVSer
-
-type BlogRepository interface {
-	Add(ctx context.Context, tx infrastracture.TX, blog *models.Blog) (models.BlogId, error)
-	List(ctx context.Context, tx infrastracture.TX, option options.ListBlogOptions) ([]*models.Blog, error)
-	Get(ctx context.Context, tx infrastracture.TX, id models.BlogId) (*models.Blog, error)
-	Delete(ctx context.Context, tx infrastracture.TX, id models.BlogId) error
-	Put(ctx context.Context, tx infrastracture.TX, blog *models.Blog) (models.BlogId, error)
-
-	AddBlogTag(ctx context.Context, tx infrastracture.TX, blogId models.BlogId, tagId models.TagId) (int64, error)
-	SelectBlogsTagsByOtherUsingBlog(ctx context.Context, tx infrastracture.TX, blogId models.BlogId) ([]*models.BlogsTags, error)
-	SelectBlogsTags(ctx context.Context, tx infrastracture.TX, blogId models.BlogId) ([]*models.BlogsTags, error)
-	DeleteBlogsTags(ctx context.Context, tx infrastracture.TX, blogId models.BlogId, tagId models.TagId) error
-
-	SelectTags(ctx context.Context, tx infrastracture.TX, tag string) ([]*models.Tag, error)
-	AddTag(ctx context.Context, tx infrastracture.TX, tag string) (models.TagId, error)
-	DeleteTag(ctx context.Context, tx infrastracture.TX, tagId models.TagId) error
-	ListTags(ctx context.Context, db repository.Queryer, option options.ListTagsOptions) ([]*models.Tag, error)
-}
 
 type UserRepository interface {
 	Add(ctx context.Context, db repository.Execer, user *models.User) (*models.User, error)

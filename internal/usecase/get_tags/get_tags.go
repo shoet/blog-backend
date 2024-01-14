@@ -1,4 +1,4 @@
-package get_blogs
+package get_tags
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 )
 
 type BlogRepository interface {
-	List(ctx context.Context, tx infrastracture.TX, option options.ListBlogOptions) ([]*models.Blog, error)
+	ListTags(ctx context.Context, tx infrastracture.TX, option options.ListTagsOptions) ([]*models.Tag, error)
 }
 
 type Usecase struct {
@@ -19,37 +19,33 @@ type Usecase struct {
 }
 
 func NewUsecase(
-	DB infrastracture.DB,
+	db infrastracture.DB,
 	blogRepository BlogRepository,
 ) *Usecase {
 	return &Usecase{
-		DB:             DB,
+		DB:             db,
 		BlogRepository: blogRepository,
 	}
 }
 
-func (u *Usecase) Run(ctx context.Context, isPublic bool) ([]*models.Blog, error) {
-
+func (u *Usecase) Run(ctx context.Context, option options.ListTagsOptions) (models.Tags, error) {
 	transactor := infrastracture.NewTransactionProvider(u.DB)
-
 	result, err := transactor.DoInTx(ctx, func(tx infrastracture.TX) (interface{}, error) {
-		listOption := options.ListBlogOptions{
-			IsPublic: isPublic,
-		}
-		blogs, err := u.BlogRepository.List(ctx, tx, listOption)
+		tags, err := u.BlogRepository.ListTags(ctx, tx, option)
 		if err != nil {
-			return nil, fmt.Errorf("failed to list blogs: %v", err)
+			return nil, fmt.Errorf("failed to list tags: %w", err)
 		}
-		return blogs, nil
+		return tags, nil
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get blogs: %v", err)
+		return nil, fmt.Errorf("failed to get tags: %w", err)
 	}
 
-	blogs, ok := result.([]*models.Blog)
+	tags, ok := result.([]*models.Tag)
 	if !ok {
-		return nil, fmt.Errorf("failed to cast []*models.Blog")
+		return nil, fmt.Errorf("failed to assert result to models.Tags")
 	}
-	return blogs, nil
+
+	return tags, nil
 }

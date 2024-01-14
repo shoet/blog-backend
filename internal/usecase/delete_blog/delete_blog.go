@@ -92,6 +92,10 @@ func (u *Usecase) Run(ctx context.Context, blogId models.BlogId) (models.BlogId,
 		return blog.Id, nil
 	})
 
+	if err != nil {
+		return 0, fmt.Errorf("failed to delete blog: %w", err)
+	}
+
 	blogId, ok := result.(models.BlogId)
 	if !ok {
 		return 0, fmt.Errorf("failed to type assertion: %w", err)

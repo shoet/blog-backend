@@ -38,6 +38,10 @@ func (u *Usecase) Run(ctx context.Context, blogId models.BlogId) (*models.Blog, 
 		return nil, fmt.Errorf("failed to get blog: %v", err)
 	}
 
+	if err != nil {
+		return nil, fmt.Errorf("failed to get blog: %v", err)
+	}
+
 	blog, ok := result.(*models.Blog)
 	if !ok {
 		return nil, fmt.Errorf("failed to cast *models.Blog")

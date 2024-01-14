@@ -17,6 +17,7 @@ import (
 	"github.com/shoet/blog/internal/usecase/delete_blog"
 	"github.com/shoet/blog/internal/usecase/get_blog_detail"
 	"github.com/shoet/blog/internal/usecase/get_blogs"
+	"github.com/shoet/blog/internal/usecase/get_tags"
 	"github.com/shoet/blog/internal/usecase/put_blog"
 )
 
@@ -87,7 +88,7 @@ func setBlogsRoute(
 
 func setTagsRoute(r chi.Router, deps *MuxDependencies) {
 	r.Route("/tags", func(r chi.Router) {
-		th := handler.NewTagListHandler(deps.BlogService)
+		th := handler.NewTagListHandler(*get_tags.NewUsecase(deps.DB, deps.BlogRepository))
 		r.Get("/", th.ServeHTTP)
 	})
 }
