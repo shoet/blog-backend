@@ -9,6 +9,7 @@ import (
 	"github.com/shoet/blog/internal/infrastracture/services"
 	"github.com/shoet/blog/internal/interfaces/response"
 	"github.com/shoet/blog/internal/logging"
+	"github.com/shoet/blog/internal/session"
 )
 
 func NewCORSMiddleWare(cfg *config.Config) func(next http.Handler) http.Handler {
@@ -80,9 +81,8 @@ func (a *AuthorizationMiddleware) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Todo: set user info with context
-		_ = userId
-
-		next.ServeHTTP(w, r)
+		// set UserId to context
+		ctx = session.SetUserId(ctx, userId)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

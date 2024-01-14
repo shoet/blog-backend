@@ -11,6 +11,7 @@ import (
 	"github.com/shoet/blog/internal/infrastracture/models"
 	"github.com/shoet/blog/internal/interfaces/response"
 	"github.com/shoet/blog/internal/logging"
+	"github.com/shoet/blog/internal/usecase/create_blog"
 	"github.com/shoet/blog/internal/usecase/get_blog_detail"
 	"github.com/shoet/blog/internal/usecase/get_blogs"
 
@@ -115,15 +116,16 @@ func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type BlogAddHandler struct {
-	Service   BlogManager
+	Usecase   *create_blog.Usecase
 	Validator *validator.Validate
 }
 
 func NewBlogAddHandler(
-	blogService BlogManager, validator *validator.Validate,
+	usecase *create_blog.Usecase,
+	validator *validator.Validate,
 ) *BlogAddHandler {
 	return &BlogAddHandler{
-		Service:   blogService,
+		Usecase:   usecase,
 		Validator: validator,
 	}
 }
@@ -163,7 +165,7 @@ func (a *BlogAddHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Tags:                   reqBody.Tags,
 	}
 
-	newBlog, err := a.Service.AddBlog(ctx, blog)
+	newBlog, err := a.Usecase.Run(ctx, blog)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to add blog: %v", err))
 		response.ResponsdInternalServerError(w, r, err)

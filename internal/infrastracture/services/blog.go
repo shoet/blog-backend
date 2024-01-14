@@ -23,58 +23,6 @@ type BlogService struct {
 	blog BlogRepository
 }
 
-func (b *BlogService) AddBlog(ctx context.Context, blog *models.Blog) (*models.Blog, error) {
-	tx, err := b.db.BeginTxx(ctx, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to begin transaction: %w", err)
-	}
-	defer tx.Rollback()
-
-	// add tags
-	var tagIds []models.TagId
-	for _, tag := range blog.Tags {
-		tags, err := b.blog.SelectTags(ctx, tx, tag)
-		if err != nil {
-			return nil, fmt.Errorf("failed to upsert tag: %w", err)
-		}
-		if len(tags) == 0 {
-			tagId, err := b.blog.AddTag(ctx, tx, tag)
-			if err != nil {
-				return nil, fmt.Errorf("failed to add tag: %w", err)
-			}
-			tagIds = append(tagIds, tagId)
-		} else {
-			tagIds = append(tagIds, tags[0].Id)
-		}
-	}
-
-	// add blog
-	id, err := b.blog.Add(ctx, tx, blog)
-	if err != nil {
-		return nil, fmt.Errorf("failed to add blog: %w", err)
-	}
-
-	// add blogs_tags
-	for _, tagId := range tagIds {
-		_, err := b.blog.AddBlogTag(ctx, tx, id, tagId)
-		if err != nil {
-			return nil, fmt.Errorf("failed to add blogs_tags: %w", err)
-		}
-	}
-
-	newBlog, err := b.blog.Get(ctx, tx, id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get blog: %w", err)
-	}
-
-	/// commit
-	if err := tx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %w", err)
-	}
-
-	return newBlog, nil
-}
-
 func (b *BlogService) DeleteBlog(ctx context.Context, id models.BlogId) error {
 	tx, err := b.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -227,5 +175,12 @@ func (s *BlogService) ListTags(ctx context.Context, option options.ListTagsOptio
 }
 
 func (s *BlogService) Export(ctx context.Context) error {
+	return nil
+}
+
+func (s *BlogService) Validate(ctx context.Context, userId models.UserId, blog *models.Blog) error {
+	if userId != blog.AuthorId {
+		return fmt.Errorf("blog.AuthorId is invalid")
+	}
 	return nil
 }

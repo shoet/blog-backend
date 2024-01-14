@@ -22,7 +22,7 @@ func NewBlogRepository(clocker clocker.Clocker) *BlogRepository {
 	}
 }
 
-func (r *BlogRepository) Add(ctx context.Context, db Execer, blog *models.Blog) (models.BlogId, error) {
+func (r *BlogRepository) Add(ctx context.Context, tx infrastracture.TX, blog *models.Blog) (models.BlogId, error) {
 	sql := `
 	INSERT INTO blogs
 		(author_id, title, content, description, thumbnail_image_file_name, is_public, created, modified)
@@ -33,7 +33,7 @@ func (r *BlogRepository) Add(ctx context.Context, db Execer, blog *models.Blog) 
 	now := r.Clocker.Now()
 	blog.Created = now
 	blog.Modified = now
-	res, err := db.ExecContext(
+	res, err := tx.ExecContext(
 		ctx,
 		sql,
 		blog.AuthorId, blog.Title, blog.Content, blog.Description,
@@ -211,7 +211,7 @@ func (r *BlogRepository) Put(
 }
 
 func (r *BlogRepository) AddBlogTag(
-	ctx context.Context, db Execer, blogId models.BlogId, tagId models.TagId,
+	ctx context.Context, tx infrastracture.TX, blogId models.BlogId, tagId models.TagId,
 ) (int64, error) {
 	sql := `
 	REPLACE INTO blogs_tags
@@ -220,7 +220,7 @@ func (r *BlogRepository) AddBlogTag(
 		(?, ?)
 	;
 	`
-	res, err := db.ExecContext(ctx, sql, blogId, tagId)
+	res, err := tx.ExecContext(ctx, sql, blogId, tagId)
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert blogs_tags: %w", err)
 	}
@@ -305,7 +305,7 @@ func (r *BlogRepository) DeleteBlogsTags(
 }
 
 func (r *BlogRepository) SelectTags(
-	ctx context.Context, db Queryer, tag string,
+	ctx context.Context, tx infrastracture.TX, tag string,
 ) ([]*models.Tag, error) {
 	sql := `
 	SELECT
@@ -317,13 +317,13 @@ func (r *BlogRepository) SelectTags(
 	;
 	`
 	var tags []*models.Tag
-	if err := db.SelectContext(ctx, &tags, sql, tag); err != nil {
+	if err := tx.SelectContext(ctx, &tags, sql, tag); err != nil {
 		return nil, fmt.Errorf("failed to select tags: %w", err)
 	}
 	return tags, nil
 }
 
-func (r *BlogRepository) AddTag(ctx context.Context, db Execer, tag string) (models.TagId, error) {
+func (r *BlogRepository) AddTag(ctx context.Context, tx infrastracture.TX, tag string) (models.TagId, error) {
 	sql := `
 	INSERT INTO tags
 		(name)
@@ -331,7 +331,7 @@ func (r *BlogRepository) AddTag(ctx context.Context, db Execer, tag string) (mod
 		(?)
 	;
 	`
-	res, err := db.ExecContext(ctx, sql, tag)
+	res, err := tx.ExecContext(ctx, sql, tag)
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert tags: %w", err)
 	}

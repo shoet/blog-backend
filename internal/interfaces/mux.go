@@ -13,6 +13,7 @@ import (
 	"github.com/shoet/blog/internal/interfaces/handler"
 	"github.com/shoet/blog/internal/interfaces/middleware"
 	"github.com/shoet/blog/internal/logging"
+	"github.com/shoet/blog/internal/usecase/create_blog"
 	"github.com/shoet/blog/internal/usecase/get_blog_detail"
 	"github.com/shoet/blog/internal/usecase/get_blogs"
 )
@@ -65,7 +66,9 @@ func setBlogsRoute(
 			get_blog_detail.NewUsecase(deps.DB, deps.BlogRepository), deps.JWTer)
 		r.Get("/{id}", bgh.ServeHTTP)
 
-		bah := handler.NewBlogAddHandler(deps.BlogService, deps.Validator)
+		bah := handler.NewBlogAddHandler(
+			create_blog.NewUsecase(deps.DB, deps.BlogRepository, deps.BlogService),
+			deps.Validator)
 		r.With(authMiddleWare.Middleware).Post("/", bah.ServeHTTP)
 
 		bdh := handler.NewBlogDeleteHandler(deps.BlogService, deps.Validator)
