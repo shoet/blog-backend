@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/shoet/blog/internal/clocker"
+	"github.com/shoet/blog/internal/infrastracture"
 	"github.com/shoet/blog/internal/infrastracture/models"
 	"github.com/shoet/blog/internal/options"
 )
@@ -48,7 +49,7 @@ func (r *BlogRepository) Add(ctx context.Context, db Execer, blog *models.Blog) 
 }
 
 func (r *BlogRepository) List(
-	ctx context.Context, db Queryer, option options.ListBlogOptions,
+	ctx context.Context, tx infrastracture.TX, option options.ListBlogOptions,
 ) ([]*models.Blog, error) {
 
 	latest := 10
@@ -101,8 +102,7 @@ func (r *BlogRepository) List(
 		Modified               time.Time     `json:"modified" db:"modified"`
 	}
 	var temp []data
-	// if err := db.SelectContext(ctx, &temp, sql, option.AuthorId, latest); err != nil {
-	if err := db.SelectContext(ctx, &temp, sql, latest); err != nil {
+	if err := tx.SelectContext(ctx, &temp, sql, latest); err != nil {
 		return nil, fmt.Errorf("failed to select blogs: %w", err)
 	}
 	var blogs []*models.Blog

@@ -16,7 +16,18 @@ import (
 	"github.com/qustavo/sqlhooks/v2"
 )
 
-type DB = *sqlx.DB
+// type DB = *sqlx.DB
+
+type DB interface {
+	BeginTxx(ctx context.Context, opts *sql.TxOptions) (*sqlx.Tx, error)
+	TX
+}
+
+type TX interface {
+	QueryRowxContext(ctx context.Context, query string, args ...interface{}) *sqlx.Row
+	SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
+	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+}
 
 func NewDBSQLite3(ctx context.Context) (*sqlx.DB, error) {
 	db, err := sql.Open("sqlite3", "database.sqlite")
@@ -83,6 +94,53 @@ func InitSQLDriverWithLogs(driverName string, driver sql_driver.Driver) (string,
 	}
 	sql.Register(hooksDriverName, sqlhooks.Wrap(driver, &SQLQueryLoggerHooks{}))
 	return hooksDriverName, nil
+}
+
+type TransactionProvider struct {
+	db DB
+}
+
+func NewTransactionProvider(db DB) *TransactionProvider {
+	return &TransactionProvider{db: db}
+}
+
+var DBTxKey = struct{}{}
+var ErrNoTransaction = fmt.Errorf("no transaction")
+
+func SetTransaction(ctx context.Context, tx *sqlx.Tx) context.Context {
+	return context.WithValue(ctx, DBTxKey, tx)
+}
+
+func GetTransaction(ctx context.Context) (*sqlx.Tx, error) {
+	tx, ok := ctx.Value(DBTxKey).(*sqlx.Tx)
+	if !ok {
+		return nil, ErrNoTransaction
+	}
+	return tx, nil
+}
+
+func (t *TransactionProvider) DoInTx(
+	ctx context.Context, f func(tx TX) (interface{}, error),
+) (interface{}, error) {
+	tx, err := t.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed begin transaction: %w", err)
+	}
+	ctx = SetTransaction(ctx, tx)
+	v, err := f(tx)
+	if err != nil {
+		if err := tx.Rollback(); err != nil {
+			return nil, fmt.Errorf("failed rollback transaction: %w", err)
+		}
+		return nil, fmt.Errorf("failed transaction: %w", err)
+	}
+	if err := tx.Commit(); err != nil {
+		if err := tx.Rollback(); err != nil {
+			return nil, fmt.Errorf("failed rollback transaction: %w", err)
+		}
+		return nil, fmt.Errorf("failed commit transaction: %w", err)
+	}
+	return v, nil
 }
 
 type SQLQueryLoggerHooks struct{}

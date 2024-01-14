@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 
+	"github.com/shoet/blog/internal/infrastracture"
 	"github.com/shoet/blog/internal/infrastracture/models"
 	"github.com/shoet/blog/internal/infrastracture/repository"
 	"github.com/shoet/blog/internal/options"
@@ -12,7 +13,7 @@ import (
 
 type BlogRepository interface {
 	Add(ctx context.Context, db repository.Execer, blog *models.Blog) (models.BlogId, error)
-	List(ctx context.Context, db repository.Queryer, option options.ListBlogOptions) ([]*models.Blog, error)
+	List(ctx context.Context, tx infrastracture.TX, option options.ListBlogOptions) ([]*models.Blog, error)
 	Get(ctx context.Context, db repository.Queryer, id models.BlogId) (*models.Blog, error)
 	Delete(ctx context.Context, db repository.Execer, id models.BlogId) error
 	Put(ctx context.Context, db repository.Execer, blog *models.Blog) (models.BlogId, error)
