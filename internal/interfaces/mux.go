@@ -7,11 +7,13 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/shoet/blog/internal/config"
 	"github.com/shoet/blog/internal/infrastracture"
+	"github.com/shoet/blog/internal/infrastracture/repository"
 	"github.com/shoet/blog/internal/infrastracture/services"
 	"github.com/shoet/blog/internal/interfaces/cookie"
 	"github.com/shoet/blog/internal/interfaces/handler"
 	"github.com/shoet/blog/internal/interfaces/middleware"
 	"github.com/shoet/blog/internal/logging"
+	"github.com/shoet/blog/internal/usecase/get_blogs"
 )
 
 type MuxDependencies struct {
@@ -24,6 +26,7 @@ type MuxDependencies struct {
 	Logger         *logging.Logger
 	Validator      *validator.Validate
 	Cookie         *cookie.CookieController
+	BlogRepository *repository.BlogRepository
 }
 
 func NewMux(
@@ -54,7 +57,7 @@ func setBlogsRoute(
 	r chi.Router, deps *MuxDependencies, authMiddleWare *middleware.AuthorizationMiddleware,
 ) {
 	r.Route("/blogs", func(r chi.Router) {
-		blh := handler.NewBlogListHandler(deps.BlogService)
+		blh := handler.NewBlogListHandler(get_blogs.NewUsecase(deps.DB, deps.BlogRepository))
 		r.Get("/", blh.ServeHTTP)
 
 		bgh := handler.NewBlogGetHandler(deps.BlogService, deps.JWTer)

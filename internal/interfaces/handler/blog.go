@@ -11,40 +11,40 @@ import (
 	"github.com/shoet/blog/internal/infrastracture/models"
 	"github.com/shoet/blog/internal/interfaces/response"
 	"github.com/shoet/blog/internal/logging"
+	"github.com/shoet/blog/internal/usecase/get_blogs"
 
 	"github.com/shoet/blog/internal/infrastracture/services"
 	"github.com/shoet/blog/internal/options"
 )
 
 type BlogListHandler struct {
-	Service BlogManager
+	Usecase *get_blogs.Usecase
 }
 
-func NewBlogListHandler(blogService BlogManager) *BlogListHandler {
+func NewBlogListHandler(usecase *get_blogs.Usecase) *BlogListHandler {
 	return &BlogListHandler{
-		Service: blogService,
+		Usecase: usecase,
 	}
 }
 
 func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)
-	option := options.ListBlogOptions{
-		IsPublic: true,
-	}
-	resp, err := l.Service.ListBlog(ctx, option)
+
+	blogs, err := l.Usecase.Run(ctx, true)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to list blog: %v", err))
 		response.ResponsdInternalServerError(w, r, err)
 		return
 	}
-	if resp == nil {
+	if blogs == nil {
 		if err := response.RespondJSON(w, r, http.StatusOK, []interface{}{}); err != nil {
 			logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 		}
 		return
 	}
-	if err := response.RespondJSON(w, r, http.StatusOK, resp); err != nil {
+
+	if err := response.RespondJSON(w, r, http.StatusOK, blogs); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
 }

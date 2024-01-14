@@ -19,14 +19,16 @@ type Usecase struct {
 }
 
 func NewUsecase(
+	DB infrastracture.DB,
 	blogRepository BlogRepository,
 ) *Usecase {
 	return &Usecase{
+		DB:             DB,
 		BlogRepository: blogRepository,
 	}
 }
 
-func (u *Usecase) Run(ctx context.Context, isPublic bool) (*models.Blogs, error) {
+func (u *Usecase) Run(ctx context.Context, isPublic bool) ([]*models.Blog, error) {
 
 	transactor := infrastracture.NewTransactionProvider(u.DB)
 
@@ -36,15 +38,15 @@ func (u *Usecase) Run(ctx context.Context, isPublic bool) (*models.Blogs, error)
 		}
 		blogs, err := u.BlogRepository.List(ctx, tx, listOption)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to list blogs: %v", err)
 		}
 		return blogs, nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get blogs: %v", err)
 	}
 
-	blogs, ok := result.(*models.Blogs)
+	blogs, ok := result.([]*models.Blog)
 	if !ok {
 		return nil, fmt.Errorf("failed to cast []*models.Blog")
 	}

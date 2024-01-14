@@ -97,6 +97,7 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 		Logger:         logger,
 		Validator:      validator,
 		Cookie:         cookie,
+		BlogRepository: blogRepo,
 	}, nil
 }
 
