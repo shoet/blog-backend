@@ -1,4 +1,4 @@
-package services
+package jwt_service_test
 
 import (
 	"context"
@@ -9,7 +9,23 @@ import (
 
 	"github.com/shoet/blog/internal/clocker"
 	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/infrastracture/services/jwt_service"
+	"github.com/stretchr/testify/mock"
 )
+
+type KVSerMock struct {
+	mock.Mock
+}
+
+func (m *KVSerMock) Save(ctx context.Context, key string, value string) error {
+	args := m.Called(ctx, key, value)
+	return args.Error(0)
+}
+
+func (m *KVSerMock) Load(ctx context.Context, key string) (string, error) {
+	args := m.Called(ctx, key)
+	return args.String(0), args.Error(1)
+}
 
 func Test_JWTService_GenerateToken(t *testing.T) {
 	type args struct {
@@ -38,17 +54,13 @@ func Test_JWTService_GenerateToken(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			kvsMock := &KVSerMock{}
-			kvsMock.SaveFunc = func(ctx context.Context, key string, value string) error {
-				if value != strconv.Itoa(int(tt.args.user.Id)) {
-					t.Fatalf("failed want user id: %v, got: %v", tt.want.user.Id, value)
-				}
-				return nil
-			}
+			userIdStr := strconv.Itoa(int(tt.want.user.Id))
+			kvsMock.On("Save", mock.Anything, mock.AnythingOfType("string"), userIdStr).Return(nil)
 			clockerMock := &clocker.FiexedClocker{}
 
 			testSecret := "12345678"
 			testTokenExpiresInSec := 60
-			sut := NewJWTManager(kvsMock, clockerMock, []byte(testSecret), testTokenExpiresInSec)
+			sut := jwt_service.NewJWTService(kvsMock, clockerMock, []byte(testSecret), testTokenExpiresInSec)
 
 			token, err := sut.GenerateToken(ctx, tt.args.user)
 			if err != nil {
@@ -99,25 +111,15 @@ func Test_JWTService_VerifyToken(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			kvsMock := &KVSerMock{}
-			var uuid string
-			kvsMock.SaveFunc = func(ctx context.Context, key string, value string) error {
-				uuid = key // 発行されたuuidを保持しておく
-				if value != strconv.Itoa(int(tt.args.user.Id)) {
-					t.Fatalf("failed want user id: %v, got: %v", tt.want.user.Id, value)
-				}
-				return nil
-			}
-			kvsMock.LoadFunc = func(ctx context.Context, key string) (string, error) {
-				if key != uuid {
-					t.Fatalf("failed want uuid: %v, got: %v", uuid, key)
-				}
-				return strconv.Itoa(int(tt.args.user.Id)), nil
-			}
+			userIdStr := strconv.Itoa(int(tt.want.user.Id))
+			kvsMock.On("Save", mock.Anything, mock.AnythingOfType("string"), userIdStr).Return(nil)
+			kvsMock.On("Load", mock.Anything, mock.AnythingOfType("string")).Return(userIdStr, nil)
+
 			clockerMock := &clocker.RealClocker{}
 			testSecret := "12345678"
 			testTokenExpiresInSec := tt.args.tokenExpireInSec
 
-			sut := NewJWTManager(kvsMock, clockerMock, []byte(testSecret), testTokenExpiresInSec)
+			sut := jwt_service.NewJWTService(kvsMock, clockerMock, []byte(testSecret), testTokenExpiresInSec)
 
 			token, err := sut.GenerateToken(ctx, tt.args.user)
 			if err != nil {

@@ -14,8 +14,12 @@ import (
 	"github.com/shoet/blog/internal/clocker"
 	"github.com/shoet/blog/internal/config"
 	"github.com/shoet/blog/internal/infrastracture"
+	"github.com/shoet/blog/internal/infrastracture/adapter"
 	"github.com/shoet/blog/internal/infrastracture/repository"
-	"github.com/shoet/blog/internal/infrastracture/services"
+	"github.com/shoet/blog/internal/infrastracture/services/auth_service"
+	"github.com/shoet/blog/internal/infrastracture/services/blog_service"
+	"github.com/shoet/blog/internal/infrastracture/services/contents_service"
+	"github.com/shoet/blog/internal/infrastracture/services/jwt_service"
 	"github.com/shoet/blog/internal/interfaces/cookie"
 	"github.com/shoet/blog/internal/logging"
 	"golang.org/x/sync/errgroup"
@@ -68,36 +72,42 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 		return nil, fmt.Errorf("failed to create redis kvs: %w", err)
 	}
 	c := clocker.RealClocker{}
-	jwter := services.NewJWTManager(kvs, &c, []byte(cfg.JWTSecret), cfg.JWTExpiresInSec)
+	jwtService := jwt_service.NewJWTService(kvs, &c, []byte(cfg.JWTSecret), cfg.JWTExpiresInSec)
 
 	blogRepo := repository.NewBlogRepository(&c)
-	blogService := services.NewBlogService()
+	blogService := blog_service.NewBlogService()
 
 	userRepo, err := repository.NewUserRepository(&c)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user repository: %w", err)
 	}
 
-	authService, err := services.NewAuthService(db, userRepo, jwter)
+	authService, err := auth_service.NewAuthService(db, userRepo, jwtService)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create auth service: %w", err)
 	}
-	awsStorage, err := services.NewAWSS3StorageService(cfg)
+
+	s3Adapter, err := adapter.NewAWSS3StorageAdapter(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create aws storage: %w", err)
+		return nil, fmt.Errorf("failed to create s3 adapter: %w", err)
+	}
+
+	contentsService, err := contents_service.NewContentsService(s3Adapter, cfg.AWSS3ThumbnailDirectory, cfg.AWSSS3ContentImageDirectory)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create contents service: %w", err)
 	}
 
 	return &MuxDependencies{
-		Config:         cfg,
-		DB:             db,
-		BlogRepository: blogRepo,
-		BlogService:    blogService,
-		AuthService:    authService,
-		StorageService: awsStorage,
-		JWTer:          jwter,
-		Logger:         logger,
-		Validator:      validator,
-		Cookie:         cookie,
+		Config:          cfg,
+		DB:              db,
+		BlogRepository:  blogRepo,
+		BlogService:     blogService,
+		AuthService:     authService,
+		ContentsService: contentsService,
+		JWTer:           jwtService,
+		Logger:          logger,
+		Validator:       validator,
+		Cookie:          cookie,
 	}, nil
 }
 

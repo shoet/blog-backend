@@ -1,10 +1,12 @@
-package services
+package adapter_test
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/shoet/blog/internal/config"
+	"github.com/shoet/blog/internal/infrastracture/adapter"
 	"github.com/shoet/blog/internal/testutil"
 )
 
@@ -14,19 +16,21 @@ func Test_AWSStorageService_GenerateThumbnailPutURL(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create config: %v", err)
 	}
-	s, err := NewAWSS3StorageService(cfg)
+	s, err := adapter.NewAWSS3StorageAdapter(cfg)
 	if err != nil {
 		t.Fatalf("failed to create aws storage service: %v", err)
 	}
 	wantFileName := "test.jpg"
-	signedUrl, objectUrl, err := s.GenerateThumbnailPutURL(wantFileName)
+	wantDirectoryName := "test"
+	wantPath := filepath.Join(wantDirectoryName, wantFileName)
+	signedUrl, objectUrl, err := s.GeneratePreSignedURL(wantDirectoryName, wantFileName)
 	if err != nil {
 		t.Fatalf("failed to generate url: %v", err)
 	}
-	if !strings.Contains(objectUrl, wantFileName) {
+	if !strings.Contains(objectUrl, wantPath) {
 		t.Fatalf("object url is not expected: %v", objectUrl)
 	}
-	if !strings.Contains(signedUrl, wantFileName) {
+	if !strings.Contains(signedUrl, wantPath) {
 		t.Fatalf("signed url is not expected: %v", signedUrl)
 	}
 }

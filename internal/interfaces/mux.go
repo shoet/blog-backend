@@ -8,7 +8,10 @@ import (
 	"github.com/shoet/blog/internal/config"
 	"github.com/shoet/blog/internal/infrastracture"
 	"github.com/shoet/blog/internal/infrastracture/repository"
-	"github.com/shoet/blog/internal/infrastracture/services"
+	"github.com/shoet/blog/internal/infrastracture/services/auth_service"
+	"github.com/shoet/blog/internal/infrastracture/services/blog_service"
+	"github.com/shoet/blog/internal/infrastracture/services/contents_service"
+	"github.com/shoet/blog/internal/infrastracture/services/jwt_service"
 	"github.com/shoet/blog/internal/interfaces/cookie"
 	"github.com/shoet/blog/internal/interfaces/handler"
 	"github.com/shoet/blog/internal/interfaces/middleware"
@@ -22,16 +25,16 @@ import (
 )
 
 type MuxDependencies struct {
-	Config         *config.Config
-	DB             infrastracture.DB
-	BlogService    *services.BlogService
-	AuthService    *services.AuthService
-	StorageService *services.AWSS3StorageService
-	JWTer          *services.JWTManager
-	Logger         *logging.Logger
-	Validator      *validator.Validate
-	Cookie         *cookie.CookieController
-	BlogRepository *repository.BlogRepository
+	Config          *config.Config
+	DB              infrastracture.DB
+	BlogService     *blog_service.BlogService
+	AuthService     *auth_service.AuthService
+	ContentsService *contents_service.ContentsService
+	JWTer           *jwt_service.JWTService
+	Logger          *logging.Logger
+	Validator       *validator.Validate
+	Cookie          *cookie.CookieController
+	BlogRepository  *repository.BlogRepository
 }
 
 func NewMux(
@@ -97,13 +100,10 @@ func setFilesRoute(
 	r chi.Router, deps *MuxDependencies, authMiddleWare *middleware.AuthorizationMiddleware,
 ) {
 	r.Route("/files", func(r chi.Router) {
-		gt := handler.NewGenerateThumbnailImageSignedURLHandler(deps.StorageService, deps.Validator)
+		gt := handler.NewGenerateThumbnailImageSignedURLHandler(deps.ContentsService, deps.Validator)
 		r.With(authMiddleWare.Middleware).Post("/thumbnail/new", gt.ServeHTTP)
 
-		gc := handler.GenerateContentsImageSignedURLHandler{
-			StorageService: deps.StorageService,
-			Validator:      deps.Validator,
-		}
+		gc := handler.NewGenerateContentsImageSignedURLHandler(deps.ContentsService, deps.Validator)
 		r.With(authMiddleWare.Middleware).Post("/content/new", gc.ServeHTTP)
 	})
 }

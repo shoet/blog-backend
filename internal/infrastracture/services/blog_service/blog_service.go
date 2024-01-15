@@ -1,4 +1,4 @@
-package services
+package blog_service
 
 import (
 	"context"

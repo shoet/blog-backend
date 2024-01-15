@@ -1,13 +1,25 @@
-package services
+package auth_service
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/shoet/blog/internal/infrastracture"
 	"github.com/shoet/blog/internal/infrastracture/models"
 	"golang.org/x/crypto/bcrypt"
 )
+
+type UserRepository interface {
+	Add(ctx context.Context, tx infrastracture.TX, user *models.User) (*models.User, error)
+	Get(ctx context.Context, tx infrastracture.TX, id models.UserId) (*models.User, error)
+	GetByEmail(ctx context.Context, tx infrastracture.TX, email string) (*models.User, error)
+}
+
+type JWTer interface {
+	GenerateToken(ctx context.Context, u *models.User) (string, error)
+	VerifyToken(ctx context.Context, token string) (models.UserId, error)
+}
 
 type AuthService struct {
 	db    *sqlx.DB

@@ -1,4 +1,4 @@
-package services
+package adapter
 
 import (
 	"context"
@@ -13,51 +13,26 @@ import (
 	"github.com/shoet/blog/internal/config"
 )
 
-type AWSS3StorageService struct {
+type AWSS3StorageAdapter struct {
 	config        *config.Config
 	S3Client      *s3.Client
 	PresignClient *s3.PresignClient
 }
 
-func NewAWSS3StorageService(cfg *config.Config) (*AWSS3StorageService, error) {
+func NewAWSS3StorageAdapter(cfg *config.Config) (*AWSS3StorageAdapter, error) {
 	sdkConfig, err := awsConfig.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return nil, fmt.Errorf("failed to load aws config: %w", err)
 	}
 	s3Client := s3.NewFromConfig(sdkConfig)
-	return &AWSS3StorageService{
+	return &AWSS3StorageAdapter{
 		config:        cfg,
 		S3Client:      s3Client,
 		PresignClient: s3.NewPresignClient(s3Client),
 	}, nil
 }
 
-/*
-Summary:
-
-	GeneratePutURL generates a signed url for put object.
-
-Args:
-
-	fileName: string
-
-Returns:
-
-	string: signed url
-	string: object url
-	error: error
-*/
-func (s *AWSS3StorageService) GenerateThumbnailPutURL(fileName string) (string, string, error) {
-	destinationPath := s.config.AWSS3ThumbnailDirectory
-	return s.generatePreSignedURL(destinationPath, fileName)
-}
-
-func (s *AWSS3StorageService) GenerateContentImagePutURL(fileName string) (string, string, error) {
-	destinationPath := s.config.AWSSS3ContentImageDirectory
-	return s.generatePreSignedURL(destinationPath, fileName)
-}
-
-func (s *AWSS3StorageService) generatePreSignedURL(destinationPath string, fileName string) (string, string, error) {
+func (s *AWSS3StorageAdapter) GeneratePreSignedURL(destinationPath string, fileName string) (presignedUrl, objectUrl string, err error) {
 	bucketName := s.config.AWSS3Bucket
 	objectKey := filepath.Join(destinationPath, fileName)
 	request, err := s.GenerateSignedURL(bucketName, objectKey)
@@ -74,9 +49,9 @@ func (s *AWSS3StorageService) generatePreSignedURL(destinationPath string, fileN
 	return request.URL, objectURL, nil
 }
 
-func (s *AWSS3StorageService) GenerateSignedURL(
+func (s *AWSS3StorageAdapter) GenerateSignedURL(
 	bucketName string, objectKey string,
-) (*v4.PresignedHTTPRequest, error) {
+) (presignedRequest *v4.PresignedHTTPRequest, err error) {
 	request, err := s.PresignClient.PresignPutObject(
 		context.TODO(),
 		&s3.PutObjectInput{

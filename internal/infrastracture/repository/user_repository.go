@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/shoet/blog/internal/clocker"
+	"github.com/shoet/blog/internal/infrastracture"
 	"github.com/shoet/blog/internal/infrastracture/models"
 )
 
@@ -17,7 +18,7 @@ func NewUserRepository(clocker clocker.Clocker) (*UserRepository, error) {
 }
 
 func (t *UserRepository) Get(
-	ctx context.Context, db Queryer, id models.UserId,
+	ctx context.Context, tx infrastracture.TX, id models.UserId,
 ) (*models.User, error) {
 	sql := `
 	SELECT
@@ -27,7 +28,7 @@ func (t *UserRepository) Get(
 	;
 	`
 	var users []*models.User
-	if err := db.SelectContext(ctx, &users, sql, id); err != nil {
+	if err := tx.SelectContext(ctx, &users, sql, id); err != nil {
 		return nil, fmt.Errorf("failed to select users: %w", err)
 	}
 	if len(users) == 0 {
@@ -39,7 +40,7 @@ func (t *UserRepository) Get(
 var ErrUserNotFound = fmt.Errorf("user not found")
 
 func (u *UserRepository) GetByEmail(
-	ctx context.Context, db Queryer, email string,
+	ctx context.Context, tx infrastracture.TX, email string,
 ) (*models.User, error) {
 	sql := `
 	SELECT
@@ -49,7 +50,7 @@ func (u *UserRepository) GetByEmail(
 	;
 	`
 	var users []*models.User
-	if err := db.SelectContext(ctx, &users, sql, email); err != nil {
+	if err := tx.SelectContext(ctx, &users, sql, email); err != nil {
 		return nil, fmt.Errorf("failed to select users: %w", err)
 	}
 	if len(users) == 0 {
@@ -59,7 +60,7 @@ func (u *UserRepository) GetByEmail(
 }
 
 func (u *UserRepository) Add(
-	ctx context.Context, db Execer, user *models.User,
+	ctx context.Context, tx infrastracture.TX, user *models.User,
 ) (*models.User, error) {
 	sql := `
 	INSERT INTO users
@@ -72,7 +73,7 @@ func (u *UserRepository) Add(
 	user.Created = now
 	user.Modified = now
 
-	res, err := db.ExecContext(
+	res, err := tx.ExecContext(
 		ctx,
 		sql,
 		user.Name, user.Email, user.Password, user.Created, user.Modified)

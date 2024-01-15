@@ -16,13 +16,13 @@ type Cookier interface {
 }
 
 type AuthLoginHandler struct {
-	Service   AuthManager
+	Service   AuthService
 	Validator *validator.Validate
 	Cookie    Cookier
 }
 
 func NewAuthLoginHandler(
-	service AuthManager,
+	service AuthService,
 	validator *validator.Validate,
 	cookie Cookier,
 ) *AuthLoginHandler {
@@ -76,11 +76,11 @@ func (a *AuthLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type AuthSessionLoginHandler struct {
-	Service AuthManager
+	Service AuthService
 }
 
 func NewAuthSessionLoginHandler(
-	service AuthManager,
+	service AuthService,
 ) *AuthSessionLoginHandler {
 	return &AuthSessionLoginHandler{
 		Service: service,

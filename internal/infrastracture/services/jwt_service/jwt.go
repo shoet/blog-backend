@@ -1,4 +1,4 @@
-package services
+package jwt_service
 
 import (
 	"context"
@@ -14,20 +14,25 @@ import (
 	"github.com/shoet/blog/internal/infrastracture/models"
 )
 
-type JWTManager struct {
+type KVSer interface {
+	Save(ctx context.Context, key string, value string) error
+	Load(ctx context.Context, key string) (string, error)
+}
+
+type JWTService struct {
 	kvs               KVSer
 	clocker           clocker.Clocker
 	secretKey         []byte
 	tokenExpiresInSec int
 }
 
-func NewJWTManager(
+func NewJWTService(
 	kvs KVSer,
 	clocker clocker.Clocker,
 	secretKey []byte,
 	tokenExpiresInSec int,
-) *JWTManager {
-	return &JWTManager{
+) *JWTService {
+	return &JWTService{
 		kvs:               kvs,
 		clocker:           clocker,
 		secretKey:         secretKey,
@@ -35,7 +40,7 @@ func NewJWTManager(
 	}
 }
 
-func (j *JWTManager) GenerateToken(ctx context.Context, u *models.User) (string, error) {
+func (j *JWTService) GenerateToken(ctx context.Context, u *models.User) (string, error) {
 	uuid := uuid.New().String()
 	claims := jwt.RegisteredClaims{
 		ID:       uuid,
@@ -58,7 +63,7 @@ func (j *JWTManager) GenerateToken(ctx context.Context, u *models.User) (string,
 
 var ErrSessionNotFound = errors.New("session is not found")
 
-func (j *JWTManager) VerifyToken(ctx context.Context, token string) (models.UserId, error) {
+func (j *JWTService) VerifyToken(ctx context.Context, token string) (models.UserId, error) {
 	// parse token
 	parsed, err := jwt.ParseWithClaims(
 		token,

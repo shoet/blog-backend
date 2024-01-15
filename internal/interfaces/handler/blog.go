@@ -16,8 +16,6 @@ import (
 	"github.com/shoet/blog/internal/usecase/get_blog_detail"
 	"github.com/shoet/blog/internal/usecase/get_blogs"
 	"github.com/shoet/blog/internal/usecase/put_blog"
-
-	"github.com/shoet/blog/internal/infrastracture/services"
 )
 
 type BlogListHandler struct {
@@ -54,10 +52,10 @@ func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 type BlogGetHandler struct {
 	Usecase *get_blog_detail.Usecase
-	jwter   services.JWTer
+	jwter   JWTService
 }
 
-func NewBlogGetHandler(usecase *get_blog_detail.Usecase, jwter services.JWTer) *BlogGetHandler {
+func NewBlogGetHandler(usecase *get_blog_detail.Usecase, jwter JWTService) *BlogGetHandler {
 	return &BlogGetHandler{
 		Usecase: usecase,
 		jwter:   jwter,

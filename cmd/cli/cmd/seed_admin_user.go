@@ -9,7 +9,7 @@ import (
 	"github.com/shoet/blog/internal/config"
 	"github.com/shoet/blog/internal/infrastracture"
 	"github.com/shoet/blog/internal/infrastracture/repository"
-	"github.com/shoet/blog/internal/infrastracture/services"
+	"github.com/shoet/blog/internal/infrastracture/services/admin_service"
 	"github.com/spf13/cobra"
 )
 
@@ -33,7 +33,7 @@ var seedAdminUserCmd = &cobra.Command{
 			fmt.Printf("failed to create user repository: %v", err)
 			os.Exit(1)
 		}
-		adminService, err := services.NewAdminService(db, userRepo)
+		adminService, err := admin_service.NewAdminService(db, userRepo)
 		if err != nil {
 			fmt.Printf("failed to create admin service: %v", err)
 			os.Exit(1)

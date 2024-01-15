@@ -1,12 +1,13 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/shoet/blog/internal/config"
-	"github.com/shoet/blog/internal/infrastracture/services"
+	"github.com/shoet/blog/internal/infrastracture/models"
 	"github.com/shoet/blog/internal/interfaces/response"
 	"github.com/shoet/blog/internal/logging"
 	"github.com/shoet/blog/internal/session"
@@ -46,11 +47,15 @@ func originAllowed(origin string, whiteList []string) bool {
 	return false
 }
 
-type AuthorizationMiddleware struct {
-	jwter services.JWTer
+type JWTService interface {
+	VerifyToken(ctx context.Context, token string) (models.UserId, error)
 }
 
-func NewAuthorizationMiddleware(jwter services.JWTer) *AuthorizationMiddleware {
+type AuthorizationMiddleware struct {
+	jwter JWTService
+}
+
+func NewAuthorizationMiddleware(jwter JWTService) *AuthorizationMiddleware {
 	return &AuthorizationMiddleware{
 		jwter: jwter,
 	}

@@ -10,17 +10,17 @@ import (
 )
 
 type GenerateThumbnailImageSignedURLHandler struct {
-	StorageService Storager
-	Validator      *validator.Validate
+	ContentsService ContentsService
+	Validator       *validator.Validate
 }
 
 func NewGenerateThumbnailImageSignedURLHandler(
-	StorageService Storager,
+	ContentsService ContentsService,
 	Validator *validator.Validate,
 ) *GenerateThumbnailImageSignedURLHandler {
 	return &GenerateThumbnailImageSignedURLHandler{
-		StorageService: StorageService,
-		Validator:      Validator,
+		ContentsService: ContentsService,
+		Validator:       Validator,
 	}
 }
 
@@ -43,7 +43,7 @@ func (g *GenerateThumbnailImageSignedURLHandler) ServeHTTP(w http.ResponseWriter
 		return
 	}
 
-	signedUrl, destinationUrl, err := g.StorageService.GenerateThumbnailPutURL(reqBody.FileName)
+	signedUrl, destinationUrl, err := g.ContentsService.GenerateThumbnailPutURL(reqBody.FileName)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
 		response.ResponsdInternalServerError(w, r, err)
@@ -63,8 +63,18 @@ func (g *GenerateThumbnailImageSignedURLHandler) ServeHTTP(w http.ResponseWriter
 }
 
 type GenerateContentsImageSignedURLHandler struct {
-	StorageService Storager
-	Validator      *validator.Validate
+	ContentsService ContentsService
+	Validator       *validator.Validate
+}
+
+func NewGenerateContentsImageSignedURLHandler(
+	ContentsService ContentsService,
+	Validator *validator.Validate,
+) *GenerateContentsImageSignedURLHandler {
+	return &GenerateContentsImageSignedURLHandler{
+		ContentsService: ContentsService,
+		Validator:       Validator,
+	}
 }
 
 func (g *GenerateContentsImageSignedURLHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -86,7 +96,7 @@ func (g *GenerateContentsImageSignedURLHandler) ServeHTTP(w http.ResponseWriter,
 		return
 	}
 
-	signedUrl, destinationUrl, err := g.StorageService.GenerateContentImagePutURL(reqBody.FileName)
+	signedUrl, destinationUrl, err := g.ContentsService.GenerateContentImagePutURL(reqBody.FileName)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
 		response.ResponsdInternalServerError(w, r, err)
