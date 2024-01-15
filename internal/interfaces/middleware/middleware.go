@@ -67,13 +67,13 @@ func (a *AuthorizationMiddleware) Middleware(next http.Handler) http.Handler {
 		logger := logging.GetLogger(ctx)
 		token := r.Header.Get("Authorization")
 		if token == "" {
-			logger.Error(fmt.Sprintf("failed to get authorization header"))
+			logger.Error("failed to get authorization header")
 			response.RespondUnauthorized(w, r, fmt.Errorf("failed to get authorization header"))
 			return
 		}
 
 		if !strings.HasPrefix(token, "Bearer ") {
-			logger.Error(fmt.Sprintf("failed invalid authorization header"))
+			logger.Error("failed invalid authorization header")
 			response.RespondUnauthorized(w, r, fmt.Errorf("failed to get authorization header"))
 			return
 		}

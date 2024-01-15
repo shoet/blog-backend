@@ -354,5 +354,4 @@ func (t *TagListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := response.RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
-	return
 }
