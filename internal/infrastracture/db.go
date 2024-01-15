@@ -107,18 +107,6 @@ func NewTransactionProvider(db DB) *TransactionProvider {
 var DBTxKey = struct{}{}
 var ErrNoTransaction = fmt.Errorf("no transaction")
 
-func SetTransaction(ctx context.Context, tx *sqlx.Tx) context.Context {
-	return context.WithValue(ctx, DBTxKey, tx)
-}
-
-func GetTransaction(ctx context.Context) (*sqlx.Tx, error) {
-	tx, ok := ctx.Value(DBTxKey).(*sqlx.Tx)
-	if !ok {
-		return nil, ErrNoTransaction
-	}
-	return tx, nil
-}
-
 func (t *TransactionProvider) DoInTx(
 	ctx context.Context, f func(tx TX) (interface{}, error),
 ) (interface{}, error) {
@@ -126,7 +114,6 @@ func (t *TransactionProvider) DoInTx(
 	if err != nil {
 		return nil, fmt.Errorf("failed begin transaction: %w", err)
 	}
-	ctx = SetTransaction(ctx, tx)
 	v, err := f(tx)
 	if err != nil {
 		if err := tx.Rollback(); err != nil {
