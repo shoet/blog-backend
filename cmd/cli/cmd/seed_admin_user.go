@@ -5,11 +5,11 @@ import (
 	"log"
 	"os"
 
-	"github.com/shoet/blog/clocker"
-	"github.com/shoet/blog/config"
-	"github.com/shoet/blog/models"
-	"github.com/shoet/blog/services"
-	"github.com/shoet/blog/store"
+	"github.com/shoet/blog/internal/clocker"
+	"github.com/shoet/blog/internal/config"
+	"github.com/shoet/blog/internal/infrastracture"
+	"github.com/shoet/blog/internal/infrastracture/repository"
+	"github.com/shoet/blog/internal/infrastracture/services/admin_service"
 	"github.com/spf13/cobra"
 )
 
@@ -22,47 +22,29 @@ var seedAdminUserCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("failed to create config: %v", err)
 		}
-		db, err := store.NewDBMySQL(ctx, cfg)
+		db, err := infrastracture.NewDBMySQL(ctx, cfg)
 		if err != nil {
 			fmt.Printf("failed to create db: %v", err)
 			os.Exit(1)
 		}
 		c := clocker.RealClocker{}
-		userRepo, err := store.NewUserRepository(&c)
+		userRepo, err := repository.NewUserRepository(&c)
 		if err != nil {
 			fmt.Printf("failed to create user repository: %v", err)
 			os.Exit(1)
 		}
-		adminService, err := services.NewAdminService(db, userRepo)
+		adminService, err := admin_service.NewAdminService(db, userRepo)
 		if err != nil {
 			fmt.Printf("failed to create admin service: %v", err)
 			os.Exit(1)
 		}
-		adminService.SeedAdminUser(ctx, cfg)
+		if _, err := adminService.SeedAdminUser(ctx, cfg); err != nil {
+			fmt.Printf("failed to seed admin user: %v", err)
+			os.Exit(1)
+		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(seedAdminUserCmd)
-}
-
-type authService interface {
-	SeedAdminUser(cfg *config.Config) (*models.User, error)
-}
-
-type AuthController struct {
-	service authService
-}
-
-func (ac *AuthController) addAdminUser() error {
-	cfg, err := config.NewConfig()
-	if err != nil {
-		return fmt.Errorf("failed to create config: %w", err)
-	}
-	admin, err := ac.service.SeedAdminUser(cfg)
-	if err != nil {
-		return fmt.Errorf("failed to seed admin user: %w", err)
-	}
-	_ = admin
-	return nil
 }

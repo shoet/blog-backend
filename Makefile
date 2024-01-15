@@ -25,6 +25,10 @@ build: ## Build docker image to local development
 up: ## Do docker compose up with hot reload
 	docker compose up -d
 
+.PHONY: restart
+restart: ## Do docker compose restart
+	docker compose restart
+
 .PHONY: down
 down: ## Do docker compose down
 	docker compose down
