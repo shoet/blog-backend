@@ -7,20 +7,22 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/shoet/blog/internal/interfaces/response"
 	"github.com/shoet/blog/internal/logging"
+	"github.com/shoet/blog/internal/usecase/storage_presigned_content"
+	"github.com/shoet/blog/internal/usecase/storage_presigned_thumbnail"
 )
 
 type GenerateThumbnailImageSignedURLHandler struct {
-	ContentsService ContentsService
-	Validator       *validator.Validate
+	Usecase   *storage_presigned_thumbnail.Usecase
+	Validator *validator.Validate
 }
 
 func NewGenerateThumbnailImageSignedURLHandler(
-	ContentsService ContentsService,
+	Usecase *storage_presigned_thumbnail.Usecase,
 	Validator *validator.Validate,
 ) *GenerateThumbnailImageSignedURLHandler {
 	return &GenerateThumbnailImageSignedURLHandler{
-		ContentsService: ContentsService,
-		Validator:       Validator,
+		Usecase:   Usecase,
+		Validator: Validator,
 	}
 }
 
@@ -43,7 +45,7 @@ func (g *GenerateThumbnailImageSignedURLHandler) ServeHTTP(w http.ResponseWriter
 		return
 	}
 
-	signedUrl, destinationUrl, err := g.ContentsService.GenerateThumbnailPutURL(reqBody.FileName)
+	signedUrl, destinationUrl, err := g.Usecase.Run(ctx, reqBody.FileName)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
 		response.ResponsdInternalServerError(w, r, err)
@@ -63,17 +65,17 @@ func (g *GenerateThumbnailImageSignedURLHandler) ServeHTTP(w http.ResponseWriter
 }
 
 type GenerateContentsImageSignedURLHandler struct {
-	ContentsService ContentsService
-	Validator       *validator.Validate
+	Usecase   *storage_presigned_content.Usecase
+	Validator *validator.Validate
 }
 
 func NewGenerateContentsImageSignedURLHandler(
-	ContentsService ContentsService,
+	Usecase *storage_presigned_content.Usecase,
 	Validator *validator.Validate,
 ) *GenerateContentsImageSignedURLHandler {
 	return &GenerateContentsImageSignedURLHandler{
-		ContentsService: ContentsService,
-		Validator:       Validator,
+		Usecase:   Usecase,
+		Validator: Validator,
 	}
 }
 
@@ -96,7 +98,7 @@ func (g *GenerateContentsImageSignedURLHandler) ServeHTTP(w http.ResponseWriter,
 		return
 	}
 
-	signedUrl, destinationUrl, err := g.ContentsService.GenerateContentImagePutURL(reqBody.FileName)
+	signedUrl, destinationUrl, err := g.Usecase.Run(ctx, reqBody.FileName)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
 		response.ResponsdInternalServerError(w, r, err)

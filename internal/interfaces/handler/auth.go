@@ -8,26 +8,23 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/shoet/blog/internal/interfaces/response"
 	"github.com/shoet/blog/internal/logging"
+	"github.com/shoet/blog/internal/usecase/login_user"
+	"github.com/shoet/blog/internal/usecase/login_user_session"
 )
 
-type Cookier interface {
-	SetCookie(w http.ResponseWriter, key string, value string) error
-	ClearCookie(w http.ResponseWriter, key string)
-}
-
 type AuthLoginHandler struct {
-	Service   AuthService
+	Usecase   *login_user.Usecase
 	Validator *validator.Validate
 	Cookie    Cookier
 }
 
 func NewAuthLoginHandler(
-	service AuthService,
+	usecase *login_user.Usecase,
 	validator *validator.Validate,
 	cookie Cookier,
 ) *AuthLoginHandler {
 	return &AuthLoginHandler{
-		Service:   service,
+		Usecase:   usecase,
 		Validator: validator,
 		Cookie:    cookie,
 	}
@@ -53,7 +50,7 @@ func (a *AuthLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := a.Service.Login(ctx, reqBody.Email, reqBody.Password)
+	token, err := a.Usecase.Run(ctx, reqBody.Email, reqBody.Password)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed login: %v", err))
 		response.RespondUnauthorized(w, r, err)
@@ -76,14 +73,14 @@ func (a *AuthLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 type AuthSessionLoginHandler struct {
-	Service AuthService
+	Usecase *login_user_session.Usecase
 }
 
 func NewAuthSessionLoginHandler(
-	service AuthService,
+	usecase *login_user_session.Usecase,
 ) *AuthSessionLoginHandler {
 	return &AuthSessionLoginHandler{
-		Service: service,
+		Usecase: usecase,
 	}
 }
 
@@ -107,7 +104,7 @@ func (a *AuthSessionLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	token = strings.TrimPrefix(token, "Bearer ")
 
-	u, err := a.Service.LoginSession(ctx, token)
+	u, err := a.Usecase.Run(ctx, token)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed login: %v", err))
 		response.RespondUnauthorized(w, r, err)

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/shoet/blog/internal/infrastracture/models"
 )
@@ -19,4 +20,9 @@ type JWTService interface {
 type ContentsService interface {
 	GenerateThumbnailPutURL(fileName string) (presignedUrl, objectUrl string, err error)
 	GenerateContentImagePutURL(fileName string) (presignedUrl, objectUrl string, err error)
+}
+
+type Cookier interface {
+	SetCookie(w http.ResponseWriter, key string, value string) error
+	ClearCookie(w http.ResponseWriter, key string)
 }

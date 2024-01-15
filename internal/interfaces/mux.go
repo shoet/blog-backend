@@ -21,12 +21,17 @@ import (
 	"github.com/shoet/blog/internal/usecase/get_blog_detail"
 	"github.com/shoet/blog/internal/usecase/get_blogs"
 	"github.com/shoet/blog/internal/usecase/get_tags"
+	"github.com/shoet/blog/internal/usecase/login_user"
+	"github.com/shoet/blog/internal/usecase/login_user_session"
 	"github.com/shoet/blog/internal/usecase/put_blog"
+	"github.com/shoet/blog/internal/usecase/storage_presigned_content"
+	"github.com/shoet/blog/internal/usecase/storage_presigned_thumbnail"
 )
 
 type MuxDependencies struct {
 	Config          *config.Config
 	DB              infrastracture.DB
+	BlogRepository  *repository.BlogRepository
 	BlogService     *blog_service.BlogService
 	AuthService     *auth_service.AuthService
 	ContentsService *contents_service.ContentsService
@@ -34,7 +39,6 @@ type MuxDependencies struct {
 	Logger          *logging.Logger
 	Validator       *validator.Validate
 	Cookie          *cookie.CookieController
-	BlogRepository  *repository.BlogRepository
 }
 
 func NewMux(
@@ -100,20 +104,27 @@ func setFilesRoute(
 	r chi.Router, deps *MuxDependencies, authMiddleWare *middleware.AuthorizationMiddleware,
 ) {
 	r.Route("/files", func(r chi.Router) {
-		gt := handler.NewGenerateThumbnailImageSignedURLHandler(deps.ContentsService, deps.Validator)
+		gt := handler.NewGenerateThumbnailImageSignedURLHandler(
+			storage_presigned_thumbnail.NewUsecase(deps.ContentsService),
+			deps.Validator)
 		r.With(authMiddleWare.Middleware).Post("/thumbnail/new", gt.ServeHTTP)
 
-		gc := handler.NewGenerateContentsImageSignedURLHandler(deps.ContentsService, deps.Validator)
+		gc := handler.NewGenerateContentsImageSignedURLHandler(
+			storage_presigned_content.NewUsecase(deps.ContentsService),
+			deps.Validator)
 		r.With(authMiddleWare.Middleware).Post("/content/new", gc.ServeHTTP)
 	})
 }
 
 func setAuthRoute(r chi.Router, deps *MuxDependencies) {
 	r.Route("/auth", func(r chi.Router) {
-		ah := handler.NewAuthLoginHandler(deps.AuthService, deps.Validator, deps.Cookie)
+		ah := handler.NewAuthLoginHandler(
+			login_user.NewUsecase(deps.AuthService),
+			deps.Validator,
+			deps.Cookie)
 		r.Post("/signin", ah.ServeHTTP)
 
-		ash := handler.NewAuthSessionLoginHandler(deps.AuthService)
+		ash := handler.NewAuthSessionLoginHandler(login_user_session.NewUsecase(deps.AuthService))
 		r.Get("/login/me", ash.ServeHTTP)
 
 		alh := handler.NewAuthLogoutHandler(deps.Cookie)
