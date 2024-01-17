@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/shoet/blog/internal/interfaces/response"
+	"github.com/shoet/blog/internal/logging"
 )
 
 type HealthCheckHandler struct{}
@@ -13,6 +14,9 @@ type ResponseHealthCheck struct {
 }
 
 func (hh *HealthCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	logger := logging.GetLogger(ctx)
+	logger.Info("health check")
 	resp := &ResponseHealthCheck{Message: "OK"}
 	if err := response.RespondJSON(w, r, http.StatusOK, resp); err != nil {
 		errResp := &response.ErrorResponse{Message: "NG"}
