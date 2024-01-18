@@ -32,7 +32,7 @@ provider:
     images:
       BlogBackendImage:
         path: ./
-        file: Dockerfile.dev
+        file: Dockerfile
         platform: linux/amd64
         buildArgs:
           PORT: 3000
