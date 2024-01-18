@@ -1,21 +1,8 @@
 .DEFAULT_GOAL := help
 
-.PHONY: build-image
-build-image: ## Build docker image to deploy
-	docker build -t blog-backend:latest \
-					--platform linux/amd64 \
-					--target deploy \
-					./
-
-.PHONY: build-image-local
-build-image-local: ## Build docker image on AppleSilicon
-	docker build -t blog-backend:local \
-		--no-cache \
-		--target deploy ./
-
-.PHONY: push-image
-push-image: ## Push docker image to ECR
-	bash image_push.sh
+.PHONY: deploy
+deploy: ## Deploy by serverless framework
+	sls deploy --stage production --verbose
 
 .PHONY: build
 build: ## Build docker image to local development
@@ -44,14 +31,6 @@ ps: ## Check container status
 .PHONY: generate
 generate: ## Generate codes
 	go generate ./...
-
-.PHONY: create-migrate
-create-migrate: ## Create migrate file
-	cd _tools && sql-migrate new
-
-.PHONY: migrate-dev
-migrate-dev: ## Execute migrate
-	cd _tools && sql-migrate up
 
 .PHONY: help
 help: ## Show options

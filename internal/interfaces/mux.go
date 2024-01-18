@@ -2,6 +2,7 @@ package interfaces
 
 import (
 	"context"
+	"log"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
@@ -44,11 +45,13 @@ type MuxDependencies struct {
 func NewMux(
 	ctx context.Context, deps *MuxDependencies,
 ) (*chi.Mux, error) {
+	log.Printf("set middleware")
 	router := chi.NewRouter()
 	authMiddleWare := middleware.NewAuthorizationMiddleware(deps.JWTer)
 	corsMiddleWare := middleware.NewCORSMiddleWare(deps.Config)
 	router.Use(logging.WithLoggerMiddleware(deps.Logger), corsMiddleWare)
 
+	log.Printf("set routes")
 	setHealthRoute(router)
 	setBlogsRoute(router, deps, authMiddleWare)
 	setTagsRoute(router, deps)

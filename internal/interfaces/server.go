@@ -55,10 +55,12 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 	validator := validator.New()
 	cookie := cookie.NewCookieController(cfg.Env, cfg.SiteDomain)
 
+	log.Println("start connection DB")
 	db, err := infrastracture.NewDBMySQL(ctx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create db: %w", err)
 	}
+	log.Println("end connection KVS")
 	kvs, err := infrastracture.NewRedisKVS(
 		ctx,
 		cfg.KVSHost,
@@ -112,6 +114,7 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 }
 
 func (s *Server) Run(ctx context.Context) error {
+	fmt.Println("server start")
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt)
 	defer stop()
 	eg, ctx := errgroup.WithContext(ctx)

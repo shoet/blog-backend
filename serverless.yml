@@ -1,0 +1,87 @@
+service: blog-backend
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  region: ap-northeast-1
+  environment:
+    BLOG_ENV: ${ssm:/blog-api/BLOG_ENV}
+    BLOG_APP_PORT: ${ssm:/blog-api/BLOG_APP_PORT}
+    BLOG_LOG_LEVEL: ${ssm:/blog-api/BLOG_LOG_LEVEL}
+    BLOG_DB_HOST: ${ssm:/blog-api/BLOG_DB_HOST}
+    BLOG_DB_PORT: ${ssm:/blog-api/BLOG_DB_PORT}
+    BLOG_DB_USER: ${ssm:/blog-api/BLOG_DB_USER}
+    BLOG_DB_PASS: ${ssm:/blog-api/BLOG_DB_PASS}
+    BLOG_DB_NAME: ${ssm:/blog-api/BLOG_DB_NAME}
+    BLOG_DB_TLS_ENABLED: ${ssm:/blog-api/BLOG_DB_TLS_ENABLED}
+    BLOG_KVS_HOST: ${ssm:/blog-api/BLOG_KVS_HOST}
+    BLOG_KVS_PORT: ${ssm:/blog-api/BLOG_KVS_PORT}
+    BLOG_KVS_USER: ${ssm:/blog-api/BLOG_KVS_USER}
+    BLOG_KVS_PASS: ${ssm:/blog-api/BLOG_KVS_PASS}
+    BLOG_KVS_TLS_ENABLED: ${ssm:/blog-api/BLOG_KVS_TLS_ENABLED}
+    BLOG_AWS_S3_BUCKET: ${ssm:/blog-api/BLOG_AWS_S3_BUCKET}
+    BLOG_AWS_S3_THUMBNAIL_DIRECTORY: ${ssm:/blog-api/BLOG_AWS_S3_THUMBNAIL_DIRECTORY}
+    BLOG_AWS_S3_CONTENT_IMAGE_DIRECTORY: ${ssm:/blog-api/BLOG_AWS_S3_CONTENT_IMAGE_DIRECTORY}
+    ADMIN_NAME: ${ssm:/blog-api/ADMIN_NAME}
+    ADMIN_EMAIL: ${ssm:/blog-api/ADMIN_EMAIL}
+    ADMIN_PASSWORD: ${ssm:/blog-api/ADMIN_PASSWORD}
+    JWT_SECRET: ${ssm:/blog-api/JWT_SECRET}
+    SITE_DOMAIN: ${ssm:/blog-api/SITE_DOMAIN}
+    CORS_WHITE_LIST: ${ssm:/blog-api/CORS_WHITE_LIST}
+  ecr:
+    images:
+      BlogBackendImage:
+        path: ./
+        file: Dockerfile
+        platform: linux/amd64
+        buildArgs:
+          PORT: 3000
+
+package:
+  patterns:
+    - "!./**"
+    - ./cmd/bin/**
+
+functions:
+  BlogBackend:
+    role: LambdaRole
+    image:
+      name: BlogBackendImage
+    name: blog-api
+    description: blog backend api for Lambda
+    events:
+      - httpApi:
+          path: /{proxy+}
+          method: any
+    timeout: 30
+
+resources:
+  Resources:
+    LambdaRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: blog-backend-lambda-role
+        AssumeRolePolicyDocument:
+          Statement:
+            - Effect: "Allow"
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action:
+                - "sts:AssumeRole"
+        Policies:
+          - PolicyName: blog-backend-lambda-policy
+            PolicyDocument:
+              Statement:
+                - Effect: "Allow"
+                  Action:
+                    - "logs:CreateLogGroup"
+                    - "logs:CreateLogStream"
+                    - "logs:PutLogEvents"
+                  Resource: "arn:aws:logs:*:*:*"
+                - Effect: "Allow"
+                  Action:
+                    - "s3:GetObject"
+                    - "s3:PutObject"
+                  Resource:
+                    - "arn:aws:s3:::${ssm:/blog-api/BLOG_AWS_S3_BUCKET}/*"

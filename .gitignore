@@ -3,3 +3,5 @@ tmp/*
 .env
 cookie.txt
 cmd/bin/*
+node_modules
+.serverless
