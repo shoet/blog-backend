@@ -31,7 +31,10 @@ func (blog *Blog) HavingTag(tag string) bool {
 
 func (blog *Blog) HavingKeyword(keyword string) bool {
 	// タイトルか概要にキーワードが含まれている
-	return strings.Contains(blog.Title, keyword) || strings.Contains(blog.Description, keyword)
+	keywordLower := strings.ToLower(keyword)
+	titleLower := strings.ToLower(blog.Title)
+	descriptionLower := strings.ToLower(blog.Description)
+	return strings.Contains(titleLower, keywordLower) || strings.Contains(descriptionLower, keywordLower)
 }
 
 type Blogs []*Blog
