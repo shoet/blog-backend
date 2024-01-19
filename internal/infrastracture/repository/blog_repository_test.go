@@ -148,7 +148,7 @@ func Test_BlogRepository_List(t *testing.T) {
 
 	type args struct {
 		blogs    []*models.Blog
-		limit    *int
+		limit    *int64
 		isPublic bool
 	}
 
@@ -166,7 +166,7 @@ func Test_BlogRepository_List(t *testing.T) {
 			args: args{
 				blogs:    generateTestBlogs(t, 20, clocker.Now()),
 				isPublic: true,
-				limit:    func() *int { v := 20; return &v }(),
+				limit:    func() *int64 { var v int64 = 20; return &v }(),
 			},
 			want: want{
 				count: 20,
@@ -176,7 +176,7 @@ func Test_BlogRepository_List(t *testing.T) {
 			id: "limit 10",
 			args: args{
 				blogs: generateTestBlogs(t, 20, clocker.Now()),
-				limit: func() *int { v := 10; return &v }(),
+				limit: func() *int64 { var v int64 = 10; return &v }(),
 			},
 			want: want{
 				count: 10,
@@ -219,13 +219,7 @@ func Test_BlogRepository_List(t *testing.T) {
 
 			}
 
-			listOption := options.ListBlogOptions{}
-
-			if tt.args.limit != nil {
-				var l int64 = int64(*tt.args.limit)
-				listOption.Limit = &l
-			}
-			listOption.IsPublic = tt.args.isPublic
+			listOption := options.NewListBlogOptions(nil, nil, &tt.args.isPublic, tt.args.limit)
 
 			blogs, err := sut.List(ctx, tx, listOption)
 			if err != nil {

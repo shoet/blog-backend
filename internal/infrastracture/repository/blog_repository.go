@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/shoet/blog/internal/clocker"
 	"github.com/shoet/blog/internal/infrastracture"
@@ -49,13 +48,9 @@ func (r *BlogRepository) Add(ctx context.Context, tx infrastracture.TX, blog *mo
 }
 
 func (r *BlogRepository) List(
-	ctx context.Context, tx infrastracture.TX, option options.ListBlogOptions,
+	ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions,
 ) ([]*models.Blog, error) {
-
-	latest := 10
-	if option.Limit != nil {
-		latest = int(*option.Limit)
-	}
+	latest := option.Limit
 	isPublic := ""
 	if option.IsPublic {
 		isPublic = "WHERE is_public = 1"
@@ -63,7 +58,7 @@ func (r *BlogRepository) List(
 	sql := `
 	SELECT
 		id, author_id, title, description, thumbnail_image_file_name, 
-		tags.tags as tags, is_public, created, modified
+		tags.tags as tags_concat, is_public, created, modified
 	FROM (
 		SELECT
 			id, author_id, title, description, thumbnail_image_file_name, is_public, created, modified
@@ -78,7 +73,6 @@ func (r *BlogRepository) List(
 	LEFT OUTER JOIN (
 		SELECT
 			blogs_tags.blog_id
-			-- , GROUP_CONCAT(tags.name, ',') as tags -- for sqlite3
 			, GROUP_CONCAT(tags.name) as tags -- for mysql
 		FROM blogs_tags
 		JOIN tags
@@ -90,16 +84,8 @@ func (r *BlogRepository) List(
 	;
 	`
 	type data struct {
-		Id                     models.BlogId `json:"id" db:"id"`
-		Title                  string        `json:"title" db:"title"`
-		Description            string        `json:"description" db:"description"`
-		Content                string        `json:"content,omitempty" db:"content"`
-		AuthorId               models.UserId `json:"authorId" db:"author_id"`
-		ThumbnailImageFileName string        `json:"thumbnailImageFileName" db:"thumbnail_image_file_name"`
-		IsPublic               bool          `json:"isPublic" db:"is_public"`
-		Tags                   *string       `json:"tags" db:"tags"`
-		Created                time.Time     `json:"created" db:"created"`
-		Modified               time.Time     `json:"modified" db:"modified"`
+		models.Blog
+		TagsConcat *string `db:"tags_concat"`
 	}
 	var temp []data
 	if err := tx.SelectContext(ctx, &temp, sql, latest); err != nil {
@@ -108,8 +94,8 @@ func (r *BlogRepository) List(
 	var blogs []*models.Blog
 	for _, t := range temp {
 		var tags []string
-		if t.Tags != nil {
-			tags = strings.Split(*t.Tags, ",")
+		if t.TagsConcat != nil {
+			tags = strings.Split(*t.TagsConcat, ",")
 		}
 		blogs = append(blogs, &models.Blog{
 			Id:                     t.Id,

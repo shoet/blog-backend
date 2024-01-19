@@ -34,7 +34,9 @@ func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)
 
-	blogs, err := l.Usecase.Run(ctx, true)
+	isPublic := func() *bool { var v = true; return &v }()
+	input := get_blogs.NewGetBlogsInput(isPublic, nil, nil)
+	blogs, err := l.Usecase.Run(ctx, input)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to list blog: %v", err))
 		response.ResponsdInternalServerError(w, r, err)
@@ -304,7 +306,10 @@ func NewBlogListAdminHandler(usecase *get_blogs.Usecase) *BlogListAdminHandler {
 func (l *BlogListAdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)
-	resp, err := l.Usecase.Run(ctx, false)
+
+	isPublic := func() *bool { var v = true; return &v }()
+	input := get_blogs.NewGetBlogsInput(isPublic, nil, nil)
+	resp, err := l.Usecase.Run(ctx, input)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to list blog: %v", err))
 		response.ResponsdInternalServerError(w, r, err)

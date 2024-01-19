@@ -1,13 +1,29 @@
 package options
 
-import "github.com/shoet/blog/internal/infrastracture/models"
-
-// TODO: リファクタリング
 type ListBlogOptions struct {
-	// AuthorId *models.UserId // 未使用
-	Tags     []models.TagId
+	Tag      *string
+	KeyWord  *string
 	IsPublic bool
-	Limit    *int64 // default 10
+	Limit    int64
+}
+
+func NewListBlogOptions(
+	tag *string, keyWord *string, isPublic *bool, limit *int64,
+) *ListBlogOptions {
+	option := new(ListBlogOptions)
+	if isPublic == nil {
+		option.IsPublic = false // Default
+	} else {
+		option.IsPublic = *isPublic
+	}
+	if limit == nil {
+		option.Limit = 10 // Default
+	} else {
+		option.Limit = *limit
+	}
+	option.Tag = tag
+	option.KeyWord = keyWord
+	return option
 }
 
 type ListTagsOptions struct {
