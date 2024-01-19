@@ -36,6 +36,16 @@ func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	isPublic := func() *bool { var v = true; return &v }()
 	input := get_blogs.NewGetBlogsInput(isPublic, nil, nil)
+	v := r.URL.Query()
+	tag := v.Get("tag")
+	if tag != "" {
+		input.Tag = &tag
+	}
+	keyword := v.Get("keyword")
+	if keyword != "" {
+		input.KeyWord = &keyword
+	}
+
 	blogs, err := l.Usecase.Run(ctx, input)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to list blog: %v", err))

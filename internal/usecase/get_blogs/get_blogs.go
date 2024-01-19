@@ -51,12 +51,19 @@ func (u *Usecase) Run(ctx context.Context, input *GetBlogsInput) ([]*models.Blog
 	transactor := infrastracture.NewTransactionProvider(u.DB)
 
 	result, err := transactor.DoInTx(ctx, func(tx infrastracture.TX) (interface{}, error) {
-		listOption := options.NewListBlogOptions(input.Tag, input.KeyWord, input.IsPublic, nil)
+		listOption := options.NewListBlogOptions(input.IsPublic, nil)
+		var blogs models.Blogs
 		blogs, err := u.BlogRepository.List(ctx, tx, listOption)
 		if err != nil {
 			return nil, fmt.Errorf("failed to list blogs: %v", err)
 		}
-		return blogs, nil
+		// タグの検索を優先する
+		if input.Tag != nil {
+			blogs = blogs.FilterByTag(*input.Tag)
+		} else if input.KeyWord != nil {
+			blogs = blogs.FilterByKeyword(*input.KeyWord)
+		}
+		return blogs.ToSlice(), nil
 	})
 
 	if err != nil {

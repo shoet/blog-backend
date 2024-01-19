@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 type BlogId int64
 
@@ -17,7 +20,49 @@ type Blog struct {
 	Modified               time.Time `json:"modified" db:"modified"`
 }
 
+func (blog *Blog) HavingTag(tag string) bool {
+	for _, t := range blog.Tags {
+		if t == tag {
+			return true
+		}
+	}
+	return false
+}
+
+func (blog *Blog) HavingKeyword(keyword string) bool {
+	// タイトルか概要にキーワードが含まれている
+	return strings.Contains(blog.Title, keyword) || strings.Contains(blog.Description, keyword)
+}
+
 type Blogs []*Blog
+
+func (blogs Blogs) FilterByTag(tag string) Blogs {
+	var result Blogs
+	for _, blog := range blogs {
+		if blog.HavingTag(tag) {
+			result = append(result, blog)
+		}
+	}
+	return result
+}
+
+func (blogs Blogs) FilterByKeyword(keyword string) Blogs {
+	var result Blogs
+	for _, blog := range blogs {
+		if blog.HavingKeyword(keyword) {
+			result = append(result, blog)
+		}
+	}
+	return result
+}
+
+func (blogs Blogs) ToSlice() []*Blog {
+	result := make([]*Blog, 0, len(blogs))
+	for _, blog := range blogs {
+		result = append(result, blog)
+	}
+	return result
+}
 
 type UserId int64
 
