@@ -128,10 +128,10 @@ func setAuthRoute(r chi.Router, deps *MuxDependencies) {
 		r.Post("/signin", ah.ServeHTTP)
 
 		ash := handler.NewAuthSessionLoginHandler(login_user_session.NewUsecase(deps.AuthService))
-		r.Get("/login/me", ash.ServeHTTP)
+		r.Get("/signin/me", ash.ServeHTTP)
 
 		alh := handler.NewAuthLogoutHandler(deps.Cookie)
-		r.Post("/admin/signout", alh.ServeHTTP)
+		r.Post("/signout", alh.ServeHTTP)
 	})
 }
 
