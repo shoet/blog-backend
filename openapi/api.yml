@@ -7,6 +7,8 @@ paths:
   /blogs:
     get:
       summary: ブログの一覧
+      description: |
+        ブログの一覧を取得する。一般公開可能な記事のみ取得する。
       parameters:
         - name: keyword
           in: query
@@ -30,7 +32,6 @@ paths:
                 items:
                   $ref: "#/components/schemas/Blog"
 
-    # TODO: auth
     post:
       summary: ブログの投稿
       requestBody:
@@ -38,6 +39,8 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/BlogRequestBody"
+      security:
+        - BearerAuth: []
       responses:
         "200":
           description: OK
@@ -75,6 +78,8 @@ paths:
           required: true
           schema:
             type: string
+      security:
+        - BearerAuth: []
       responses:
         "200":
           description: OK
@@ -82,7 +87,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BlogId"
-                  
+
     put:
       summary: ブログの更新
       requestBody:
@@ -90,6 +95,8 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/Blog"
+      security:
+        - BearerAuth: []
       responses:
         "200":
           description: OK
@@ -98,15 +105,72 @@ paths:
               schema:
                 $ref: "#/components/schemas/Blog"
 
-  /auth/login:
-  /auth/login/me:
+  /auth/signin:
+    post:
+      summary: ログイン
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  required: true
+                password:
+                  type: string
+                  required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  authToken:
+                    type: string
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: "authToken=xxx.xxx.xxx; Path=/; Expires=Sat, 21 Mar 2043 06:33:50 GMT;"
+
+  /auth/signin/me:
+    get:
+      summary: セッションログイン
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: integer
+                    description: ユーザーID
+                    example: 1
+                  name:
+                    type: string
+                    description: ユーザー名
+                    example: shoet
+
   /admin/blogs:
   /files/thumbnail/new:
   /files/content/new:
   /tags:
 
-
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      schema: bearer
+      description: JWT Token
+      bearerFormat: JWT
+
   schemas:
     BlogId:
       type: object
@@ -151,15 +215,15 @@ components:
 
     Blog:
       allOf:
-      - type: object
-        properties:
-          id:
-            type: integer
-            description: ブログID
-            example: 1
-      - $ref: "#/components/schemas/BlogDomain"
-      - $ref: "#/components/schemas/CommonColumn"
-        
+        - type: object
+          properties:
+            id:
+              type: integer
+              description: ブログID
+              example: 1
+        - $ref: "#/components/schemas/BlogDomain"
+        - $ref: "#/components/schemas/CommonColumn"
+
     CommonColumn:
       type: object
       properties:
