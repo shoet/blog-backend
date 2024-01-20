@@ -1,0 +1,431 @@
+openapi: "3.0.0"
+info:
+  title: Blog backend API
+  version: "1.0"
+
+paths:
+  /blogs:
+    get:
+      summary: ブログの一覧
+      description: |
+        ブログの一覧を取得する。一般公開可能な記事のみ取得する。
+        contentは返却しない。
+      parameters:
+        - name: keyword
+          in: query
+          description: 検索キーワード
+          required: false
+          schema:
+            type: string
+        - name: tag
+          in: query
+          description: 検索タグ
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - type: object
+                      properties:
+                        id:
+                          $ref: "#/components/schemas/BlogId"
+                        title:
+                          $ref: "#/components/schemas/BlogTitle"
+                        description:
+                          $ref: "#/components/schemas/BlogDescription"
+                        authorId:
+                          $ref: "#/components/schemas/BlogAuthorId"
+                        thumbnailImageFileName:
+                          $ref: "#/components/schemas/BlogThumbnailImageFileName"
+                        isPublic:
+                          $ref: "#/components/schemas/BlogIsPublic"
+                        tags:
+                          $ref: "#/components/schemas/BlogTags"
+                    - $ref: "#/components/schemas/CommonColumn"
+
+    post:
+      summary: ブログの投稿
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  $ref: "#/components/schemas/BlogTitle"
+                description:
+                  $ref: "#/components/schemas/BlogDescription"
+                content:
+                  $ref: "#/components/schemas/BlogContent"
+                authorId:
+                  $ref: "#/components/schemas/BlogAuthorId"
+                thumbnailImageFileName:
+                  $ref: "#/components/schemas/BlogThumbnailImageFileName"
+                isPublic:
+                  $ref: "#/components/schemas/BlogIsPublic"
+                tags:
+                  $ref: "#/components/schemas/BlogTags"
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Blog"
+                  - $ref: "#/components/schemas/CommonColumn"
+
+  /blogs/{blog_id}:
+    get:
+      summary: ブログの取得
+      description: ブログを1件取得する
+      parameters:
+        - name: blog_id
+          in: path
+          description: ブログID
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Blog"
+                  - $ref: "#/components/schemas/CommonColumn"
+
+    delete:
+      summary: ブログの削除
+      description: ブログを1件削除する
+      parameters:
+        - name: blog_id
+          in: path
+          description: ブログID
+          required: true
+          schema:
+            type: string
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlogId"
+
+    put:
+      summary: ブログの更新
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  $ref: "#/components/schemas/BlogId"
+                title:
+                  $ref: "#/components/schemas/BlogTitle"
+                description:
+                  $ref: "#/components/schemas/BlogDescription"
+                content:
+                  $ref: "#/components/schemas/BlogContent"
+                authorId:
+                  $ref: "#/components/schemas/BlogAuthorId"
+                thumbnailImageFileName:
+                  $ref: "#/components/schemas/BlogThumbnailImageFileName"
+                isPublic:
+                  $ref: "#/components/schemas/BlogIsPublic"
+                tags:
+                  $ref: "#/components/schemas/BlogTags"
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Blog"
+                  - $ref: "#/components/schemas/CommonColumn"
+
+  /auth/signin:
+    post:
+      summary: ログイン
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  required: true
+                password:
+                  type: string
+                  required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  authToken:
+                    type: string
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: "authToken=xxx.xxx.xxx; Path=/; Expires=Sat, 21 Mar 2043 06:33:50 GMT;"
+
+  /auth/signin/me:
+    get:
+      summary: セッションログイン
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                - type: object
+                  properties:
+                    userId:
+                      type: integer
+                      description: ユーザーID
+                      example: 1
+                    name:
+                      type: string
+                      description: ユーザー名
+                      example: shoet
+                - $ref: "#/components/schemas/CommonColumn"
+
+  /admin/blogs:
+    get:
+      summary: ブログの一覧
+      description: |
+        ブログの一覧を取得する。一般不可な記事も含めて取得する。
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: keyword
+          in: query
+          description: 検索キーワード
+          required: false
+          schema:
+            type: string
+        - name: tag
+          in: query
+          description: 検索タグ
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: "#/components/schemas/Blog"
+                    - $ref: "#/components/schemas/CommonColumn"
+
+  /files/thumbnail/new:
+    post:
+      summary: 署名付きアップロード用URLの取得(サムネイル用)
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: 
+                fileName:
+                  type: string
+                  description: ファイル名
+                  example: "sample.png"
+      responses:
+        "200":
+          descriptioin: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  signedUrl:
+                    description: 署名付きURL
+                    type: string
+                  putUrl:
+                    description: PUT先PublicURL
+                    example: https://xxx/thumbnail/sample.png
+                    type: string
+
+  /files/content/new:
+    post:
+      summary: 署名付きアップロード用URLの取得(記事画像用)
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: 
+                fileName:
+                  type: string
+                  description: ファイル名
+                  example: "sample.png"
+      responses:
+        "200":
+          descriptioin: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  signedUrl:
+                    description: 署名付きURL
+                    type: string
+                  putUrl:
+                    description: PUT先PublicURL
+                    example: https://xxx/content/sample.png
+                    type: string
+
+  /tags:
+    get:
+      summary: タグの一覧
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tag"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      schema: bearer
+      description: JWT Token
+      bearerFormat: JWT
+
+  schemas:
+    BlogId:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ブログID
+          example: 1
+
+    Blog:
+      type: object
+      properties:
+      allOf:
+        - type: object
+          properties:
+            id:
+              $ref: "#/components/schemas/BlogId"
+            title:
+              $ref: "#/components/schemas/BlogTitle"
+            description:
+              $ref: "#/components/schemas/BlogDescription"
+            content:
+              $ref: "#/components/schemas/BlogContent"
+            authorId:
+              $ref: "#/components/schemas/BlogAuthorId"
+            thumbnailImageFileName:
+              $ref: "#/components/schemas/BlogThumbnailImageFileName"
+            isPublic:
+              $ref: "#/components/schemas/BlogIsPublic"
+            tags:
+              $ref: "#/components/schemas/BlogTags"
+    
+    Tag:
+      type: object
+      properties:
+        id:
+          type: integer
+          descriptioin: タグID
+          example: 1
+        name:
+          type: string
+          description: タグ
+          example: Go
+
+    # Columns ##################
+    BlogId:
+      type: integer
+      description: ブログID
+      example: 1
+
+    BlogTitle:
+      type: string
+      description: タイトル
+      example: XXXについてまとめました
+    
+    BlogDescription:
+      type: string
+      description: 概要
+      example: 知見共有のためXXXについてまとめました。
+    
+    BlogContent:
+      type: string
+      description: 本文
+
+    BlogAuthorId:
+      type: integer
+      description: 投稿者
+      example: 1
+
+    BlogThumbnailImageFileName:
+      type: string
+      description: サムネイル画像ファイル名
+      example: sample.png
+    
+    BlogIsPublic:
+      type: boolean
+      description: 公開/非公開
+
+    BlogTags:
+      type: array
+      items:
+        type: string
+        description: タグ
+        example: Go
+
+    CommonColumn:
+      type: object
+      properties:
+        created:
+          type: string
+          description: 作成日
+          format: date-time
+          example: "2023-12-31T09:10:58+09:00"
+        updated:
+          type: string
+          description: 更新日
+          format: date-time
+          example: "2023-12-31T09:10:58+09:00"
