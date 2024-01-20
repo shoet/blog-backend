@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
-	"time"
 
 	"github.com/shoet/blog/internal/clocker"
 	"github.com/shoet/blog/internal/infrastracture"
@@ -48,58 +48,58 @@ func (r *BlogRepository) Add(ctx context.Context, tx infrastracture.TX, blog *mo
 	return models.BlogId(id), nil
 }
 
-func (r *BlogRepository) List(
-	ctx context.Context, tx infrastracture.TX, option options.ListBlogOptions,
-) ([]*models.Blog, error) {
+type BlogTag struct {
+	BlogId models.BlogId `db:"blog_id"`
+	Tag    string        `db:"tag"`
+}
 
-	latest := 10
-	if option.Limit != nil {
-		latest = int(*option.Limit)
+// Blogに紐づくTagを取得する
+func (r *BlogRepository) WithBlogTags(
+	ctx context.Context, tx infrastracture.TX, blogId models.BlogId,
+) ([]*BlogTag, error) {
+	sql := `
+	SELECT
+		blogs_tags.blog_id, tags.name as tag
+	FROM 
+		blogs_tags
+	JOIN
+		tags
+	ON
+		blogs_tags.tag_id = tags.id
+	WHERE
+		blog_id = ?
+	;	
+	`
+	var tagResult []*BlogTag
+	if err := tx.SelectContext(ctx, &tagResult, sql, blogId); err != nil {
+		return nil, fmt.Errorf("failed to select blogs_tags: %w", err)
 	}
+	return tagResult, nil
+}
+
+func (r *BlogRepository) List(
+	ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions,
+) ([]*models.Blog, error) {
+	latest := option.Limit
 	isPublic := ""
 	if option.IsPublic {
 		isPublic = "WHERE is_public = 1"
 	}
 	sql := `
 	SELECT
-		id, author_id, title, description, thumbnail_image_file_name, 
-		tags.tags as tags, is_public, created, modified
-	FROM (
-		SELECT
-			id, author_id, title, description, thumbnail_image_file_name, is_public, created, modified
-		FROM
-			blogs
-		` + isPublic + ` 
-		ORDER BY 
-			created DESC
-		LIMIT 
-			?
-	) AS blogs
-	LEFT OUTER JOIN (
-		SELECT
-			blogs_tags.blog_id
-			-- , GROUP_CONCAT(tags.name, ',') as tags -- for sqlite3
-			, GROUP_CONCAT(tags.name) as tags -- for mysql
-		FROM blogs_tags
-		JOIN tags
-			ON blogs_tags.tag_id = tags.id
-		GROUP BY blogs_tags.blog_id
-		-- TODO: 将来的に遅くなる チューニング
-	) AS tags
-		ON blogs.id = tags.blog_id
+		id, author_id, title, description, 
+		thumbnail_image_file_name, is_public, created, modified
+	FROM
+		blogs
+	` + isPublic + ` 
+	ORDER BY 
+		id DESC -- 連番なのでPKでソートする
+	LIMIT 
+		?
 	;
 	`
 	type data struct {
-		Id                     models.BlogId `json:"id" db:"id"`
-		Title                  string        `json:"title" db:"title"`
-		Description            string        `json:"description" db:"description"`
-		Content                string        `json:"content,omitempty" db:"content"`
-		AuthorId               models.UserId `json:"authorId" db:"author_id"`
-		ThumbnailImageFileName string        `json:"thumbnailImageFileName" db:"thumbnail_image_file_name"`
-		IsPublic               bool          `json:"isPublic" db:"is_public"`
-		Tags                   *string       `json:"tags" db:"tags"`
-		Created                time.Time     `json:"created" db:"created"`
-		Modified               time.Time     `json:"modified" db:"modified"`
+		models.Blog
 	}
 	var temp []data
 	if err := tx.SelectContext(ctx, &temp, sql, latest); err != nil {
@@ -107,10 +107,18 @@ func (r *BlogRepository) List(
 	}
 	var blogs []*models.Blog
 	for _, t := range temp {
-		var tags []string
-		if t.Tags != nil {
-			tags = strings.Split(*t.Tags, ",")
+		blogTag, err := r.WithBlogTags(ctx, tx, t.Id)
+		if err != nil {
+			return nil, fmt.Errorf("failed to select blogs_tags: %w", err)
 		}
+		tags := make([]string, 0, len(blogTag))
+		for _, t := range blogTag {
+			tags = append(tags, t.Tag)
+		}
+		// タグを昇順にソート
+		sort.SliceStable(tags, func(i, j int) bool {
+			return strings.Compare(tags[i], tags[j]) < 0
+		})
 		blogs = append(blogs, &models.Blog{
 			Id:                     t.Id,
 			Title:                  t.Title,

@@ -9,6 +9,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/shoet/blog/internal/clocker"
+	"github.com/shoet/blog/internal/infrastracture"
 	"github.com/shoet/blog/internal/infrastracture/models"
 	"github.com/shoet/blog/internal/infrastracture/repository"
 	"github.com/shoet/blog/internal/options"
@@ -147,9 +148,9 @@ func Test_BlogRepository_List(t *testing.T) {
 	sut := repository.NewBlogRepository(clocker)
 
 	type args struct {
-		blogs    []*models.Blog
-		limit    *int
+		limit    *int64
 		isPublic bool
+		prepare  func(ctx context.Context, tx infrastracture.TX) error
 	}
 
 	type want struct {
@@ -164,9 +165,31 @@ func Test_BlogRepository_List(t *testing.T) {
 		{
 			id: "success",
 			args: args{
-				blogs:    generateTestBlogs(t, 20, clocker.Now()),
 				isPublic: true,
-				limit:    func() *int { v := 20; return &v }(),
+				limit:    func() *int64 { var v int64 = 20; return &v }(),
+				prepare: func(ctx context.Context, tx infrastracture.TX) error {
+					// blogを20個作成する
+					blogs := generateTestBlogs(t, 20, clocker.Now())
+					for _, b := range blogs {
+						prepareTask := `
+						INSERT INTO blogs
+							(
+								author_id, title, content, description, 
+								thumbnail_image_file_name, is_public, created, modified)
+						VALUES
+							(?, ?, ?, ?, ?, ?, ?, ?)
+						`
+						_, err := tx.ExecContext(
+							ctx, prepareTask,
+							b.AuthorId, b.Title, b.Content, b.Description,
+							b.ThumbnailImageFileName, b.IsPublic, b.Created, b.Modified)
+						if err != nil {
+							return fmt.Errorf("failed to prepare task: %v", err)
+						}
+
+					}
+					return nil
+				},
 			},
 			want: want{
 				count: 20,
@@ -175,8 +198,30 @@ func Test_BlogRepository_List(t *testing.T) {
 		{
 			id: "limit 10",
 			args: args{
-				blogs: generateTestBlogs(t, 20, clocker.Now()),
-				limit: func() *int { v := 10; return &v }(),
+				limit: func() *int64 { var v int64 = 10; return &v }(),
+				prepare: func(ctx context.Context, tx infrastracture.TX) error {
+					// blogを20個作成する
+					blogs := generateTestBlogs(t, 20, clocker.Now())
+					for _, b := range blogs {
+						prepareTask := `
+						INSERT INTO blogs
+							(
+								author_id, title, content, description, 
+								thumbnail_image_file_name, is_public, created, modified)
+						VALUES
+							(?, ?, ?, ?, ?, ?, ?, ?)
+						`
+						_, err := tx.ExecContext(
+							ctx, prepareTask,
+							b.AuthorId, b.Title, b.Content, b.Description,
+							b.ThumbnailImageFileName, b.IsPublic, b.Created, b.Modified)
+						if err != nil {
+							return fmt.Errorf("failed to prepare task: %v", err)
+						}
+
+					}
+					return nil
+				},
 			},
 			want: want{
 				count: 10,
@@ -185,9 +230,31 @@ func Test_BlogRepository_List(t *testing.T) {
 		{
 			id: "isNotPublic",
 			args: args{
-				blogs:    generateTestBlogsWithPublic(t, 20, clocker.Now()),
 				limit:    nil,
 				isPublic: false,
+				prepare: func(ctx context.Context, tx infrastracture.TX) error {
+					// publicなblogを10個、privateなblogを10個作成する
+					blogs := generateTestBlogsWithPublic(t, 20, clocker.Now())
+					for _, b := range blogs {
+						prepareTask := `
+						INSERT INTO blogs
+							(
+								author_id, title, content, description, 
+								thumbnail_image_file_name, is_public, created, modified)
+						VALUES
+							(?, ?, ?, ?, ?, ?, ?, ?)
+						`
+						_, err := tx.ExecContext(
+							ctx, prepareTask,
+							b.AuthorId, b.Title, b.Content, b.Description,
+							b.ThumbnailImageFileName, b.IsPublic, b.Created, b.Modified)
+						if err != nil {
+							return fmt.Errorf("failed to prepare task: %v", err)
+						}
+
+					}
+					return nil
+				},
 			},
 			want: want{
 				count: 10,
@@ -200,32 +267,11 @@ func Test_BlogRepository_List(t *testing.T) {
 			tx := db.MustBegin()
 			defer tx.Rollback()
 
-			for _, b := range tt.args.blogs {
-				prepareTask := `
-				INSERT INTO blogs
-					(
-						author_id, title, content, description, 
-						thumbnail_image_file_name, is_public, created, modified)
-				VALUES
-					(?, ?, ?, ?, ?, ?, ?, ?)
-				`
-				_, err := tx.ExecContext(
-					ctx, prepareTask,
-					b.AuthorId, b.Title, b.Content, b.Description,
-					b.ThumbnailImageFileName, b.IsPublic, b.Created, b.Modified)
-				if err != nil {
-					t.Fatalf("failed to prepare task: %v", err)
-				}
-
+			if err := tt.args.prepare(ctx, tx); err != nil {
+				t.Fatalf("failed to prepare: %v", err)
 			}
 
-			listOption := options.ListBlogOptions{}
-
-			if tt.args.limit != nil {
-				var l int64 = int64(*tt.args.limit)
-				listOption.Limit = &l
-			}
-			listOption.IsPublic = tt.args.isPublic
+			listOption := options.NewListBlogOptions(&tt.args.isPublic, tt.args.limit)
 
 			blogs, err := sut.List(ctx, tx, listOption)
 			if err != nil {
