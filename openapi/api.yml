@@ -7,6 +7,19 @@ paths:
   /blogs:
     get:
       summary: ブログの一覧
+      parameters:
+        - name: keyword
+          in: query
+          description: 検索キーワード
+          required: false
+          schema:
+            type: string
+        - name: tag
+          in: query
+          description: 検索タグ
+          required: false
+          schema:
+            type: string
       responses:
         "200":
           description: OK
@@ -17,11 +30,86 @@ paths:
                 items:
                   $ref: "#/components/schemas/Blog"
 
+    post:
+      summary: ブログの投稿
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlogRequestBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blog"
+
+  /blogs/{blog_id}:
+    get:
+      summary: ブログの取得
+      description: ブログを1件取得する
+      parameters:
+        - name: blog_id
+          in: path
+          description: ブログID
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blog"
+
+    delete:
+      summary: ブログの削除
+      description: ブログを1件削除する
+      parameters:
+        - name: blog_id
+          in: path
+          description: ブログID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BlogId"
+                  
+    put:
+      summary: ブログの更新
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Blog"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blog"
 components:
   schemas:
+    BlogId:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ブログID
+          example: 1
+
     BlogRequestBody:
       allOf:
         - $ref: "#/components/schemas/BlogDomain"
+
     BlogDomain:
       type: object
       properties:
@@ -37,7 +125,7 @@ components:
           type: string
           description: 本文
         authorId:
-          type: number
+          type: integer
           description: 投稿者
           example: 1
         thumbnailImageFileName:
@@ -56,7 +144,7 @@ components:
       - type: object
         properties:
           id:
-            type: number
+            type: integer
             description: ブログID
             example: 1
       - $ref: "#/components/schemas/BlogDomain"
