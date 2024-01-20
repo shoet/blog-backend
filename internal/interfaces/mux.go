@@ -84,11 +84,13 @@ func setBlogsRoute(
 			deps.Validator)
 		r.With(authMiddleWare.Middleware).Post("/", bah.ServeHTTP)
 
+		// TODO: 修正
 		bdh := handler.NewBlogDeleteHandler(
 			delete_blog.NewUsecase(deps.DB, deps.BlogRepository),
 			deps.Validator)
 		r.With(authMiddleWare.Middleware).Delete("/", bdh.ServeHTTP)
 
+		// TODO: 修正
 		buh := handler.NewBlogPutHandler(
 			put_blog.NewUsecase(deps.DB, deps.BlogRepository),
 			deps.Validator)
@@ -128,10 +130,11 @@ func setAuthRoute(r chi.Router, deps *MuxDependencies) {
 		r.Post("/signin", ah.ServeHTTP)
 
 		ash := handler.NewAuthSessionLoginHandler(login_user_session.NewUsecase(deps.AuthService))
-		r.Get("/login/me", ash.ServeHTTP)
+		r.Get("/signin/me", ash.ServeHTTP)
 
+		// TODO: path修正
 		alh := handler.NewAuthLogoutHandler(deps.Cookie)
-		r.Post("/admin/signout", alh.ServeHTTP)
+		r.Post("/signout", alh.ServeHTTP)
 	})
 }
 

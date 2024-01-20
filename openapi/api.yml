@@ -30,6 +30,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/Blog"
 
+    # TODO: auth
     post:
       summary: ブログの投稿
       requestBody:
@@ -96,6 +97,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Blog"
+
+  /auth/login:
+  /auth/login/me:
+  /admin/blogs:
+  /files/thumbnail/new:
+  /files/content/new:
+  /tags:
+
+
 components:
   schemas:
     BlogId:
