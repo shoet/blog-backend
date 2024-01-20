@@ -159,9 +159,109 @@ paths:
                     example: shoet
 
   /admin/blogs:
+    get:
+      summary: ブログの一覧
+      description: |
+        ブログの一覧を取得する。一般不可な記事も含めて取得する。
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: keyword
+          in: query
+          description: 検索キーワード
+          required: false
+          schema:
+            type: string
+        - name: tag
+          in: query
+          description: 検索タグ
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Blog"
+
   /files/thumbnail/new:
+    post:
+      summary: 署名付きアップロード用URLの取得(サムネイル用)
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: 
+                fileName:
+                  type: string
+                  description: ファイル名
+                  example: "sample.png"
+      responses:
+        "200":
+          descriptioin: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  signedUrl:
+                    description: 署名付きURL
+                    type: string
+                  putUrl:
+                    description: PUT先PublicURL
+                    example: https://xxx/thumbnail/sample.png
+                    type: string
+
   /files/content/new:
+    post:
+      summary: 署名付きアップロード用URLの取得(記事画像用)
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: 
+                fileName:
+                  type: string
+                  description: ファイル名
+                  example: "sample.png"
+      responses:
+        "200":
+          descriptioin: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  signedUrl:
+                    description: 署名付きURL
+                    type: string
+                  putUrl:
+                    description: PUT先PublicURL
+                    example: https://xxx/content/sample.png
+                    type: string
+
   /tags:
+    get:
+      summary: タグの一覧
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Tag"
 
 components:
   securitySchemes:
@@ -223,6 +323,18 @@ components:
               example: 1
         - $ref: "#/components/schemas/BlogDomain"
         - $ref: "#/components/schemas/CommonColumn"
+    
+    Tag:
+      type: object
+      properties:
+        id:
+          type: integer
+          descriptioin: タグID
+          example: 1
+        name:
+          type: string
+          description: タグ
+          example: Go
 
     CommonColumn:
       type: object
