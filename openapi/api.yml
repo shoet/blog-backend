@@ -1,0 +1,77 @@
+openapi: "3.0.0"
+info:
+  title: Blog backend API
+  version: "1.0"
+
+paths:
+  /blogs:
+    get:
+      summary: ブログの一覧
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Blog"
+
+components:
+  schemas:
+    BlogRequestBody:
+      allOf:
+        - $ref: "#/components/schemas/BlogDomain"
+    BlogDomain:
+      type: object
+      properties:
+        title:
+          type: string
+          description: タイトル
+          example: XXXについてまとめました
+        description:
+          type: string
+          description: 概要
+          example: 知見共有のためXXXについてまとめました。
+        content:
+          type: string
+          description: 本文
+        authorId:
+          type: number
+          description: 投稿者
+          example: 1
+        thumbnailImageFileName:
+          type: string
+          description: サムネイル画像ファイル名
+        isPublic:
+          type: boolean
+          description: 公開/非公開
+        tags:
+          type: array
+          items:
+            type: string
+
+    Blog:
+      allOf:
+      - type: object
+        properties:
+          id:
+            type: number
+            description: ブログID
+            example: 1
+      - $ref: "#/components/schemas/BlogDomain"
+      - $ref: "#/components/schemas/CommonColumn"
+        
+    CommonColumn:
+      type: object
+      properties:
+        created:
+          type: string
+          description: 作成日
+          format: date-time
+          example: "2023-12-31T09:10:58+09:00"
+        updated:
+          type: string
+          description: 更新日
+          format: date-time
+          example: "2023-12-31T09:10:58+09:00"
