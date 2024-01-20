@@ -208,23 +208,20 @@ func NewBlogDeleteHandler(
 func (d *BlogDeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)
-	var reqBody struct {
-		Id models.BlogId `json:"id" validate:"required"`
+
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		logger.Error("failed to get id from url")
+		response.ResponsdBadRequest(w, r, nil)
+		return
 	}
-	defer r.Body.Close()
-	if err := response.JsonToStruct(r, &reqBody); err != nil {
-		logger.Error(fmt.Sprintf("failed to parse request body: %v", err))
+	idInt, err := strconv.Atoi(strings.TrimSpace(id))
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to convert id to int: %v", err))
 		response.ResponsdBadRequest(w, r, err)
 		return
 	}
-
-	if err := d.Validator.Struct(reqBody); err != nil {
-		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
-		response.ResponsdBadRequest(w, r, err)
-		return
-	}
-
-	blogId, err := d.Usecase.Run(ctx, reqBody.Id)
+	blogId, err := d.Usecase.Run(ctx, models.BlogId(idInt))
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to delete blog: %v", err))
 		response.ResponsdInternalServerError(w, r, err)

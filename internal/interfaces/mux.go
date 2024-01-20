@@ -75,24 +75,22 @@ func setBlogsRoute(
 		blh := handler.NewBlogListHandler(get_blogs.NewUsecase(deps.DB, deps.BlogRepository))
 		r.Get("/", blh.ServeHTTP)
 
-		bgh := handler.NewBlogGetHandler(
-			get_blog_detail.NewUsecase(deps.DB, deps.BlogRepository), deps.JWTer)
-		r.Get("/{id}", bgh.ServeHTTP)
-
 		bah := handler.NewBlogAddHandler(
 			create_blog.NewUsecase(deps.DB, deps.BlogRepository, deps.BlogService),
 			deps.Validator)
 		r.With(authMiddleWare.Middleware).Post("/", bah.ServeHTTP)
 
+		bgh := handler.NewBlogGetHandler(
+			get_blog_detail.NewUsecase(deps.DB, deps.BlogRepository), deps.JWTer)
+		r.Get("/{id}", bgh.ServeHTTP)
+
 		bdh := handler.NewBlogDeleteHandler(
-			delete_blog.NewUsecase(deps.DB, deps.BlogRepository),
-			deps.Validator)
-		r.With(authMiddleWare.Middleware).Delete("/", bdh.ServeHTTP)
+			delete_blog.NewUsecase(deps.DB, deps.BlogRepository), deps.Validator)
+		r.With(authMiddleWare.Middleware).Delete("/{id}", bdh.ServeHTTP)
 
 		buh := handler.NewBlogPutHandler(
-			put_blog.NewUsecase(deps.DB, deps.BlogRepository),
-			deps.Validator)
-		r.With(authMiddleWare.Middleware).Put("/", buh.ServeHTTP)
+			put_blog.NewUsecase(deps.DB, deps.BlogRepository), deps.Validator)
+		r.With(authMiddleWare.Middleware).Put("/{id}", buh.ServeHTTP)
 	})
 }
 
