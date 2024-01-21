@@ -314,8 +314,7 @@ func (l *BlogListAdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)
 
-	isPublic := func() *bool { var v = true; return &v }()
-	input := get_blogs.NewGetBlogsInput(isPublic, nil, nil)
+	input := get_blogs.NewGetBlogsInput(nil, nil, nil)
 	resp, err := l.Usecase.Run(ctx, input)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to list blog: %v", err))
