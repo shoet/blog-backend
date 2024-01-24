@@ -7,6 +7,8 @@ paths:
   /blogs:
     get:
       summary: ブログの一覧
+      tags:
+        - blogs
       description: |
         ブログの一覧を取得する。一般公開可能な記事のみ取得する。
         contentは返却しない。
@@ -52,6 +54,8 @@ paths:
 
     post:
       summary: ブログの投稿
+      tags:
+        - blogs
       requestBody:
         content:
           application/json:
@@ -87,6 +91,8 @@ paths:
   /blogs/{blog_id}:
     get:
       summary: ブログの取得
+      tags:
+        - blogs
       description: ブログを1件取得する
       parameters:
         - name: blog_id
@@ -108,6 +114,8 @@ paths:
     delete:
       summary: ブログの削除
       description: ブログを1件削除する
+      tags:
+        - blogs
       parameters:
         - name: blog_id
           in: path
@@ -123,10 +131,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BlogId"
+                type: object
+                properties:
+                  id:
+                    $ref: "#/components/schemas/BlogId"
 
     put:
       summary: ブログの更新
+      tags:
+        - blogs
       requestBody:
         content:
           application/json:
@@ -164,6 +177,8 @@ paths:
   /auth/signin:
     post:
       summary: ログイン
+      tags:
+        - auth
       requestBody:
         content:
           application/json:
@@ -195,6 +210,8 @@ paths:
   /auth/signin/me:
     get:
       summary: セッションログイン
+      tags:
+        - auth
       security:
         - BearerAuth: []
       responses:
@@ -219,8 +236,10 @@ paths:
   /admin/blogs:
     get:
       summary: ブログの一覧
+      tags:
+        - admin
       description: |
-        ブログの一覧を取得する。一般不可な記事も含めて取得する。
+        ブログの一覧を取得する。非公開な記事も含めて取得する。
       security:
         - BearerAuth: []
       parameters:
@@ -251,6 +270,8 @@ paths:
   /files/thumbnail/new:
     post:
       summary: 署名付きアップロード用URLの取得(サムネイル用)
+      tags:
+        - file
       security:
         - BearerAuth: []
       requestBody:
@@ -265,7 +286,7 @@ paths:
                   example: "sample.png"
       responses:
         "200":
-          descriptioin: OK
+          description: OK
           content:
             application/json:
               schema:
@@ -282,6 +303,8 @@ paths:
   /files/content/new:
     post:
       summary: 署名付きアップロード用URLの取得(記事画像用)
+      tags:
+        - file
       security:
         - BearerAuth: []
       requestBody:
@@ -296,7 +319,7 @@ paths:
                   example: "sample.png"
       responses:
         "200":
-          descriptioin: OK
+          description: OK
           content:
             application/json:
               schema:
@@ -313,6 +336,8 @@ paths:
   /tags:
     get:
       summary: タグの一覧
+      tags:
+        - tags
       responses:
         "200":
           description: OK
@@ -324,6 +349,17 @@ paths:
                   $ref: "#/components/schemas/Tag"
 
 components:
+  tags:
+    - name: blogs
+      description: ブログ
+    - name: auth
+      description: 認証
+    - name: admin
+      description: 管理者
+    - name: files
+      description: ファイル
+    - name: tags
+      description: タグ
   securitySchemes:
     BearerAuth:
       type: http
@@ -332,43 +368,32 @@ components:
       bearerFormat: JWT
 
   schemas:
-    BlogId:
-      type: object
-      properties:
-        id:
-          type: integer
-          description: ブログID
-          example: 1
-
     Blog:
       type: object
       properties:
-      allOf:
-        - type: object
-          properties:
-            id:
-              $ref: "#/components/schemas/BlogId"
-            title:
-              $ref: "#/components/schemas/BlogTitle"
-            description:
-              $ref: "#/components/schemas/BlogDescription"
-            content:
-              $ref: "#/components/schemas/BlogContent"
-            authorId:
-              $ref: "#/components/schemas/BlogAuthorId"
-            thumbnailImageFileName:
-              $ref: "#/components/schemas/BlogThumbnailImageFileName"
-            isPublic:
-              $ref: "#/components/schemas/BlogIsPublic"
-            tags:
-              $ref: "#/components/schemas/BlogTags"
+        id:
+          $ref: "#/components/schemas/BlogId"
+        title:
+          $ref: "#/components/schemas/BlogTitle"
+        description:
+          $ref: "#/components/schemas/BlogDescription"
+        content:
+          $ref: "#/components/schemas/BlogContent"
+        authorId:
+          $ref: "#/components/schemas/BlogAuthorId"
+        thumbnailImageFileName:
+          $ref: "#/components/schemas/BlogThumbnailImageFileName"
+        isPublic:
+          $ref: "#/components/schemas/BlogIsPublic"
+        tags:
+          $ref: "#/components/schemas/BlogTags"
     
     Tag:
       type: object
       properties:
         id:
           type: integer
-          descriptioin: タグID
+          description: タグID
           example: 1
         name:
           type: string
