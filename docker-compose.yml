@@ -5,8 +5,7 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
-      args:
-        - target=dev
+      target: dev
     ports:
       - "3000:3000"
     volumes:
@@ -37,6 +36,7 @@ services:
       BLOG_DB_NAME: ${BLOG_DB_NAME:-blog}
       BLOG_DB_TLS_ENABLED: ${BLOG_KVS_TLS_ENABLED:-false}
       CORS_WHITE_LIST: ${CORS_WHITE_LIST}
+      CDN_DOMAIN: ${CDN_DOMAIN}
     depends_on:
       - blog-db
       - blog-db-test

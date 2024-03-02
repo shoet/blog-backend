@@ -28,6 +28,7 @@ provider:
     JWT_SECRET: ${ssm:/blog-api/JWT_SECRET}
     SITE_DOMAIN: ${ssm:/blog-api/SITE_DOMAIN}
     CORS_WHITE_LIST: ${ssm:/blog-api/CORS_WHITE_LIST}
+    CDN_DOMAIN: ${ssm:/blog-api/CDN_DOMAIN}
   ecr:
     images:
       BlogBackendImage:

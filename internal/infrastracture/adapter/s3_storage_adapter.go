@@ -40,9 +40,8 @@ func (s *AWSS3StorageAdapter) GeneratePreSignedURL(destinationPath string, fileN
 		return "", "", fmt.Errorf("failed to generate signed url: %w", err)
 	}
 	objectURL := fmt.Sprintf(
-		"https://%s.s3.%s.amazonaws.com/%s/%s",
-		bucketName,
-		s.config.AWSS3Region,
+		"https://%s/%s/%s",
+		s.config.CdnDomain,
 		destinationPath,
 		fileName,
 	)

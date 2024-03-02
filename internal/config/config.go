@@ -31,6 +31,7 @@ type Config struct {
 	JWTExpiresInSec             int    `env:"JWT_EXPIRES_IN_SEC" envDefault:"86400"`
 	CORSWhiteList               string `env:"CORS_WHITE_LIST"`
 	SiteDomain                  string `env:"SITE_DOMAIN"`
+	CdnDomain                   string `env:"CDN_DOMAIN"`
 }
 
 func NewConfig() (*Config, error) {
