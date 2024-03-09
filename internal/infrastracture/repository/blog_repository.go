@@ -28,21 +28,20 @@ func (r *BlogRepository) Add(ctx context.Context, tx infrastracture.TX, blog *mo
 		(author_id, title, content, description, thumbnail_image_file_name, is_public)
 	VALUES
 		($1, $2, $3, $4, $5, $6)
+	RETURNING
+		id
 	;
 	`
-	now := r.Clocker.Now()
-	blog.Created = uint(now.Unix())
-	blog.Modified = uint(now.Unix())
-	res, err := tx.ExecContext(
+	row := tx.QueryRowxContext(
 		ctx,
 		sql,
 		blog.AuthorId, blog.Title, blog.Content, blog.Description,
-		blog.ThumbnailImageFileName, blog.IsPublic, blog.Created, blog.Modified)
-	if err != nil {
-		return 0, fmt.Errorf("failed to insert blog: %w", err)
+		blog.ThumbnailImageFileName, blog.IsPublic)
+	if row.Err() != nil {
+		return 0, fmt.Errorf("failed to insert blog: %w", row.Err())
 	}
-	id, err := res.LastInsertId()
-	if err != nil {
+	var id models.BlogId
+	if err := row.Scan(&id); err != nil {
 		return 0, fmt.Errorf("failed to get last insert id: %w", err)
 	}
 	return models.BlogId(id), nil
@@ -223,17 +222,24 @@ func (r *BlogRepository) AddBlogTag(
 	ctx context.Context, tx infrastracture.TX, blogId models.BlogId, tagId models.TagId,
 ) (int64, error) {
 	sql := `
-	REPLACE INTO blogs_tags
+	INSERT INTO blogs_tags
 		(blog_id, tag_id)
 	VALUES
 		($1, $2)
+	ON CONFLICT(blog_id, tag_id)
+	DO UPDATE SET 
+		blog_id = $1,
+		tag_id = $2
+	RETURNING
+		id
 	;
 	`
-	res, err := tx.ExecContext(ctx, sql, blogId, tagId)
-	if err != nil {
-		return 0, fmt.Errorf("failed to insert blogs_tags: %w", err)
+	row := tx.QueryRowxContext(ctx, sql, blogId, tagId)
+	if row.Err() != nil {
+		return 0, fmt.Errorf("failed to insert blogs_tags: %w", row.Err())
 	}
-	id, err := res.LastInsertId()
+	var id int64
+	err := row.Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get last insert id: %w", err)
 	}
