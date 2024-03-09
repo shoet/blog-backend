@@ -45,7 +45,7 @@ jobs:
           POSTGRES_PASSWORD: blog
           POSTGRES_DB: blog
         options: >-
-          --health-cmd "PGPASSWORD=blog psql -h 127.0.0.1 -p 5432 -U blog -d blog -c "SELECT 1"
+          --health-cmd "PGPASSWORD=blog psql -h 127.0.0.1 -p 5432 -U blog -d blog -c 'SELECT 1'"
           --health-interval 20s
           --health-timeout 10s
           --health-retries 10
