@@ -40,7 +40,7 @@ jobs:
         image: postgres:latest
         ports:
           - "54321:5432"
-        environment:
+        env:
           POSTGRES_USER: blog
           POSTGRES_PASSWORD: blog
           POSTGRES_DB: blog
