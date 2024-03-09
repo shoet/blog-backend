@@ -31,8 +31,8 @@ func (r *BlogRepository) Add(ctx context.Context, tx infrastracture.TX, blog *mo
 	;
 	`
 	now := r.Clocker.Now()
-	blog.Created = now
-	blog.Modified = now
+	blog.Created = uint(now.Unix())
+	blog.Modified = uint(now.Unix())
 	res, err := tx.ExecContext(
 		ctx,
 		sql,
@@ -83,7 +83,7 @@ func (r *BlogRepository) List(
 	latest := option.Limit
 	isPublic := ""
 	if option.IsPublic {
-		isPublic = "WHERE is_public = 1"
+		isPublic = "WHERE is_public = true"
 	}
 	sql := `
 	SELECT
@@ -95,7 +95,7 @@ func (r *BlogRepository) List(
 	ORDER BY 
 		id DESC -- 連番なのでPKでソートする
 	LIMIT 
-		?
+		$1
 	;
 	`
 	type data struct {
@@ -208,6 +208,7 @@ func (r *BlogRepository) Put(
 	`
 	now := r.Clocker.Now()
 	blog.Modified = now
+	blog.Modified = uint(now.Unix())
 	_, err := tx.ExecContext(
 		ctx,
 		sql,
