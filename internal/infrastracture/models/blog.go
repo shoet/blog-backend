@@ -2,7 +2,6 @@ package models
 
 import (
 	"strings"
-	"time"
 )
 
 type BlogId int64
@@ -70,12 +69,12 @@ func (blogs Blogs) ToSlice() []*Blog {
 type UserId int64
 
 type User struct {
-	Id       UserId    `json:"id,omitempty" db:"id"`
-	Name     string    `json:"name" db:"name"`
-	Email    string    `json:"email,omitempty" db:"email"`
-	Password string    `json:"password,omitempty" db:"password"`
-	Created  time.Time `json:"created,omitempty" db:"created"`
-	Modified time.Time `json:"modified,omitempty" db:"modified"`
+	Id       UserId `json:"id,omitempty" db:"id"`
+	Name     string `json:"name" db:"name"`
+	Email    string `json:"email,omitempty" db:"email"`
+	Password string `json:"password,omitempty" db:"password"`
+	Created  uint   `json:"created,omitempty" db:"created"`
+	Modified uint   `json:"modified,omitempty" db:"modified"`
 }
 
 type TagId int64

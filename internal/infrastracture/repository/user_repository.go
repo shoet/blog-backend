@@ -24,7 +24,7 @@ func (t *UserRepository) Get(
 	SELECT
 		id, name, created, modified
 	FROM users
-	WHERE id = ?
+	WHERE id = $1
 	;
 	`
 	var users []*models.User
@@ -46,7 +46,7 @@ func (u *UserRepository) GetByEmail(
 	SELECT
 		id, name, email, password, created, modified
 	FROM users
-	WHERE email = ?
+	WHERE email = $1
 	;
 	`
 	var users []*models.User
@@ -64,26 +64,25 @@ func (u *UserRepository) Add(
 ) (*models.User, error) {
 	sql := `
 	INSERT INTO users
-		(name, email, password, created, modified)
+		(name, email, password)
 	VALUES
-		(?, ?, ?, ?, ?)
+		($1, $2, $3)
+	RETURNING id
 	;
 	`
-	now := u.Clocker.Now()
-	user.Created = now
-	user.Modified = now
 
-	res, err := tx.ExecContext(
+	row := tx.QueryRowxContext(
 		ctx,
 		sql,
-		user.Name, user.Email, user.Password, user.Created, user.Modified)
+		user.Name, user.Email, user.Password)
+	if row.Err() != nil {
+		return nil, fmt.Errorf("failed to insert user: %w", row.Err())
+	}
+	var userId models.UserId
+	err := row.Scan(&userId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert user: %w", err)
 	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get last insert id: %w", err)
-	}
-	user.Id = models.UserId(id)
+	user.Id = userId
 	return user, nil
 }
