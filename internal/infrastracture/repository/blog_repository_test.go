@@ -17,7 +17,6 @@ import (
 	"github.com/shoet/blog/internal/testutil"
 )
 
-// TODO: ok
 func Test_BlogRepository_Add(t *testing.T) {
 	clocker := &clocker.FiexedClocker{}
 	ctx := context.Background()
@@ -283,7 +282,6 @@ func Test_BlogRepository_List(t *testing.T) {
 	}
 }
 
-// TODO: ok
 func Test_BlogRepository_Delete(t *testing.T) {
 	clocker := &clocker.FiexedClocker{}
 	ctx := context.Background()
@@ -358,7 +356,6 @@ func Test_BlogRepository_Delete(t *testing.T) {
 
 }
 
-// TODO: ok
 func Test_BlogRepository_Get(t *testing.T) {
 	clocker := &clocker.FiexedClocker{}
 	ctx := context.Background()
@@ -465,7 +462,6 @@ func Test_BlogRepository_Get(t *testing.T) {
 
 }
 
-// TODO: ok
 func Test_BlogRepository_Put(t *testing.T) {
 	clocker := &clocker.FiexedClocker{}
 	ctx := context.Background()
@@ -581,7 +577,6 @@ func Test_BlogRepository_Put(t *testing.T) {
 
 }
 
-// TODO: ok
 func Test_BlogRepository_AddBlogTag(t *testing.T) {
 	clocker := &clocker.FiexedClocker{}
 	ctx := context.Background()
