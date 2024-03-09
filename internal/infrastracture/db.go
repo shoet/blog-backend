@@ -9,6 +9,7 @@ import (
 	sql_driver "database/sql/driver"
 
 	"github.com/go-sql-driver/mysql"
+	_ "github.com/jackc/pgx/v5"
 	"github.com/shoet/blog/internal/config"
 	"github.com/shoet/blog/internal/logging"
 
@@ -82,6 +83,23 @@ func NewDBMySQL(ctx context.Context, cfg *config.Config) (*sqlx.DB, error) {
 	}
 	xdb := sqlx.NewDb(db, withHooksDriverName)
 	return xdb, nil
+}
+
+func NewDBPostgres(ctx context.Context, cfg *config.Config) (*sqlx.DB, error) {
+	dbDsn := fmt.Sprintf(
+		"postgres://%s:%s@%s:%d/%s",
+		cfg.DBUser, cfg.DBPass, cfg.DBHost, cfg.DBPort, cfg.DBName)
+
+	db, err := sql.Open("pgx", dbDsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed open postgres: %w", err)
+	}
+
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("failed connect postgres: %w", err)
+	}
+
+	return sqlx.NewDb(db, "pgx"), nil
 }
 
 func InitSQLDriverWithLogs(driverName string, driver sql_driver.Driver) (string, error) {

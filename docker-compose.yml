@@ -79,6 +79,17 @@ services:
     volumes:
       - blog-db-data-test:/var/lib/mysql
 
+  blog-db-pg-test:
+    image: postgres:latest
+    ports:
+      - "54321:5432"
+    environment:
+      POSTGRES_USER: blog
+      POSTGRES_PASSWORD: blog
+      POSTGRES_DB: blog
+    volumes:
+      - blog-db-pg-test-data:/var/lib/postgresql/data
+
   blog-kvs:
     image: redis:latest
     container_name: blog-redis
@@ -92,3 +103,4 @@ volumes:
   blog-db-data-test:
   blog-redis-data:
   blog-db-pg-data:
+  blog-db-pg-test-data:

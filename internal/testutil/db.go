@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
 	migrate "github.com/rubenv/sql-migrate"
 	"github.com/shoet/blog/internal/util"
@@ -64,6 +65,24 @@ func NewDBMySQLForTest(t *testing.T, ctx context.Context) (*sqlx.DB, error) {
 	return xdb, nil
 }
 
+func NewDBPostgreSQLForTest(t *testing.T, ctx context.Context) (*sqlx.DB, error) {
+	t.Helper()
+	dbDsn := fmt.Sprintf(
+		"postgres://%s:%s@%s:%d/%s",
+		"blog", "blog", "127.0.0.1", 54321, "blog")
+
+	db, err := sql.Open("pgx", dbDsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed open postgres: %w", err)
+	}
+
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("failed connect postgres: %w", err)
+	}
+
+	return sqlx.NewDb(db, "pgx"), nil
+}
+
 func RepositoryTestPrepare(t *testing.T, ctx context.Context, db *sqlx.DB) {
 	t.Helper()
 
@@ -76,12 +95,12 @@ func RepositoryTestPrepare(t *testing.T, ctx context.Context, db *sqlx.DB) {
 		t.Fatalf("failed to get project root: %v", err)
 	}
 
-	sqlDir := filepath.Join(cwd, "_tools/migrations/mysql")
+	sqlDir := filepath.Join(cwd, "_tools/migrations/postgres")
 	migrations := &migrate.FileMigrationSource{
 		Dir: sqlDir,
 	}
 
-	_, err = migrate.ExecContext(ctx, db.DB, "mysql", migrations, migrate.Up)
+	_, err = migrate.ExecContext(ctx, db.DB, "postgres", migrations, migrate.Up)
 	if err != nil {
 		t.Fatalf("failed to migrate: %v", err)
 	}
