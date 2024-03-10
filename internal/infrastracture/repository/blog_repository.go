@@ -344,17 +344,18 @@ func (r *BlogRepository) AddTag(ctx context.Context, tx infrastracture.TX, tag s
 		(name)
 	VALUES
 		($1)
+	RETURNING id
 	;
 	`
-	res, err := tx.ExecContext(ctx, sql, tag)
-	if err != nil {
-		return 0, fmt.Errorf("failed to insert tags: %w", err)
+	row := tx.QueryRowxContext(ctx, sql, tag)
+	if row.Err() != nil {
+		return 0, fmt.Errorf("failed to insert tags: %w", row.Err())
 	}
-	id, err := res.LastInsertId()
-	if err != nil {
+	var tagId models.TagId
+	if err := row.Scan(&tagId); err != nil {
 		return 0, fmt.Errorf("failed to get last insert id: %w", err)
 	}
-	return models.TagId(id), nil
+	return tagId, nil
 }
 
 func (r *BlogRepository) DeleteTag(

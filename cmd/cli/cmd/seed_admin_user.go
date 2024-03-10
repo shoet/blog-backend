@@ -22,7 +22,7 @@ var seedAdminUserCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("failed to create config: %v", err)
 		}
-		db, err := infrastracture.NewDBMySQL(ctx, cfg)
+		db, err := infrastracture.NewDBPostgres(ctx, cfg)
 		if err != nil {
 			fmt.Printf("failed to create db: %v", err)
 			os.Exit(1)

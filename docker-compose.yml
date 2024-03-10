@@ -29,8 +29,8 @@ services:
       BLOG_KVS_USER: ${BLOG_KVS_USER:-default}
       BLOG_KVS_PASS: ${BLOG_KVS_PASS:-redispw}
       BLOG_KVS_TLS_ENABLED: ${BLOG_KVS_TLS_ENABLED:-false}
-      BLOG_DB_HOST: ${BLOG_DB_HOST:-blog-db}
-      BLOG_DB_PORT: ${BLOG_DB_PORT:-3306}
+      BLOG_DB_HOST: ${BLOG_DB_HOST:-blog-db-pg}
+      BLOG_DB_PORT: ${BLOG_DB_PORT:-5432}
       BLOG_DB_USER: ${BLOG_DB_USER:-blog}
       BLOG_DB_PASS: ${BLOG_DB_PASS:-blog}
       BLOG_DB_NAME: ${BLOG_DB_NAME:-blog}
