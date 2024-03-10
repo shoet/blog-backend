@@ -25,24 +25,23 @@ func NewBlogRepository(clocker clocker.Clocker) *BlogRepository {
 func (r *BlogRepository) Add(ctx context.Context, tx infrastracture.TX, blog *models.Blog) (models.BlogId, error) {
 	sql := `
 	INSERT INTO blogs
-		(author_id, title, content, description, thumbnail_image_file_name, is_public, created, modified)
+		(author_id, title, content, description, thumbnail_image_file_name, is_public)
 	VALUES
-		(?, ?, ?, ?, ?, ?, ?, ?)
+		($1, $2, $3, $4, $5, $6)
+	RETURNING
+		id
 	;
 	`
-	now := r.Clocker.Now()
-	blog.Created = now
-	blog.Modified = now
-	res, err := tx.ExecContext(
+	row := tx.QueryRowxContext(
 		ctx,
 		sql,
 		blog.AuthorId, blog.Title, blog.Content, blog.Description,
-		blog.ThumbnailImageFileName, blog.IsPublic, blog.Created, blog.Modified)
-	if err != nil {
-		return 0, fmt.Errorf("failed to insert blog: %w", err)
+		blog.ThumbnailImageFileName, blog.IsPublic)
+	if row.Err() != nil {
+		return 0, fmt.Errorf("failed to insert blog: %w", row.Err())
 	}
-	id, err := res.LastInsertId()
-	if err != nil {
+	var id models.BlogId
+	if err := row.Scan(&id); err != nil {
 		return 0, fmt.Errorf("failed to get last insert id: %w", err)
 	}
 	return models.BlogId(id), nil
@@ -67,7 +66,7 @@ func (r *BlogRepository) WithBlogTags(
 	ON
 		blogs_tags.tag_id = tags.id
 	WHERE
-		blog_id = ?
+		blog_id = $1
 	;	
 	`
 	var tagResult []*BlogTag
@@ -83,7 +82,7 @@ func (r *BlogRepository) List(
 	latest := option.Limit
 	isPublic := ""
 	if option.IsPublic {
-		isPublic = "WHERE is_public = 1"
+		isPublic = "WHERE is_public = true"
 	}
 	sql := `
 	SELECT
@@ -95,7 +94,7 @@ func (r *BlogRepository) List(
 	ORDER BY 
 		id DESC -- 連番なのでPKでソートする
 	LIMIT 
-		?
+		$1
 	;
 	`
 	type data struct {
@@ -143,7 +142,7 @@ func (r *BlogRepository) Get(
 		id, author_id, title, content, description,
 		thumbnail_image_file_name, is_public, created, modified
 	FROM
-		blogs WHERE id = ?
+		blogs WHERE id = $1
 	;
 	`
 	var blogs []*models.Blog
@@ -161,7 +160,7 @@ func (r *BlogRepository) Get(
 		SELECT
 			tag_id
 		FROM blogs_tags
-		WHERE blog_id = ?
+		WHERE blog_id = $1
 	) as b_t
 	LEFT OUTER JOIN tags
 		ON b_t.tag_id = tags.id
@@ -179,7 +178,7 @@ func (r *BlogRepository) Delete(ctx context.Context, tx infrastracture.TX, id mo
 	DELETE FROM
 		blogs
 	WHERE 
-		id = ?
+		id = $1
 	;
 	`
 	_, err := tx.ExecContext(ctx, sql, id)
@@ -195,19 +194,19 @@ func (r *BlogRepository) Put(
 	sql := `
 	UPDATE blogs
 	SET
-		author_id = ?
-		, title = ?
-		, content = ?
-		, description = ?
-		, thumbnail_image_file_name = ?
-		, is_public = ?
-		, modified = ?
+		author_id = $1
+		, title = $2
+		, content = $3
+		, description = $4
+		, thumbnail_image_file_name = $5
+		, is_public = $6
+		, modified = $7
 	WHERE
-		id = ?
+		id = $8
 	;
 	`
 	now := r.Clocker.Now()
-	blog.Modified = now
+	blog.Modified = uint(now.Unix())
 	_, err := tx.ExecContext(
 		ctx,
 		sql,
@@ -223,17 +222,24 @@ func (r *BlogRepository) AddBlogTag(
 	ctx context.Context, tx infrastracture.TX, blogId models.BlogId, tagId models.TagId,
 ) (int64, error) {
 	sql := `
-	REPLACE INTO blogs_tags
+	INSERT INTO blogs_tags
 		(blog_id, tag_id)
 	VALUES
-		(?, ?)
+		($1, $2)
+	ON CONFLICT(blog_id, tag_id)
+	DO UPDATE SET 
+		blog_id = $1,
+		tag_id = $2
+	RETURNING
+		id
 	;
 	`
-	res, err := tx.ExecContext(ctx, sql, blogId, tagId)
-	if err != nil {
-		return 0, fmt.Errorf("failed to insert blogs_tags: %w", err)
+	row := tx.QueryRowxContext(ctx, sql, blogId, tagId)
+	if row.Err() != nil {
+		return 0, fmt.Errorf("failed to insert blogs_tags: %w", row.Err())
 	}
-	id, err := res.LastInsertId()
+	var id int64
+	err := row.Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get last insert id: %w", err)
 	}
@@ -258,7 +264,7 @@ func (r *BlogRepository) SelectBlogsTagsByOtherUsingBlog(
 		FROM
 			blogs_tags
 		WHERE
-			blog_id = ?
+			blog_id = $1
 	) as b
 	ON 
 		a.tag_id = b.tag_id
@@ -287,7 +293,7 @@ func (r *BlogRepository) SelectBlogsTags(
 	LEFT OUTER JOIN tags
 		ON blogs_tags.tag_id = tags.id
 	WHERE
-		blog_id = ?
+		blog_id = $1
 	;
 	`
 	if err := tx.SelectContext(ctx, &result, sql, blogId); err != nil {
@@ -303,8 +309,8 @@ func (r *BlogRepository) DeleteBlogsTags(
 	DELETE FROM
 		blogs_tags
 	WHERE
-		blog_id = ?
-		AND tag_id = ?
+		blog_id = $1
+		AND tag_id = $2
 	;
 	`
 	if _, err := tx.ExecContext(ctx, sql, blogId, tagId); err != nil {
@@ -322,7 +328,7 @@ func (r *BlogRepository) SelectTags(
 	FROM
 		tags
 	WHERE
-		name = ?
+		name = $1
 	;
 	`
 	var tags []*models.Tag
@@ -337,18 +343,19 @@ func (r *BlogRepository) AddTag(ctx context.Context, tx infrastracture.TX, tag s
 	INSERT INTO tags
 		(name)
 	VALUES
-		(?)
+		($1)
+	RETURNING id
 	;
 	`
-	res, err := tx.ExecContext(ctx, sql, tag)
-	if err != nil {
-		return 0, fmt.Errorf("failed to insert tags: %w", err)
+	row := tx.QueryRowxContext(ctx, sql, tag)
+	if row.Err() != nil {
+		return 0, fmt.Errorf("failed to insert tags: %w", row.Err())
 	}
-	id, err := res.LastInsertId()
-	if err != nil {
+	var tagId models.TagId
+	if err := row.Scan(&tagId); err != nil {
 		return 0, fmt.Errorf("failed to get last insert id: %w", err)
 	}
-	return models.TagId(id), nil
+	return tagId, nil
 }
 
 func (r *BlogRepository) DeleteTag(
@@ -358,7 +365,7 @@ func (r *BlogRepository) DeleteTag(
 	DELETE FROM	
 		tags
 	WHERE 
-		id = ?
+		id = $1
 	;
 	`
 	if _, err := tx.ExecContext(ctx, sql, tagId); err != nil {
@@ -377,7 +384,7 @@ func (r *BlogRepository) ListTags(
 		tags
 	ORDER BY
 		name
-	LIMIT ?
+	LIMIT $1
 	;
 	`
 	var tags []*models.Tag

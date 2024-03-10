@@ -3,6 +3,7 @@ package repository_test
 import (
 	"context"
 	"fmt"
+	"sort"
 	"testing"
 	"time"
 
@@ -19,7 +20,7 @@ import (
 func Test_BlogRepository_Add(t *testing.T) {
 	clocker := &clocker.FiexedClocker{}
 	ctx := context.Background()
-	db, err := testutil.NewDBMySQLForTest(t, ctx)
+	db, err := testutil.NewDBPostgreSQLForTest(t, ctx)
 	if err != nil {
 		t.Fatalf("failed to create db: %v", err)
 	}
@@ -50,8 +51,6 @@ func Test_BlogRepository_Add(t *testing.T) {
 					Description:            "description",
 					ThumbnailImageFileName: "thumbnail_image_file_name",
 					IsPublic:               true,
-					Created:                clocker.Now(),
-					Modified:               clocker.Now(),
 				},
 			},
 			want: want{
@@ -62,8 +61,6 @@ func Test_BlogRepository_Add(t *testing.T) {
 					Description:            "description",
 					ThumbnailImageFileName: "thumbnail_image_file_name",
 					IsPublic:               true,
-					Created:                clocker.Now(),
-					Modified:               clocker.Now(),
 				},
 			},
 		},
@@ -78,7 +75,7 @@ func Test_BlogRepository_Add(t *testing.T) {
 				t.Fatalf("failed to add blog: %v", err)
 			}
 
-			row := tx.QueryRowContext(ctx, "SELECT * FROM blogs WHERE id = ?", blogId)
+			row := tx.QueryRowContext(ctx, "SELECT * FROM blogs WHERE id = $1", blogId)
 			var got models.Blog
 			if err := row.Scan(
 				&got.Id, &got.AuthorId, &got.Title, &got.Content, &got.Description,
@@ -87,7 +84,7 @@ func Test_BlogRepository_Add(t *testing.T) {
 				t.Fatalf("failed to scan row: %v", err)
 			}
 
-			opt := cmpopts.IgnoreFields(models.Blog{}, "Id")
+			opt := cmpopts.IgnoreFields(models.Blog{}, "Id", "Created", "Modified")
 			if diff := cmp.Diff(tt.want.blog, &got, opt); diff != "" {
 				t.Errorf("differs: (-want +got)\n%s", diff)
 			}
@@ -106,8 +103,8 @@ func generateTestBlogs(t *testing.T, count int, now time.Time) []*models.Blog {
 			Description:            fmt.Sprintf("description%d", i),
 			ThumbnailImageFileName: fmt.Sprintf("thumbnail_image_file_name%d", i),
 			IsPublic:               true,
-			Created:                now,
-			Modified:               now,
+			Created:                uint(now.Unix()),
+			Modified:               uint(now.Unix()),
 		}
 		blogs[i] = b
 	}
@@ -125,8 +122,8 @@ func generateTestBlogsWithPublic(t *testing.T, count int, now time.Time) []*mode
 			Description:            fmt.Sprintf("description%d", i),
 			ThumbnailImageFileName: fmt.Sprintf("thumbnail_image_file_name%d", i),
 			IsPublic:               true,
-			Created:                now,
-			Modified:               now,
+			Created:                uint(now.Unix()),
+			Modified:               uint(now.Unix()),
 		}
 		if i%2 == 0 {
 			b.IsPublic = false
@@ -139,7 +136,7 @@ func generateTestBlogsWithPublic(t *testing.T, count int, now time.Time) []*mode
 func Test_BlogRepository_List(t *testing.T) {
 	clocker := &clocker.FiexedClocker{}
 	ctx := context.Background()
-	db, err := testutil.NewDBMySQLForTest(t, ctx)
+	db, err := testutil.NewDBPostgreSQLForTest(t, ctx)
 	if err != nil {
 		t.Fatalf("failed to create db: %v", err)
 	}
@@ -175,14 +172,14 @@ func Test_BlogRepository_List(t *testing.T) {
 						INSERT INTO blogs
 							(
 								author_id, title, content, description, 
-								thumbnail_image_file_name, is_public, created, modified)
+								thumbnail_image_file_name, is_public)
 						VALUES
-							(?, ?, ?, ?, ?, ?, ?, ?)
+							($1, $2, $3, $4, $5, $6)
 						`
-						_, err := tx.ExecContext(
+						_, err = tx.ExecContext(
 							ctx, prepareTask,
 							b.AuthorId, b.Title, b.Content, b.Description,
-							b.ThumbnailImageFileName, b.IsPublic, b.Created, b.Modified)
+							b.ThumbnailImageFileName, b.IsPublic)
 						if err != nil {
 							return fmt.Errorf("failed to prepare task: %v", err)
 						}
@@ -207,14 +204,14 @@ func Test_BlogRepository_List(t *testing.T) {
 						INSERT INTO blogs
 							(
 								author_id, title, content, description, 
-								thumbnail_image_file_name, is_public, created, modified)
+								thumbnail_image_file_name, is_public)
 						VALUES
-							(?, ?, ?, ?, ?, ?, ?, ?)
+							($1, $2, $3, $4, $5, $6)
 						`
 						_, err := tx.ExecContext(
 							ctx, prepareTask,
 							b.AuthorId, b.Title, b.Content, b.Description,
-							b.ThumbnailImageFileName, b.IsPublic, b.Created, b.Modified)
+							b.ThumbnailImageFileName, b.IsPublic)
 						if err != nil {
 							return fmt.Errorf("failed to prepare task: %v", err)
 						}
@@ -240,14 +237,14 @@ func Test_BlogRepository_List(t *testing.T) {
 						INSERT INTO blogs
 							(
 								author_id, title, content, description, 
-								thumbnail_image_file_name, is_public, created, modified)
+								thumbnail_image_file_name, is_public)
 						VALUES
-							(?, ?, ?, ?, ?, ?, ?, ?)
+							($1, $2, $3, $4, $5, $6)
 						`
 						_, err := tx.ExecContext(
 							ctx, prepareTask,
 							b.AuthorId, b.Title, b.Content, b.Description,
-							b.ThumbnailImageFileName, b.IsPublic, b.Created, b.Modified)
+							b.ThumbnailImageFileName, b.IsPublic)
 						if err != nil {
 							return fmt.Errorf("failed to prepare task: %v", err)
 						}
@@ -288,7 +285,7 @@ func Test_BlogRepository_List(t *testing.T) {
 func Test_BlogRepository_Delete(t *testing.T) {
 	clocker := &clocker.FiexedClocker{}
 	ctx := context.Background()
-	db, err := testutil.NewDBMySQLForTest(t, ctx)
+	db, err := testutil.NewDBPostgreSQLForTest(t, ctx)
 	if err != nil {
 		t.Fatalf("failed to create db: %v", err)
 	}
@@ -330,14 +327,14 @@ func Test_BlogRepository_Delete(t *testing.T) {
 				INSERT INTO blogs
 					(
 						author_id, title, content, description, 
-						thumbnail_image_file_name, is_public, created, modified)
+						thumbnail_image_file_name, is_public)
 				VALUES
-					(?, ?, ?, ?, ?, ?, ?, ?)
+					($1, $2, $3, $4, $5, $6)
 				`
 				_, err := tx.ExecContext(
 					ctx, prepareTask,
 					b.AuthorId, b.Title, b.Content, b.Description,
-					b.ThumbnailImageFileName, b.IsPublic, b.Created, b.Modified)
+					b.ThumbnailImageFileName, b.IsPublic)
 				if err != nil {
 					t.Fatalf("failed to prepare task: %v", err)
 				}
@@ -362,7 +359,7 @@ func Test_BlogRepository_Delete(t *testing.T) {
 func Test_BlogRepository_Get(t *testing.T) {
 	clocker := &clocker.FiexedClocker{}
 	ctx := context.Background()
-	db, err := testutil.NewDBMySQLForTest(t, ctx)
+	db, err := testutil.NewDBPostgreSQLForTest(t, ctx)
 	if err != nil {
 		t.Fatalf("failed to create db: %v", err)
 	}
@@ -394,8 +391,6 @@ func Test_BlogRepository_Get(t *testing.T) {
 						Description:            "description",
 						ThumbnailImageFileName: "thumbnail_image_file_name",
 						IsPublic:               true,
-						Created:                clocker.Now(),
-						Modified:               clocker.Now(),
 					},
 				},
 			},
@@ -407,8 +402,6 @@ func Test_BlogRepository_Get(t *testing.T) {
 					Description:            "description",
 					ThumbnailImageFileName: "thumbnail_image_file_name",
 					IsPublic:               true,
-					Created:                clocker.Now(),
-					Modified:               clocker.Now(),
 				},
 			},
 		},
@@ -434,20 +427,23 @@ func Test_BlogRepository_Get(t *testing.T) {
 				INSERT INTO blogs
 					(
 						author_id, title, content, description, 
-						thumbnail_image_file_name, is_public, created, modified)
+						thumbnail_image_file_name, is_public)
 				VALUES
-					(?, ?, ?, ?, ?, ?, ?, ?)
+					($1, $2, $3, $4, $5, $6)
+				RETURNING 
+					id
 				`
-				res, err := tx.ExecContext(
+				row := tx.QueryRowxContext(
 					ctx, prepareTask,
 					b.AuthorId, b.Title, b.Content, b.Description,
-					b.ThumbnailImageFileName, b.IsPublic, b.Created, b.Modified)
-				if err != nil {
-					t.Fatalf("failed to prepare task: %v", err)
+					b.ThumbnailImageFileName, b.IsPublic)
+				if row.Err() != nil {
+					t.Fatalf("failed to prepare task: %v", row.Err())
 				}
-				id, err := res.LastInsertId()
+				var id models.BlogId
+				err := row.Scan(&id)
 				if err != nil {
-					t.Fatalf("failed get LastInsertId: %v", err)
+					t.Fatalf("failed get Scan: %v", err)
 				}
 				blogId = models.BlogId(id)
 			}
@@ -457,7 +453,7 @@ func Test_BlogRepository_Get(t *testing.T) {
 				t.Fatalf("failed to get blog: %v", err)
 			}
 
-			cmpOptions := cmpopts.IgnoreFields(models.Blog{}, "Id")
+			cmpOptions := cmpopts.IgnoreFields(models.Blog{}, "Id", "Created", "Modified")
 			if diff := cmp.Diff(tt.want.blog, got, cmpOptions); diff != "" {
 				t.Errorf("differs: (-want +got)\n%s", diff)
 			}
@@ -469,7 +465,7 @@ func Test_BlogRepository_Get(t *testing.T) {
 func Test_BlogRepository_Put(t *testing.T) {
 	clocker := &clocker.FiexedClocker{}
 	ctx := context.Background()
-	db, err := testutil.NewDBMySQLForTest(t, ctx)
+	db, err := testutil.NewDBPostgreSQLForTest(t, ctx)
 	if err != nil {
 		t.Fatalf("failed to create db: %v", err)
 	}
@@ -502,8 +498,6 @@ func Test_BlogRepository_Put(t *testing.T) {
 						Description:            "description",
 						ThumbnailImageFileName: "thumbnail_image_file_name",
 						IsPublic:               true,
-						Created:                clocker.Now(),
-						Modified:               clocker.Now(),
 					},
 				},
 				blog: &models.Blog{
@@ -513,8 +507,6 @@ func Test_BlogRepository_Put(t *testing.T) {
 					Description:            "description",
 					ThumbnailImageFileName: "thumbnail_image_file_name",
 					IsPublic:               true,
-					Created:                clocker.Now(),
-					Modified:               clocker.Now(),
 				},
 			},
 			want: want{
@@ -525,8 +517,6 @@ func Test_BlogRepository_Put(t *testing.T) {
 					Description:            "description",
 					ThumbnailImageFileName: "thumbnail_image_file_name",
 					IsPublic:               true,
-					Created:                clocker.Now(),
-					Modified:               clocker.Now(),
 				},
 			},
 		},
@@ -543,19 +533,22 @@ func Test_BlogRepository_Put(t *testing.T) {
 				INSERT INTO blogs
 					(
 						author_id, title, content, description, 
-						thumbnail_image_file_name, is_public, created, modified)
+						thumbnail_image_file_name, is_public)
 				VALUES
-					(?, ?, ?, ?, ?, ?, ?, ?)
+					($1, $2, $3, $4, $5, $6)
+				RETURNING
+					id
 				`
-				res, err := tx.ExecContext(
+				row := tx.QueryRowxContext(
 					ctx, prepareTask,
 					b.AuthorId, b.Title, b.Content, b.Description,
-					b.ThumbnailImageFileName, b.IsPublic, b.Created, b.Modified)
-				if err != nil {
-					t.Fatalf("failed to prepare task: %v", err)
+					b.ThumbnailImageFileName, b.IsPublic)
+				if row.Err() != nil {
+					t.Fatalf("failed to prepare task: %v", row.Err())
 				}
 
-				id, err := res.LastInsertId()
+				var id int64
+				err := row.Scan(&id)
 				if err != nil {
 					t.Fatalf("failed to get last insert id: %v", err)
 				}
@@ -569,18 +562,14 @@ func Test_BlogRepository_Put(t *testing.T) {
 				t.Fatalf("failed to put blog: %v", err)
 			}
 
-			selectQuery := `SELECT * FROM blogs WHERE id = ?`
-			row := tx.QueryRowxContext(ctx, selectQuery, blogId)
-			var got models.Blog
-			if err := row.Scan(
-				&got.Id, &got.AuthorId, &got.Title, &got.Content, &got.Description,
-				&got.ThumbnailImageFileName, &got.IsPublic, &got.Created, &got.Modified,
-			); err != nil {
+			selectQuery := `SELECT * FROM blogs WHERE id = $1`
+			var got []*models.Blog
+			if err := tx.SelectContext(ctx, &got, selectQuery, blogId); err != nil {
 				t.Fatalf("failed to scan row: %v", err)
 			}
 
-			cmpOptions := cmpopts.IgnoreFields(models.Blog{}, "Id")
-			if diff := cmp.Diff(tt.want.blog, &got, cmpOptions); diff != "" {
+			cmpOptions := cmpopts.IgnoreFields(models.Blog{}, "Id", "Created", "Modified")
+			if diff := cmp.Diff(tt.want.blog, got[0], cmpOptions); diff != "" {
 				t.Errorf("differs: (-want +got)\n%s", diff)
 			}
 		})
@@ -591,7 +580,7 @@ func Test_BlogRepository_Put(t *testing.T) {
 func Test_BlogRepository_AddBlogTag(t *testing.T) {
 	clocker := &clocker.FiexedClocker{}
 	ctx := context.Background()
-	db, err := testutil.NewDBMySQLForTest(t, ctx)
+	db, err := testutil.NewDBPostgreSQLForTest(t, ctx)
 	if err != nil {
 		t.Fatalf("failed to create db: %v", err)
 	}
@@ -680,7 +669,7 @@ func Test_BlogRepository_AddBlogTag(t *testing.T) {
 				INSERT INTO blogs_tags
 					(blog_id, tag_id)
 				VALUES
-					(?, ?)
+					($1, $2)
 				`
 				_, err := tx.ExecContext(ctx, prepareTask, bt.BlogId, bt.TagId)
 				if err != nil {
@@ -693,14 +682,20 @@ func Test_BlogRepository_AddBlogTag(t *testing.T) {
 				t.Fatalf("failed to put blog: %v", err)
 			}
 
-			selectQuery := `SELECT * FROM blogs_tags`
+			selectQuery := `SELECT blog_id, tag_id FROM blogs_tags`
 			var got []*blogTag
 			if err := tx.SelectContext(ctx, &got, selectQuery); err != nil {
 				t.Fatalf("failed to scan row: %v", err)
 			}
 
-			cmpOption := cmpopts.IgnoreFields(blogTag{}, "Id")
+			sort.Slice(got, func(i, j int) bool {
+				return got[i].BlogId < got[j].BlogId
+			})
+			sort.Slice(tt.want.blogTag, func(i, j int) bool {
+				return tt.want.blogTag[i].BlogId < tt.want.blogTag[j].BlogId
+			})
 
+			cmpOption := cmpopts.IgnoreFields(blogTag{}, "Id")
 			if diff := cmp.Diff(tt.want.blogTag, got, cmpOption); diff != "" {
 				t.Errorf("differs: (-want +got)\n%s", diff)
 			}

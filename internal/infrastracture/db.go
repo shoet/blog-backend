@@ -9,6 +9,7 @@ import (
 	sql_driver "database/sql/driver"
 
 	"github.com/go-sql-driver/mysql"
+	_ "github.com/jackc/pgx/stdlib"
 	"github.com/shoet/blog/internal/config"
 	"github.com/shoet/blog/internal/logging"
 
@@ -24,9 +25,11 @@ type DB interface {
 }
 
 type TX interface {
+	QueryxContext(ctx context.Context, query string, args ...interface{}) (*sqlx.Rows, error)
 	QueryRowxContext(ctx context.Context, query string, args ...interface{}) *sqlx.Row
 	SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+	Queryx(query string, args ...interface{}) (*sqlx.Rows, error)
 }
 
 func NewDBSQLite3(ctx context.Context) (*sqlx.DB, error) {
@@ -82,6 +85,27 @@ func NewDBMySQL(ctx context.Context, cfg *config.Config) (*sqlx.DB, error) {
 	}
 	xdb := sqlx.NewDb(db, withHooksDriverName)
 	return xdb, nil
+}
+
+func NewDBPostgres(ctx context.Context, cfg *config.Config) (*sqlx.DB, error) {
+	dbDsn := fmt.Sprintf(
+		"postgres://%s:%s@%s:%d/%s",
+		cfg.DBUser, cfg.DBPass, cfg.DBHost, cfg.DBPort, cfg.DBName)
+
+	if cfg.DBSSLMode != "" {
+		dbDsn += fmt.Sprintf("?sslmode=%s", cfg.DBSSLMode)
+	}
+
+	db, err := sql.Open("pgx", dbDsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed open postgres: %w", err)
+	}
+
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("failed connect postgres: %w", err)
+	}
+
+	return sqlx.NewDb(db, "pgx"), nil
 }
 
 func InitSQLDriverWithLogs(driverName string, driver sql_driver.Driver) (string, error) {

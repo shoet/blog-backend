@@ -33,13 +33,9 @@ func Test_UserRepository_Get(t *testing.T) {
 					Name:     "test",
 					Email:    "test@test.com",
 					Password: "test",
-					Created:  clocker.Now(),
-					Modified: clocker.Now(),
 				}},
 			want: &models.User{
-				Name:     "test",
-				Created:  clocker.Now(),
-				Modified: clocker.Now(),
+				Name: "test",
 			},
 			wantErr: nil,
 		},
@@ -52,7 +48,7 @@ func Test_UserRepository_Get(t *testing.T) {
 		t.Fatalf("failed to create user repository: %v", err)
 	}
 
-	db, err := testutil.NewDBMySQLForTest(t, ctx)
+	db, err := testutil.NewDBPostgreSQLForTest(t, ctx)
 	if err != nil {
 		t.Fatalf("failed to create db: %v", err)
 	}
@@ -66,34 +62,34 @@ func Test_UserRepository_Get(t *testing.T) {
 			defer tx.Rollback()
 
 			sql := `
-		INSERT INTO users
-			(name, email, password, created, modified)
-		VALUES
-			(?, ?, ?, ?, ?)
-		;
-		`
-			res, err := tx.ExecContext(
+			INSERT INTO users
+				(name, email, password)
+			VALUES
+				($1, $2, $3)
+			RETURNING id
+			;
+			`
+			row := tx.QueryRowxContext(
 				ctx,
 				sql,
 				tt.args.user.Name,
 				tt.args.user.Email,
 				tt.args.user.Password,
-				tt.args.user.Created,
-				tt.args.user.Modified)
-			if err != nil {
-				t.Fatalf("failed to insert user: %v", err)
+			)
+			if row.Err() != nil {
+				t.Fatalf("failed to insert user: %v", row.Err())
 			}
-			gotId, err := res.LastInsertId()
-			if err != nil {
-				t.Fatalf("failed to insert user: %v", err)
+			var userId models.UserId
+			if err := row.Scan(&userId); err != nil {
+				t.Fatalf("failed to scan user: %v", err)
 			}
 
-			got, err := sut.Get(ctx, tx, models.UserId(gotId))
+			got, err := sut.Get(ctx, tx, userId)
 			if err != nil {
 				t.Fatalf("failed to get user: %v", err)
 			}
 
-			opt := cmpopts.IgnoreFields(models.User{}, "Id")
+			opt := cmpopts.IgnoreFields(models.User{}, "Id", "Created", "Modified")
 			if diff := cmp.Diff(got, tt.want, opt); diff != "" {
 				t.Errorf("(-got +want)\n%s", diff)
 			}
@@ -128,8 +124,6 @@ func Test_UserRepository_GetByEmail(t *testing.T) {
 						Name:     "test",
 						Email:    "test@test.com",
 						Password: "test",
-						Created:  clocker.Now(),
-						Modified: clocker.Now(),
 					},
 				},
 				email: "test@test.com",
@@ -139,8 +133,6 @@ func Test_UserRepository_GetByEmail(t *testing.T) {
 					Name:     "test",
 					Email:    "test@test.com",
 					Password: "test",
-					Created:  clocker.Now(),
-					Modified: clocker.Now(),
 				},
 				error: nil,
 			},
@@ -165,7 +157,7 @@ func Test_UserRepository_GetByEmail(t *testing.T) {
 		t.Fatalf("failed to create user repository: %v", err)
 	}
 
-	db, err := testutil.NewDBMySQLForTest(t, ctx)
+	db, err := testutil.NewDBPostgreSQLForTest(t, ctx)
 	if err != nil {
 		t.Fatalf("failed to create db: %v", err)
 	}
@@ -182,20 +174,18 @@ func Test_UserRepository_GetByEmail(t *testing.T) {
 
 			for _, u := range tt.args.prepareUser {
 				sql := `
-			INSERT INTO users
-				(name, email, password, created, modified)
-			VALUES
-				(?, ?, ?, ?, ?)
-			;
-			`
+				INSERT INTO users
+					(name, email, password)
+				VALUES
+					($1, $2, $3)
+				;
+				`
 				_, err = tx.ExecContext(
 					ctx,
 					sql,
 					u.Name,
 					u.Email,
 					u.Password,
-					u.Created,
-					u.Modified,
 				)
 				if err != nil {
 					t.Fatalf("failed to insert user: %v", err)
@@ -209,7 +199,7 @@ func Test_UserRepository_GetByEmail(t *testing.T) {
 				}
 			}
 
-			opt := cmpopts.IgnoreFields(models.User{}, "Id")
+			opt := cmpopts.IgnoreFields(models.User{}, "Id", "Created", "Modified")
 			if diff := cmp.Diff(got, tt.want.user, opt); diff != "" {
 				t.Errorf("(-got +want)\n%s", diff)
 			}
@@ -240,8 +230,6 @@ func Test_UserRepository_Add(t *testing.T) {
 					Name:     "test",
 					Email:    "test@test.com",
 					Password: "test",
-					Created:  clocker.Now(),
-					Modified: clocker.Now(),
 				},
 			},
 			want: want{
@@ -249,8 +237,6 @@ func Test_UserRepository_Add(t *testing.T) {
 					Name:     "test",
 					Email:    "test@test.com",
 					Password: "test",
-					Created:  clocker.Now(),
-					Modified: clocker.Now(),
 				},
 			},
 		},
@@ -263,7 +249,7 @@ func Test_UserRepository_Add(t *testing.T) {
 		t.Fatalf("failed to create user repository: %v", err)
 	}
 
-	db, err := testutil.NewDBMySQLForTest(t, ctx)
+	db, err := testutil.NewDBPostgreSQLForTest(t, ctx)
 	if err != nil {
 		t.Fatalf("failed to create db: %v", err)
 	}
@@ -283,13 +269,13 @@ func Test_UserRepository_Add(t *testing.T) {
 				t.Fatalf("failed to add user: %v", err)
 			}
 
-			selectSql := "SELECT * FROM users WHERE id = ?"
+			selectSql := "SELECT * FROM users WHERE id = $1"
 			var gotUser models.User
 			if err := tx.QueryRowxContext(ctx, selectSql, user.Id).StructScan(&gotUser); err != nil {
 				t.Fatalf("failed to get user: %v", err)
 			}
 
-			opt := cmpopts.IgnoreFields(models.User{}, "Id")
+			opt := cmpopts.IgnoreFields(models.User{}, "Id", "Created", "Modified")
 			if diff := cmp.Diff(&gotUser, tt.want.user, opt); diff != "" {
 				t.Errorf("(-got +want)\n%s", diff)
 			}

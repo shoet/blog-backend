@@ -29,12 +29,13 @@ services:
       BLOG_KVS_USER: ${BLOG_KVS_USER:-default}
       BLOG_KVS_PASS: ${BLOG_KVS_PASS:-redispw}
       BLOG_KVS_TLS_ENABLED: ${BLOG_KVS_TLS_ENABLED:-false}
-      BLOG_DB_HOST: ${BLOG_DB_HOST:-blog-db}
-      BLOG_DB_PORT: ${BLOG_DB_PORT:-3306}
+      BLOG_DB_HOST: ${BLOG_DB_HOST:-blog-db-pg}
+      BLOG_DB_PORT: ${BLOG_DB_PORT:-5432}
       BLOG_DB_USER: ${BLOG_DB_USER:-blog}
       BLOG_DB_PASS: ${BLOG_DB_PASS:-blog}
       BLOG_DB_NAME: ${BLOG_DB_NAME:-blog}
       BLOG_DB_TLS_ENABLED: ${BLOG_KVS_TLS_ENABLED:-false}
+      BLOG_DB_SSL_MODE: ${BLOG_DB_SSL_MODE}
       CORS_WHITE_LIST: ${CORS_WHITE_LIST}
       CDN_DOMAIN: ${CDN_DOMAIN}
     depends_on:
@@ -55,6 +56,17 @@ services:
     volumes:
       - blog-db-data:/var/lib/mysql
 
+  blog-db-pg:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: blog
+      POSTGRES_PASSWORD: blog
+      POSTGRES_DB: blog
+    volumes:
+      - blog-db-pg-data:/var/lib/postgresql/data
+
   blog-db-test:
     image: mysql:8.0.33
     container_name: blog-db-test
@@ -68,6 +80,17 @@ services:
     volumes:
       - blog-db-data-test:/var/lib/mysql
 
+  blog-db-pg-test:
+    image: postgres:latest
+    ports:
+      - "54321:5432"
+    environment:
+      POSTGRES_USER: blog
+      POSTGRES_PASSWORD: blog
+      POSTGRES_DB: blog
+    volumes:
+      - blog-db-pg-test-data:/var/lib/postgresql/data
+
   blog-kvs:
     image: redis:latest
     container_name: blog-redis
@@ -80,3 +103,5 @@ volumes:
   blog-db-data:
   blog-db-data-test:
   blog-redis-data:
+  blog-db-pg-data:
+  blog-db-pg-test-data:

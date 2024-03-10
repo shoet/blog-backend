@@ -36,20 +36,19 @@ jobs:
       BLOG_KVS_TLS_ENABLED: false
 
     services:
-      mysql:
-        image: mysql:8.0.33
+      postgresql:
+        image: postgres:latest
+        ports:
+          - "54321:5432"
+        env:
+          POSTGRES_USER: blog
+          POSTGRES_PASSWORD: blog
+          POSTGRES_DB: blog
         options: >-
-          --health-cmd "mysqladmin ping -h localhost"
+          --health-cmd "PGPASSWORD=blog psql -h 127.0.0.1 -p 5432 -U blog -d blog -c 'SELECT 1'"
           --health-interval 20s
           --health-timeout 10s
           --health-retries 10
-        ports:
-          - 33061:3306
-        env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-          MYSQL_USER: blog
-          MYSQL_PASSWORD: blog
-          MYSQL_DATABASE: blog
       redis:
         image: redis:latest
         options: >-

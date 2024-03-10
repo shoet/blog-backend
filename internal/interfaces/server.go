@@ -56,7 +56,7 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 	cookie := cookie.NewCookieController(cfg.Env, cfg.SiteDomain)
 
 	log.Println("start connection DB")
-	db, err := infrastracture.NewDBMySQL(ctx, cfg)
+	db, err := infrastracture.NewDBPostgres(ctx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create db: %w", err)
 	}
