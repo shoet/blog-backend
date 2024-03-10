@@ -18,16 +18,6 @@ type MigrateConfig struct {
 	DstDSN string `env:"DST_DSN,required"`
 }
 
-func StreamMigrationSource(
-	ctx context.Context,
-	src infrastracture.DB,
-	dst infrastracture.TX,
-	scanQuery string,
-	writeFunc func(ctx context.Context, tx infrastracture.TX, rows *sqlx.Rows) error,
-) error {
-	return nil
-}
-
 func SetupDB(srcDSN, dstDSN string) (src, dst *sql.DB, err error) {
 	src, err = ConnectDB("mysql", srcDSN)
 	if err != nil {
@@ -133,7 +123,7 @@ func main() {
 	defer src.Close()
 	defer dst.Close()
 
-	for _, m := range []*MigrationInput{
+	for _, m := range []MigrationInput{
 		{
 			tableName: "blogs",
 			src:       srcx,
