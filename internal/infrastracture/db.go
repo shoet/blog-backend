@@ -25,9 +25,11 @@ type DB interface {
 }
 
 type TX interface {
+	QueryxContext(ctx context.Context, query string, args ...interface{}) (*sqlx.Rows, error)
 	QueryRowxContext(ctx context.Context, query string, args ...interface{}) *sqlx.Row
 	SelectContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+	Queryx(query string, args ...interface{}) (*sqlx.Rows, error)
 }
 
 func NewDBSQLite3(ctx context.Context) (*sqlx.DB, error) {
@@ -143,6 +145,7 @@ func (t *TransactionProvider) DoInTx(
 		}
 		return nil, fmt.Errorf("failed transaction: %w", err)
 	}
+	tx.Queryx
 	if err := tx.Commit(); err != nil {
 		if err := tx.Rollback(); err != nil {
 			return nil, fmt.Errorf("failed rollback transaction: %w", err)
