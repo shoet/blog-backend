@@ -19,10 +19,9 @@ CREATE TRIGGER update_users_trigger_mod
 BEFORE UPDATE ON users
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
-
 -- +migrate StatementEnd
 
 -- +migrate Down
-DROP TRIGGER update_blogs_trigger_mod;
-DROP TRIGGER update_users_trigger_mod;
-DROP FUNCTION update_updated_at_column;
+DROP TRIGGER IF EXISTS update_blogs_trigger_mod ON blogs;
+DROP TRIGGER IF EXISTS update_users_trigger_mod ON users;
+DROP FUNCTION IF EXISTS update_updated_at_column();
