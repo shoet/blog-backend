@@ -106,7 +106,7 @@ func main() {
 
 	dryrun := false
 
-	if os.Args[1] == "dryrun" {
+	if len(os.Args) > 1 && os.Args[1] == "dryrun" {
 		dryrun = true
 	}
 
@@ -221,7 +221,7 @@ func main() {
 		},
 	} {
 		fmt.Println("start migration: ", m.tableName)
-		if err := Migration(m, m.tableName, dryrun); err != nil {
+		if err := Migration(&m, m.tableName, dryrun); err != nil {
 			panic(err)
 		}
 	}
