@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/caarlos0/env/v10"
 	"github.com/jmoiron/sqlx"
@@ -78,9 +79,9 @@ type MigrationInput struct {
 	writeFunc func(ctx context.Context, tx infrastracture.TX, rows *sqlx.Rows) error
 }
 
-func Migration(input *MigrationInput) error {
+func Migration(input *MigrationInput, dryrun bool) error {
 	ctx := context.Background()
-	dstTx, err := input.src.BeginTxx(ctx, nil)
+	dstTx, err := input.dst.BeginTxx(ctx, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -90,10 +91,18 @@ func Migration(input *MigrationInput) error {
 	); err != nil {
 		return fmt.Errorf("failed to migrate: %w", err)
 	}
-	if err := dstTx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit to destination database: %w", err)
+	if dryrun {
+		if err := dstTx.Commit(); err != nil {
+			return fmt.Errorf("failed to commit to destination database: %w", err)
+		}
 	}
 	return nil
+}
+
+type BeforeBlog struct {
+	models.Blog
+	Created  time.Time `db:"created"`
+	Modified time.Time `db:"modified"`
 }
 
 func main() {
@@ -112,6 +121,8 @@ func main() {
 	defer src.Close()
 	defer dst.Close()
 
+	dryrun := true
+
 	for _, m := range []*MigrationInput{
 		{
 			name:      "blogs",
@@ -124,38 +135,33 @@ func main() {
 					blogs
 				(
 					id, title, description, content, author_id, 
-					thumbnail_image_file_name, is_public, tags,
+					thumbnail_image_file_name, is_public,
 					created, modified
 				)
 				VALUES
-					($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+					($1, $2, $3, $4, $5, $6, $7, $8, $9)
 				`
-				rows, err := tx.Queryx(dstQuery)
-				if err != nil {
-					return fmt.Errorf("failed to insert to destination database: %w", err)
+				var blog BeforeBlog
+				if err := rows.StructScan(&blog); err != nil {
+					return fmt.Errorf("failed to scan to destination database: %w", err)
 				}
-				for rows.Next() {
-					var blog models.Blog
-					if err := rows.StructScan(&blog); err != nil {
-						return fmt.Errorf("failed to scan to destination database: %w", err)
-					}
-					if _, err := tx.ExecContext(
-						ctx, dstQuery,
-						blog.Id, blog.Title, blog.Description, blog.Content, blog.AuthorId,
-						blog.ThumbnailImageFileName, blog.IsPublic, blog.Tags,
-						blog.Created, blog.Modified,
-					); err != nil {
-						return fmt.Errorf("failed to insert to destination database: %w", err)
-					}
+				created := blog.Created.Unix()
+				modified := blog.Modified.Unix()
+				if _, err := tx.ExecContext(
+					ctx,
+					dstQuery,
+					blog.Id, blog.Title, blog.Description, blog.Content, blog.AuthorId,
+					blog.ThumbnailImageFileName, blog.IsPublic, created, modified,
+				); err != nil {
+					return fmt.Errorf("failed to insert to destination database: %w", err)
 				}
 				return nil
 			},
 		},
 	} {
 		fmt.Println("start migration: ", m.name)
-		if err := Migration(m); err != nil {
+		if err := Migration(m, dryrun); err != nil {
 			panic(err)
 		}
 	}
-
 }

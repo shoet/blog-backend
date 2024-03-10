@@ -145,7 +145,6 @@ func (t *TransactionProvider) DoInTx(
 		}
 		return nil, fmt.Errorf("failed transaction: %w", err)
 	}
-	tx.Queryx
 	if err := tx.Commit(); err != nil {
 		if err := tx.Rollback(); err != nil {
 			return nil, fmt.Errorf("failed rollback transaction: %w", err)
