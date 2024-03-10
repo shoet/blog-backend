@@ -63,7 +63,11 @@ func Migration(input *MigrationInput, tableName string, dryrun bool) error {
 	if err != nil {
 		panic(err)
 	}
-	defer dstTx.Rollback()
+	defer func() {
+		if err := dstTx.Rollback(); err != nil {
+			panic(err)
+		}
+	}()
 
 	_, err = dstTx.ExecContext(ctx, fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY;", tableName))
 	if err != nil {
