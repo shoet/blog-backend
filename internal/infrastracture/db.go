@@ -90,6 +90,10 @@ func NewDBPostgres(ctx context.Context, cfg *config.Config) (*sqlx.DB, error) {
 		"postgres://%s:%s@%s:%d/%s",
 		cfg.DBUser, cfg.DBPass, cfg.DBHost, cfg.DBPort, cfg.DBName)
 
+	if cfg.DBSSLMode != "" {
+		dbDsn += fmt.Sprintf("?sslmode=%s", cfg.DBSSLMode)
+	}
+
 	db, err := sql.Open("pgx", dbDsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed open postgres: %w", err)

@@ -35,6 +35,7 @@ services:
       BLOG_DB_PASS: ${BLOG_DB_PASS:-blog}
       BLOG_DB_NAME: ${BLOG_DB_NAME:-blog}
       BLOG_DB_TLS_ENABLED: ${BLOG_KVS_TLS_ENABLED:-false}
+      BLOG_DB_SSL_MODE: ${BLOG_DB_SSL_MODE}
       CORS_WHITE_LIST: ${CORS_WHITE_LIST}
       CDN_DOMAIN: ${CDN_DOMAIN}
     depends_on:

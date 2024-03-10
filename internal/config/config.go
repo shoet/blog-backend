@@ -14,6 +14,7 @@ type Config struct {
 	DBPass                      string `env:"BLOG_DB_PASS,required"`
 	DBName                      string `env:"BLOG_DB_NAME,required"`
 	DBTlsEnabled                bool   `env:"BLOG_DB_TLS_ENABLED" envDefault:"false"`
+	DBSSLMode                   string `env:"BLOG_DB_SSL_MODE"`
 	KVSHost                     string `env:"BLOG_KVS_HOST,required"`
 	KVSPort                     int64  `env:"BLOG_KVS_PORT,required"`
 	KVSUser                     string `env:"BLOG_KVS_USER,required"`
