@@ -21,6 +21,7 @@ import (
 	"github.com/shoet/blog/internal/usecase/delete_blog"
 	"github.com/shoet/blog/internal/usecase/get_blog_detail"
 	"github.com/shoet/blog/internal/usecase/get_blogs"
+	"github.com/shoet/blog/internal/usecase/get_github_contributions"
 	"github.com/shoet/blog/internal/usecase/get_tags"
 	"github.com/shoet/blog/internal/usecase/login_user"
 	"github.com/shoet/blog/internal/usecase/login_user_session"
@@ -58,6 +59,7 @@ func NewMux(
 	setFilesRoute(router, deps, authMiddleWare)
 	setAuthRoute(router, deps)
 	setAdminRoute(router, deps, authMiddleWare)
+	setGitHubRoute(router, deps)
 	return router, nil
 }
 
@@ -139,5 +141,17 @@ func setAdminRoute(
 	r.Route("/admin", func(r chi.Router) {
 		bla := handler.NewBlogListAdminHandler(get_blogs.NewUsecase(deps.DB, deps.BlogRepository))
 		r.With(authMiddleWare.Middleware).Get("/blogs", bla.ServeHTTP)
+	})
+}
+
+func setGitHubRoute(
+	r chi.Router, deps *MuxDependencies,
+) {
+	r.Route("/github", func(r chi.Router) {
+		ghgch := handler.NewGitHubGetContributionsHandler(
+			get_github_contributions.NewUsecase(),
+			deps.Config.GitHubPersonalAccessToken,
+		)
+		r.Get("/contributions", ghgch.ServeHTTP)
 	})
 }

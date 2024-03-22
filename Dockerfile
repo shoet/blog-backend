@@ -1,5 +1,5 @@
 # ===== build stage ====
-FROM golang:1.19.13-bullseye as builder
+FROM golang:1.22-bullseye as builder
 
 WORKDIR /app
 
@@ -21,15 +21,15 @@ RUN --mount=type=cache,target=/gomod-cache \
   go build -trimpath -ldflags="-w -s" -o cmd/bin/cli cmd/cli/main.go
 
 # ===== local development stage ====
-FROM golang:1.19.13-bullseye as dev
+FROM golang:1.22-bullseye as dev
 
 WORKDIR /app
 
-RUN go install github.com/cosmtrek/air@latest
+RUN go install github.com/cosmtrek/air@v1.51.0
 CMD ["air"]
 
 # ===== deploy stage ====
-FROM golang:1.19.13-bullseye as production
+FROM golang:1.22-bullseye as production
 
 ARG PORT
 
