@@ -76,9 +76,9 @@ func (u *Usecase) Run(
 	}{
 		Query: query,
 		Variables: map[string]string{
-			"login": "shoet",
-			"from":  "2024-03-01T15:00:00Z",
-			"to":    "2024-03-22T14:59:59Z",
+			"login": username,
+			"from":  fromDateUTC,
+			"to":    toDateUTC,
 		},
 	}
 
