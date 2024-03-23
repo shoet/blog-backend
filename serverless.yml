@@ -29,6 +29,7 @@ provider:
     SITE_DOMAIN: ${ssm:/blog-api/SITE_DOMAIN}
     CORS_WHITE_LIST: ${ssm:/blog-api/CORS_WHITE_LIST}
     CDN_DOMAIN: ${ssm:/blog-api/CDN_DOMAIN}
+    GITHUB_PERSONAL_ACCESS_TOKEN: ${ssm:/blog-api/GITHUB_PERSONAL_ACCESS_TOKEN}
   ecr:
     images:
       BlogBackendImage:
