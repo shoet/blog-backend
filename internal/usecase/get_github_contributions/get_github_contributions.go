@@ -11,10 +11,15 @@ import (
 )
 
 type Usecase struct {
+	githubPersonalAccessToken string
 }
 
-func NewUsecase() *Usecase {
-	return &Usecase{}
+func NewUsecase(
+	githubPersonalAccessToken string,
+) *Usecase {
+	return &Usecase{
+		githubPersonalAccessToken: githubPersonalAccessToken,
+	}
 }
 
 type GitHubContributionWeeks []struct {
@@ -26,7 +31,7 @@ type GitHubContributionWeeks []struct {
 }
 
 func (u *Usecase) Run(
-	ctx context.Context, githubToken string, username string, fromDateUTC string, toDateUTC string,
+	ctx context.Context, username string, fromDateUTC string, toDateUTC string,
 ) (GitHubContributionWeeks, error) {
 	apiUrl, err := url.Parse("https://api.github.com/graphql")
 	if err != nil {
@@ -43,7 +48,7 @@ func (u *Usecase) Run(
 		} `graphql:"user(login: $login)"`
 	}
 	src := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: githubToken, TokenType: "Bearer"},
+		&oauth2.Token{AccessToken: u.githubPersonalAccessToken, TokenType: "Bearer"},
 	)
 	httpClient := oauth2.NewClient(context.Background(), src)
 	client := graphql.NewClient(apiUrl.String(), httpClient)
@@ -67,5 +72,6 @@ func (u *Usecase) Run(
 	if err := client.Query(context.Background(), &query, variables); err != nil {
 		return nil, fmt.Errorf("failed to query: %v", err)
 	}
+
 	return query.User.ContributionCollection.ContributionCalendar.Weeks, nil
 }

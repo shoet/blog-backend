@@ -11,14 +11,13 @@ import (
 )
 
 type GitHubGetContributionsHandler struct {
-	Usecase                   *get_github_contributions.Usecase
-	GitHubPersonalAccessToken string
+	Usecase *get_github_contributions.Usecase
 }
 
 func NewGitHubGetContributionsHandler(
-	usecase *get_github_contributions.Usecase, githubPersonalAccessToken string,
+	usecase *get_github_contributions.Usecase,
 ) *GitHubGetContributionsHandler {
-	return &GitHubGetContributionsHandler{Usecase: usecase, GitHubPersonalAccessToken: githubPersonalAccessToken}
+	return &GitHubGetContributionsHandler{Usecase: usecase}
 }
 
 func (g *GitHubGetContributionsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +40,7 @@ func (g *GitHubGetContributionsHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	contributions, err := g.Usecase.Run(r.Context(), g.GitHubPersonalAccessToken, username, fromDateUtc, toDateUtc)
+	contributions, err := g.Usecase.Run(r.Context(), username, fromDateUtc, toDateUtc)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to get github contributions: %v", err))
 		response.ResponsdInternalServerError(w, r, nil)

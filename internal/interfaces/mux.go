@@ -149,8 +149,7 @@ func setGitHubRoute(
 ) {
 	r.Route("/github", func(r chi.Router) {
 		ghgch := handler.NewGitHubGetContributionsHandler(
-			get_github_contributions.NewUsecase(),
-			deps.Config.GitHubPersonalAccessToken,
+			get_github_contributions.NewUsecase(deps.Config.GitHubPersonalAccessToken),
 		)
 		r.Get("/contributions", ghgch.ServeHTTP)
 	})
