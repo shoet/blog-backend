@@ -113,6 +113,7 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 		Validator:        validator,
 		Cookie:           cookie,
 		GitHubAPIAdapter: gitHubAPIAdapter,
+		Clocker:          &c,
 	}, nil
 }
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
+	"github.com/shoet/blog/internal/clocker"
 	"github.com/shoet/blog/internal/config"
 	"github.com/shoet/blog/internal/infrastracture"
 	"github.com/shoet/blog/internal/infrastracture/adapter"
@@ -23,6 +24,7 @@ import (
 	"github.com/shoet/blog/internal/usecase/get_blog_detail"
 	"github.com/shoet/blog/internal/usecase/get_blogs"
 	"github.com/shoet/blog/internal/usecase/get_github_contributions"
+	"github.com/shoet/blog/internal/usecase/get_github_contributions_latest_week"
 	"github.com/shoet/blog/internal/usecase/get_tags"
 	"github.com/shoet/blog/internal/usecase/login_user"
 	"github.com/shoet/blog/internal/usecase/login_user_session"
@@ -43,6 +45,7 @@ type MuxDependencies struct {
 	Validator        *validator.Validate
 	Cookie           *cookie.CookieController
 	GitHubAPIAdapter *adapter.GitHubV4APIClient
+	Clocker          clocker.Clocker
 }
 
 func NewMux(
@@ -154,5 +157,11 @@ func setGitHubRoute(
 			get_github_contributions.NewUsecase(deps.GitHubAPIAdapter),
 		)
 		r.Get("/contributions", ghgch.ServeHTTP)
+
+		ghgchw := handler.NewGitHubGetContributionsLatestWeekHandler(
+			get_github_contributions_latest_week.NewUsecase(deps.GitHubAPIAdapter, deps.Clocker),
+		)
+		r.Get("/contributions_latest_week", ghgchw.ServeHTTP)
+
 	})
 }
