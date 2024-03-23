@@ -8,6 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/shoet/blog/internal/config"
 	"github.com/shoet/blog/internal/infrastracture"
+	"github.com/shoet/blog/internal/infrastracture/adapter"
 	"github.com/shoet/blog/internal/infrastracture/repository"
 	"github.com/shoet/blog/internal/infrastracture/services/auth_service"
 	"github.com/shoet/blog/internal/infrastracture/services/blog_service"
@@ -31,16 +32,17 @@ import (
 )
 
 type MuxDependencies struct {
-	Config          *config.Config
-	DB              infrastracture.DB
-	BlogRepository  *repository.BlogRepository
-	BlogService     *blog_service.BlogService
-	AuthService     *auth_service.AuthService
-	ContentsService *contents_service.ContentsService
-	JWTer           *jwt_service.JWTService
-	Logger          *logging.Logger
-	Validator       *validator.Validate
-	Cookie          *cookie.CookieController
+	Config           *config.Config
+	DB               infrastracture.DB
+	BlogRepository   *repository.BlogRepository
+	BlogService      *blog_service.BlogService
+	AuthService      *auth_service.AuthService
+	ContentsService  *contents_service.ContentsService
+	JWTer            *jwt_service.JWTService
+	Logger           *logging.Logger
+	Validator        *validator.Validate
+	Cookie           *cookie.CookieController
+	GitHubAPIAdapter *adapter.GitHubV4APIClient
 }
 
 func NewMux(
@@ -149,7 +151,7 @@ func setGitHubRoute(
 ) {
 	r.Route("/github", func(r chi.Router) {
 		ghgch := handler.NewGitHubGetContributionsHandler(
-			get_github_contributions.NewUsecase(deps.Config.GitHubPersonalAccessToken),
+			get_github_contributions.NewUsecase(deps.GitHubAPIAdapter),
 		)
 		r.Get("/contributions", ghgch.ServeHTTP)
 	})

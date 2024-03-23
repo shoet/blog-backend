@@ -3,75 +3,45 @@ package get_github_contributions
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"time"
 
-	"github.com/shurcooL/graphql"
-	"golang.org/x/oauth2"
+	"github.com/shoet/blog/internal/infrastracture/adapter"
 )
 
+type GitHubV4APIAdapter interface {
+	GetContributions(ctx context.Context, username string, fromDateUTC time.Time, toDateUTC time.Time) (adapter.GitHubContributionWeeks, error)
+}
+
 type Usecase struct {
-	githubPersonalAccessToken string
+	githubAPIv4 GitHubV4APIAdapter
 }
 
 func NewUsecase(
-	githubPersonalAccessToken string,
+	githubAPIv4 GitHubV4APIAdapter,
 ) *Usecase {
 	return &Usecase{
-		githubPersonalAccessToken: githubPersonalAccessToken,
+		githubAPIv4: githubAPIv4,
 	}
-}
-
-type GitHubContributionWeeks []struct {
-	ContributionDays []struct {
-		Date              string `json:"date"`
-		Color             string `json:"color"`
-		ContributionCount int    `json:"contributionCount"`
-	} `json:"contributionDays"`
 }
 
 func (u *Usecase) Run(
-	ctx context.Context, username string, fromDateUTC string, toDateUTC string,
-) (GitHubContributionWeeks, error) {
-	apiUrl, err := url.Parse("https://api.github.com/graphql")
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse url: %v", err)
-	}
+	ctx context.Context, username string, fromDateUTCStr string, toDateUTCStr string,
+) (adapter.GitHubContributionWeeks, error) {
 
-	var query struct {
-		User struct {
-			ContributionCollection struct {
-				ContributionCalendar struct {
-					Weeks GitHubContributionWeeks `json:"weeks"`
-				}
-			} `graphql:"contributionsCollection(from: $from, to: $to)"`
-		} `graphql:"user(login: $login)"`
-	}
-	src := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: u.githubPersonalAccessToken, TokenType: "Bearer"},
-	)
-	httpClient := oauth2.NewClient(context.Background(), src)
-	client := graphql.NewClient(apiUrl.String(), httpClient)
-
-	fromTime, err := time.Parse(time.RFC3339, fromDateUTC)
+	fromTime, err := time.Parse(time.RFC3339, fromDateUTCStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse time: %v", err)
 	}
 
-	toTime, err := time.Parse(time.RFC3339, toDateUTC)
+	toTime, err := time.Parse(time.RFC3339, toDateUTCStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse time: %v", err)
 	}
 
-	type DateTime struct{ time.Time }
-	variables := map[string]interface{}{
-		"login": graphql.String(username),
-		"from":  DateTime{fromTime},
-		"to":    DateTime{toTime},
-	}
-	if err := client.Query(context.Background(), &query, variables); err != nil {
-		return nil, fmt.Errorf("failed to query: %v", err)
+	contributions, err := u.githubAPIv4.GetContributions(ctx, username, fromTime, toTime)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get contributions: %v", err)
 	}
 
-	return query.User.ContributionCollection.ContributionCalendar.Weeks, nil
+	return contributions, nil
 }
