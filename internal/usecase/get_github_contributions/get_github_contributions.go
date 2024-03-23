@@ -1,12 +1,13 @@
 package get_github_contributions
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
+	"time"
+
+	"github.com/shurcooL/graphql"
+	"golang.org/x/oauth2"
 )
 
 type Usecase struct {
@@ -46,64 +47,39 @@ func (u *Usecase) Run(
 		return nil, fmt.Errorf("failed to parse url: %v", err)
 	}
 
-	query := `
-	query($login:String!, $from:DateTime!, $to:DateTime!) {
-	  user(login: $login) {
-		contributionsCollection(from: $from, to: $to) {
-			contributionCalendar {
-				weeks {
-					contributionDays {
-						color
-						contributionCount
-						date
-					}
+	var query struct {
+		User struct {
+			ContributionCollection struct {
+				ContributionCalendar struct {
+					Weeks GitHubContributionWeeks `json:"weeks"`
 				}
-			}
-		}
-	  }
+			} `graphql:"contributionsCollection(from: $from, to: $to)"`
+		} `graphql:"user(login: $login)"`
 	}
-	`
+	src := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: githubToken, TokenType: "Bearer"},
+	)
+	httpClient := oauth2.NewClient(context.Background(), src)
+	client := graphql.NewClient(apiUrl.String(), httpClient)
 
-	type variables struct {
-		Login string `json:"login"`
-		From  string `json:"from"`
-		To    string `json:"to"`
-	}
-
-	requestBody := struct {
-		Query     string            `json:"query"`
-		Variables map[string]string `json:"variables"`
-	}{
-		Query: query,
-		Variables: map[string]string{
-			"login": username,
-			"from":  fromDateUTC,
-			"to":    toDateUTC,
-		},
-	}
-
-	b, err := json.Marshal(requestBody)
+	fromTime, err := time.Parse(time.RFC3339, fromDateUTC)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request body: %v", err)
+		return nil, fmt.Errorf("failed to parse time: %v", err)
 	}
 
-	request, err := http.NewRequest("POST", apiUrl.String(), bytes.NewBuffer(b))
+	toTime, err := time.Parse(time.RFC3339, toDateUTC)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %v", err)
-	}
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", githubToken))
-
-	response, err := http.DefaultClient.Do(request)
-	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %v", err)
-	}
-	defer response.Body.Close()
-
-	var githubResponse GitHubContributionResponse
-	if err := json.NewDecoder(response.Body).Decode(&githubResponse); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %v", err)
+		return nil, fmt.Errorf("failed to parse time: %v", err)
 	}
 
-	return githubResponse.Data.User.ContributionsCollection.ContributionCalendar.Weeks, nil
+	type DateTime struct{ time.Time }
+	variables := map[string]interface{}{
+		"login": graphql.String(username),
+		"from":  DateTime{fromTime},
+		"to":    DateTime{toTime},
+	}
+	if err := client.Query(context.Background(), &query, variables); err != nil {
+		return nil, fmt.Errorf("failed to query: %v", err)
+	}
+	return query.User.ContributionCollection.ContributionCalendar.Weeks, nil
 }
