@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/shoet/blog/internal/interfaces/response"
 	"github.com/shoet/blog/internal/logging"
@@ -42,7 +43,19 @@ func (g *GitHubGetContributionsHandler) ServeHTTP(w http.ResponseWriter, r *http
 		return
 	}
 
-	contributions, err := g.Usecase.Run(r.Context(), username, fromDateUtc, toDateUtc)
+	fromDateTime, err := time.Parse(time.RFC3339, fromDateUtc)
+	if err != nil {
+		response.ResponsdBadRequest(w, r, errors.New("from_date_utc is invalid format"))
+		return
+	}
+
+	toDateTime, err := time.Parse(time.RFC3339, toDateUtc)
+	if err != nil {
+		response.ResponsdBadRequest(w, r, errors.New("to_date_utc is invalid format"))
+		return
+	}
+
+	contributions, err := g.Usecase.Run(r.Context(), username, fromDateTime, toDateTime)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to get github contributions: %v", err))
 		response.ResponsdInternalServerError(w, r, nil)

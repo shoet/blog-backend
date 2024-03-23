@@ -25,23 +25,11 @@ func NewUsecase(
 }
 
 func (u *Usecase) Run(
-	ctx context.Context, username string, fromDateUTCStr string, toDateUTCStr string,
+	ctx context.Context, username string, fromDateUTC time.Time, toDateUTC time.Time,
 ) (adapter.GitHubContributionWeeks, error) {
-
-	fromTime, err := time.Parse(time.RFC3339, fromDateUTCStr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse time: %v", err)
-	}
-
-	toTime, err := time.Parse(time.RFC3339, toDateUTCStr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse time: %v", err)
-	}
-
-	contributions, err := u.githubAPIv4.GetContributions(ctx, username, fromTime, toTime)
+	contributions, err := u.githubAPIv4.GetContributions(ctx, username, fromDateUTC, toDateUTC)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get contributions: %v", err)
 	}
-
 	return contributions, nil
 }
