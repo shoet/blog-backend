@@ -99,17 +99,21 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 		return nil, fmt.Errorf("failed to create contents service: %w", err)
 	}
 
+	gitHubAPIAdapter := adapter.NewGitHubV4APIClient(cfg.GitHubPersonalAccessToken)
+
 	return &MuxDependencies{
-		Config:          cfg,
-		DB:              db,
-		BlogRepository:  blogRepo,
-		BlogService:     blogService,
-		AuthService:     authService,
-		ContentsService: contentsService,
-		JWTer:           jwtService,
-		Logger:          logger,
-		Validator:       validator,
-		Cookie:          cookie,
+		Config:           cfg,
+		DB:               db,
+		BlogRepository:   blogRepo,
+		BlogService:      blogService,
+		AuthService:      authService,
+		ContentsService:  contentsService,
+		JWTer:            jwtService,
+		Logger:           logger,
+		Validator:        validator,
+		Cookie:           cookie,
+		GitHubAPIAdapter: gitHubAPIAdapter,
+		Clocker:          &c,
 	}, nil
 }
 

@@ -38,26 +38,15 @@ services:
       BLOG_DB_SSL_MODE: ${BLOG_DB_SSL_MODE}
       CORS_WHITE_LIST: ${CORS_WHITE_LIST}
       CDN_DOMAIN: ${CDN_DOMAIN}
+      GITHUB_PERSONAL_ACCESS_TOKEN: ${GITHUB_PERSONAL_ACCESS_TOKEN:?err}
     depends_on:
-      - blog-db
-      - blog-db-test
+      - blog-db-pg
+      - blog-db-pg-test
       - blog-kvs
-
-  blog-db:
-    image: mysql:8.0.33
-    container_name: blog-db
-    ports:
-      - "3306:3306"
-    environment:
-      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-      MYSQL_USER: blog
-      MYSQL_PASSWORD: blog
-      MYSQL_DATABASE: blog
-    volumes:
-      - blog-db-data:/var/lib/mysql
 
   blog-db-pg:
     image: postgres:latest
+    container_name: blog-db-pg
     ports:
       - "5432:5432"
     environment:
@@ -67,21 +56,9 @@ services:
     volumes:
       - blog-db-pg-data:/var/lib/postgresql/data
 
-  blog-db-test:
-    image: mysql:8.0.33
-    container_name: blog-db-test
-    ports:
-      - "33061:3306"
-    environment:
-      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-      MYSQL_USER: blog
-      MYSQL_PASSWORD: blog
-      MYSQL_DATABASE: blog
-    volumes:
-      - blog-db-data-test:/var/lib/mysql
-
   blog-db-pg-test:
     image: postgres:latest
+    container_name: blog-db-pg-test
     ports:
       - "54321:5432"
     environment:
@@ -100,8 +77,6 @@ services:
       - blog-redis-data:/data
 
 volumes:
-  blog-db-data:
-  blog-db-data-test:
-  blog-redis-data:
   blog-db-pg-data:
   blog-db-pg-test-data:
+  blog-redis-data:
