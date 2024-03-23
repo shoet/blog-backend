@@ -17,26 +17,12 @@ func NewUsecase() *Usecase {
 	return &Usecase{}
 }
 
-type GitHubContributionResponse struct {
-	Data struct {
-		User struct {
-			ContributionsCollection struct {
-				ContributionCalendar struct {
-					Weeks GitHubContributionWeeks `json:"weeks"`
-				} `json:"contributionCalendar"`
-			} `json:"contributionsCollection"`
-		} `json:"user"`
-	} `json:"data"`
-}
-
 type GitHubContributionWeeks []struct {
-	ContributionDays []GitHubContribution `json:"contributionDays"`
-}
-
-type GitHubContribution struct {
-	Date              string `json:"date"`
-	Color             string `json:"color"`
-	ContributionCount int    `json:"contributionCount"`
+	ContributionDays []struct {
+		Date              string `json:"date"`
+		Color             string `json:"color"`
+		ContributionCount int    `json:"contributionCount"`
+	} `json:"contributionDays"`
 }
 
 func (u *Usecase) Run(
