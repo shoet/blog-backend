@@ -23,20 +23,21 @@ func NewBlogRepository(clocker clocker.Clocker) *BlogRepository {
 }
 
 func (r *BlogRepository) Add(ctx context.Context, tx infrastracture.TX, blog *models.Blog) (models.BlogId, error) {
-	sql := `
-	INSERT INTO blogs
-		(author_id, title, content, description, thumbnail_image_file_name, is_public)
-	VALUES
-		($1, $2, $3, $4, $5, $6)
-	RETURNING
-		id
-	;
-	`
+	sql, args, err := GetQueryBuilderPostgres().
+		Insert("blogs").
+		Columns("author_id", "title", "content", "description", "thumbnail_image_file_name", "is_public").
+		Values(
+			blog.AuthorId, blog.Title, blog.Content, blog.Description,
+			blog.ThumbnailImageFileName, blog.IsPublic).
+		Suffix("RETURNING id").
+		ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("failed to build sql: %w", err)
+	}
 	row := tx.QueryRowxContext(
 		ctx,
 		sql,
-		blog.AuthorId, blog.Title, blog.Content, blog.Description,
-		blog.ThumbnailImageFileName, blog.IsPublic)
+		args...)
 	if row.Err() != nil {
 		return 0, fmt.Errorf("failed to insert blog: %w", row.Err())
 	}
@@ -56,21 +57,17 @@ type BlogTag struct {
 func (r *BlogRepository) WithBlogTags(
 	ctx context.Context, tx infrastracture.TX, blogId models.BlogId,
 ) ([]*BlogTag, error) {
-	sql := `
-	SELECT
-		blogs_tags.blog_id, tags.name as tag
-	FROM 
-		blogs_tags
-	JOIN
-		tags
-	ON
-		blogs_tags.tag_id = tags.id
-	WHERE
-		blog_id = $1
-	;	
-	`
+	sql, args, err := GetQueryBuilderPostgres().
+		Select("blogs_tags.blog_id, tags.name as tag").
+		From("blogs_tags").
+		Join("tags ON blogs_tags.tag_id = tags.id").
+		Where("blog_id = ?", blogId).
+		ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build sql: %w", err)
+	}
 	var tagResult []*BlogTag
-	if err := tx.SelectContext(ctx, &tagResult, sql, blogId); err != nil {
+	if err := tx.SelectContext(ctx, &tagResult, sql, args...); err != nil {
 		return nil, fmt.Errorf("failed to select blogs_tags: %w", err)
 	}
 	return tagResult, nil
@@ -80,28 +77,29 @@ func (r *BlogRepository) List(
 	ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions,
 ) ([]*models.Blog, error) {
 	latest := option.Limit
-	isPublic := ""
+
+	builder := GetQueryBuilderPostgres()
+	builder_select := builder.
+		Select(
+			`id, author_id, title, description, thumbnail_image_file_name, 
+			is_public, created, modified`,
+		).
+		From("blogs").
+		OrderBy("id DESC"). // 連番なのでPKでソートする
+		Limit(uint64(latest))
 	if option.IsPublic {
-		isPublic = "WHERE is_public = true"
+		builder_select = builder_select.Where("is_public = true")
 	}
-	sql := `
-	SELECT
-		id, author_id, title, description, 
-		thumbnail_image_file_name, is_public, created, modified
-	FROM
-		blogs
-	` + isPublic + ` 
-	ORDER BY 
-		id DESC -- 連番なのでPKでソートする
-	LIMIT 
-		$1
-	;
-	`
+	sql, args, err := builder_select.ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build sql: %w", err)
+	}
+
 	type data struct {
 		models.Blog
 	}
 	var temp []data
-	if err := tx.SelectContext(ctx, &temp, sql, latest); err != nil {
+	if err := tx.SelectContext(ctx, &temp, sql, args...); err != nil {
 		return nil, fmt.Errorf("failed to select blogs: %w", err)
 	}
 	var blogs []*models.Blog
