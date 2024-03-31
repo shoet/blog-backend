@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/doug-martin/goqu/v9"
 	"github.com/shoet/blog/internal/clocker"
 	"github.com/shoet/blog/internal/infrastracture"
 	"github.com/shoet/blog/internal/infrastracture/models"
@@ -20,15 +21,18 @@ func NewUserRepository(clocker clocker.Clocker) (*UserRepository, error) {
 func (t *UserRepository) Get(
 	ctx context.Context, tx infrastracture.TX, id models.UserId,
 ) (*models.User, error) {
-	sql := `
-	SELECT
-		id, name, created, modified
-	FROM users
-	WHERE id = $1
-	;
-	`
+	sql, params, err := goqu.
+		From("users").
+		Select(
+			"id", "name", "created", "modified",
+		).
+		Where(goqu.Ex{"id": id}).
+		ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build sql: %w", err)
+	}
 	var users []*models.User
-	if err := tx.SelectContext(ctx, &users, sql, id); err != nil {
+	if err := tx.SelectContext(ctx, &users, sql, params...); err != nil {
 		return nil, fmt.Errorf("failed to select users: %w", err)
 	}
 	if len(users) == 0 {
@@ -42,15 +46,18 @@ var ErrUserNotFound = fmt.Errorf("user not found")
 func (u *UserRepository) GetByEmail(
 	ctx context.Context, tx infrastracture.TX, email string,
 ) (*models.User, error) {
-	sql := `
-	SELECT
-		id, name, email, password, created, modified
-	FROM users
-	WHERE email = $1
-	;
-	`
+	sql, params, err := goqu.
+		From("users").
+		Select(
+			"id", "name", "email", "password", "created", "modified",
+		).
+		Where(goqu.Ex{"email": email}).
+		ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build sql: %w", err)
+	}
 	var users []*models.User
-	if err := tx.SelectContext(ctx, &users, sql, email); err != nil {
+	if err := tx.SelectContext(ctx, &users, sql, params...); err != nil {
 		return nil, fmt.Errorf("failed to select users: %w", err)
 	}
 	if len(users) == 0 {
@@ -62,25 +69,21 @@ func (u *UserRepository) GetByEmail(
 func (u *UserRepository) Add(
 	ctx context.Context, tx infrastracture.TX, user *models.User,
 ) (*models.User, error) {
-	sql := `
-	INSERT INTO users
-		(name, email, password)
-	VALUES
-		($1, $2, $3)
-	RETURNING id
-	;
-	`
-
-	row := tx.QueryRowxContext(
-		ctx,
-		sql,
-		user.Name, user.Email, user.Password)
+	sql, params, err := goqu.
+		Insert("users").
+		Cols("name", "email", "password").
+		Vals(goqu.Vals{user.Name, user.Email, user.Password}).
+		Returning("id").
+		ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build sql: %w", err)
+	}
+	row := tx.QueryRowxContext(ctx, sql, params...)
 	if row.Err() != nil {
 		return nil, fmt.Errorf("failed to insert user: %w", row.Err())
 	}
 	var userId models.UserId
-	err := row.Scan(&userId)
-	if err != nil {
+	if err := row.Scan(&userId); err != nil {
 		return nil, fmt.Errorf("failed to insert user: %w", err)
 	}
 	user.Id = userId
