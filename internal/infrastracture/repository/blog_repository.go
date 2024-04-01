@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/doug-martin/goqu/v9"
 	"github.com/shoet/blog/internal/clocker"
 	"github.com/shoet/blog/internal/infrastracture"
 	"github.com/shoet/blog/internal/infrastracture/models"
@@ -23,20 +24,19 @@ func NewBlogRepository(clocker clocker.Clocker) *BlogRepository {
 }
 
 func (r *BlogRepository) Add(ctx context.Context, tx infrastracture.TX, blog *models.Blog) (models.BlogId, error) {
-	sql := `
-	INSERT INTO blogs
-		(author_id, title, content, description, thumbnail_image_file_name, is_public)
-	VALUES
-		($1, $2, $3, $4, $5, $6)
-	RETURNING
-		id
-	;
-	`
-	row := tx.QueryRowxContext(
-		ctx,
-		sql,
-		blog.AuthorId, blog.Title, blog.Content, blog.Description,
-		blog.ThumbnailImageFileName, blog.IsPublic)
+	sql, params, err := goqu.
+		Insert("blogs").
+		Cols("author_id", "title", "content", "description", "thumbnail_image_file_name", "is_public").
+		Vals(goqu.Vals{
+			blog.AuthorId, blog.Title, blog.Content, blog.Description,
+			blog.ThumbnailImageFileName, blog.IsPublic,
+		}).
+		Returning("id").
+		ToSQL()
+	if err != nil {
+		return 0, fmt.Errorf("failed to build sql: %w", err)
+	}
+	row := tx.QueryRowxContext(ctx, sql, params...)
 	if row.Err() != nil {
 		return 0, fmt.Errorf("failed to insert blog: %w", row.Err())
 	}
@@ -56,21 +56,20 @@ type BlogTag struct {
 func (r *BlogRepository) WithBlogTags(
 	ctx context.Context, tx infrastracture.TX, blogId models.BlogId,
 ) ([]*BlogTag, error) {
-	sql := `
-	SELECT
-		blogs_tags.blog_id, tags.name as tag
-	FROM 
-		blogs_tags
-	JOIN
-		tags
-	ON
-		blogs_tags.tag_id = tags.id
-	WHERE
-		blog_id = $1
-	;	
-	`
+	sql, params, err := goqu.
+		Select("blog_id", goqu.C("name").As("tag")).
+		From("blogs_tags").
+		Join(
+			goqu.T("tags"),
+			goqu.On(goqu.Ex{"blogs_tags.tag_id": goqu.I("tags.id")}),
+		).
+		Where(goqu.Ex{"blog_id": blogId}).
+		ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build sql: %w", err)
+	}
 	var tagResult []*BlogTag
-	if err := tx.SelectContext(ctx, &tagResult, sql, blogId); err != nil {
+	if err := tx.SelectContext(ctx, &tagResult, sql, params...); err != nil {
 		return nil, fmt.Errorf("failed to select blogs_tags: %w", err)
 	}
 	return tagResult, nil
@@ -80,28 +79,26 @@ func (r *BlogRepository) List(
 	ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions,
 ) ([]*models.Blog, error) {
 	latest := option.Limit
-	isPublic := ""
+	builder := goqu.
+		Select(
+			"id", "author_id", "title", "description",
+			"thumbnail_image_file_name", "is_public", "created", "modified",
+		).
+		From("blogs").
+		Order(goqu.I("id").Desc()). // 連番なのでPKでソートする
+		Limit(uint(latest))
 	if option.IsPublic {
-		isPublic = "WHERE is_public = true"
+		builder = builder.Where(goqu.Ex{"is_public": true})
 	}
-	sql := `
-	SELECT
-		id, author_id, title, description, 
-		thumbnail_image_file_name, is_public, created, modified
-	FROM
-		blogs
-	` + isPublic + ` 
-	ORDER BY 
-		id DESC -- 連番なのでPKでソートする
-	LIMIT 
-		$1
-	;
-	`
+	sql, params, err := builder.ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build sql: %w", err)
+	}
 	type data struct {
 		models.Blog
 	}
 	var temp []data
-	if err := tx.SelectContext(ctx, &temp, sql, latest); err != nil {
+	if err := tx.SelectContext(ctx, &temp, sql, params...); err != nil {
 		return nil, fmt.Errorf("failed to select blogs: %w", err)
 	}
 	var blogs []*models.Blog
@@ -137,36 +134,37 @@ func (r *BlogRepository) List(
 func (r *BlogRepository) Get(
 	ctx context.Context, tx infrastracture.TX, id models.BlogId,
 ) (*models.Blog, error) {
-	sqlBlog := `
-	SELECT
-		id, author_id, title, content, description,
-		thumbnail_image_file_name, is_public, created, modified
-	FROM
-		blogs WHERE id = $1
-	;
-	`
+	sql, params, err := goqu.
+		Select("id", "author_id", "title", "content", "description",
+			"thumbnail_image_file_name", "is_public", "created", "modified",
+		).
+		From("blogs").
+		Where(goqu.Ex{"id": id}).
+		ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build sql: %w", err)
+	}
 	var blogs []*models.Blog
-	if err := tx.SelectContext(ctx, &blogs, sqlBlog, id); err != nil {
+	if err := tx.SelectContext(ctx, &blogs, sql, params...); err != nil {
 		return nil, fmt.Errorf("failed to select blog: %w", err)
 	}
 	if len(blogs) == 0 {
 		return nil, nil
 	}
-
-	sqlTags := `
-	SELECT
-		tags.name
-	FROM (
-		SELECT
-			tag_id
-		FROM blogs_tags
-		WHERE blog_id = $1
-	) as b_t
-	LEFT OUTER JOIN tags
-		ON b_t.tag_id = tags.id
-	`
+	subSelectBlogsTags := goqu.Select("tag_id").From("blogs_tags").Where(goqu.Ex{"blog_id": id})
+	sql, params, err = goqu.
+		From(subSelectBlogsTags.As("b_t")).
+		LeftOuterJoin(
+			goqu.T("tags"),
+			goqu.On(goqu.Ex{"b_t.tag_id": goqu.I("tags.id")}),
+		).
+		Select("tags.name").
+		ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build sql: %w", err)
+	}
 	var tags []string
-	if err := tx.SelectContext(ctx, &tags, sqlTags, id); err != nil {
+	if err := tx.SelectContext(ctx, &tags, sql, params...); err != nil {
 		return nil, fmt.Errorf("failed to select tag: %w", err)
 	}
 	blogs[0].Tags = tags
@@ -174,15 +172,14 @@ func (r *BlogRepository) Get(
 }
 
 func (r *BlogRepository) Delete(ctx context.Context, tx infrastracture.TX, id models.BlogId) error {
-	sql := `
-	DELETE FROM
-		blogs
-	WHERE 
-		id = $1
-	;
-	`
-	_, err := tx.ExecContext(ctx, sql, id)
+	sql, params, err := goqu.
+		Delete("blogs").
+		Where(goqu.Ex{"id": id}).
+		ToSQL()
 	if err != nil {
+		return fmt.Errorf("failed to build sql: %w", err)
+	}
+	if _, err := tx.ExecContext(ctx, sql, params...); err != nil {
 		return fmt.Errorf("failed to delete blog: %w", err)
 	}
 	return nil
@@ -191,28 +188,25 @@ func (r *BlogRepository) Delete(ctx context.Context, tx infrastracture.TX, id mo
 func (r *BlogRepository) Put(
 	ctx context.Context, tx infrastracture.TX, blog *models.Blog,
 ) (models.BlogId, error) {
-	sql := `
-	UPDATE blogs
-	SET
-		author_id = $1
-		, title = $2
-		, content = $3
-		, description = $4
-		, thumbnail_image_file_name = $5
-		, is_public = $6
-		, modified = $7
-	WHERE
-		id = $8
-	;
-	`
 	now := r.Clocker.Now()
 	blog.Modified = uint(now.Unix())
-	_, err := tx.ExecContext(
-		ctx,
-		sql,
-		blog.AuthorId, blog.Title, blog.Content, blog.Description,
-		blog.ThumbnailImageFileName, blog.IsPublic, blog.Modified, blog.Id)
+	sql, params, err := goqu.
+		Update("blogs").
+		Set(goqu.Record{
+			"author_id":                 blog.AuthorId,
+			"title":                     blog.Title,
+			"content":                   blog.Content,
+			"description":               blog.Description,
+			"thumbnail_image_file_name": blog.ThumbnailImageFileName,
+			"is_public":                 blog.IsPublic,
+			"modified":                  blog.Modified,
+		}).
+		Where(goqu.Ex{"id": blog.Id}).
+		ToSQL()
 	if err != nil {
+		return 0, fmt.Errorf("failed to build sql: %w", err)
+	}
+	if _, err := tx.ExecContext(ctx, sql, params...); err != nil {
 		return 0, fmt.Errorf("failed to update blog: %w", err)
 	}
 	return blog.Id, nil
@@ -221,31 +215,34 @@ func (r *BlogRepository) Put(
 func (r *BlogRepository) AddBlogTag(
 	ctx context.Context, tx infrastracture.TX, blogId models.BlogId, tagId models.TagId,
 ) (int64, error) {
-	sql := `
-	INSERT INTO blogs_tags
-		(blog_id, tag_id)
-	VALUES
-		($1, $2)
-	ON CONFLICT(blog_id, tag_id)
-	DO UPDATE SET 
-		blog_id = $1,
-		tag_id = $2
-	RETURNING
-		id
-	;
-	`
-	row := tx.QueryRowxContext(ctx, sql, blogId, tagId)
+	sql, params, err := goqu.
+		Insert("blogs_tags").
+		Cols("blog_id", "tag_id").
+		Vals(goqu.Vals{blogId, tagId}).
+		OnConflict(
+			goqu.DoUpdate(
+				"blog_id, tag_id",
+				goqu.Record{"blog_id": blogId, "tag_id": tagId}),
+		).
+		Returning("id").
+		ToSQL()
+	if err != nil {
+		return 0, fmt.Errorf("failed to build sql: %w", err)
+	}
+	row := tx.QueryRowxContext(ctx, sql, params...)
 	if row.Err() != nil {
 		return 0, fmt.Errorf("failed to insert blogs_tags: %w", row.Err())
 	}
 	var id int64
-	err := row.Scan(&id)
-	if err != nil {
+	if err := row.Scan(&id); err != nil {
 		return 0, fmt.Errorf("failed to get last insert id: %w", err)
 	}
 	return id, nil
 }
 
+/*
+そのブログと同じタグを使っている他のブログを取得する
+*/
 func (r *BlogRepository) SelectBlogsTagsByOtherUsingBlog(
 	ctx context.Context, tx infrastracture.TX, blogId models.BlogId,
 ) ([]*models.BlogsTags, error) {
