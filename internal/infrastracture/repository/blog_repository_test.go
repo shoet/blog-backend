@@ -225,10 +225,10 @@ func Test_BlogRepository_List(t *testing.T) {
 			},
 		},
 		{
-			id: "isNotPublic",
+			id: "publicな記事のみ取得される",
 			args: args{
-				limit:    nil,
-				isPublic: false,
+				limit:    func() *int64 { var v int64 = 20; return &v }(),
+				isPublic: true,
 				prepare: func(ctx context.Context, tx infrastracture.TX) error {
 					// publicなblogを10個、privateなblogを10個作成する
 					blogs := generateTestBlogsWithPublic(t, 20, clocker.Now())
@@ -257,6 +257,39 @@ func Test_BlogRepository_List(t *testing.T) {
 				count: 10,
 			},
 		},
+		{
+			id: "public/publicでない記事両方とも取得される",
+			args: args{
+				limit:    func() *int64 { var v int64 = 20; return &v }(),
+				isPublic: false,
+				prepare: func(ctx context.Context, tx infrastracture.TX) error {
+					// publicなblogを10個、privateなblogを10個作成する
+					blogs := generateTestBlogsWithPublic(t, 20, clocker.Now())
+					for _, b := range blogs {
+						prepareTask := `
+						INSERT INTO blogs
+							(
+								author_id, title, content, description, 
+								thumbnail_image_file_name, is_public)
+						VALUES
+							($1, $2, $3, $4, $5, $6)
+						`
+						_, err := tx.ExecContext(
+							ctx, prepareTask,
+							b.AuthorId, b.Title, b.Content, b.Description,
+							b.ThumbnailImageFileName, b.IsPublic)
+						if err != nil {
+							return fmt.Errorf("failed to prepare task: %v", err)
+						}
+
+					}
+					return nil
+				},
+			},
+			want: want{
+				count: 20,
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -275,7 +308,7 @@ func Test_BlogRepository_List(t *testing.T) {
 				t.Fatalf("failed to list blogs: %v", err)
 			}
 			if tt.want.count != len(blogs) {
-				t.Fatalf("failed to count blogs: %v", err)
+				t.Fatalf("unmatch blogs count want: %d, got: %d", tt.want.count, len(blogs))
 			}
 
 		})
