@@ -171,6 +171,33 @@ func (r *BlogRepository) ListByTag(
 	return blogs, nil
 }
 
+func (r *BlogRepository) ListByKeyword(
+	ctx context.Context, tx infrastracture.TX, keyword string, isPublicOnly bool,
+) (models.Blogs, error) {
+	builder := goqu.
+		From("blogs").
+		Where(goqu.ExOr{
+			"title":       goqu.Op{"like": "%" + keyword + "%"},
+			"description": goqu.Op{"like": "%" + keyword + "%"},
+		}).
+		Select("blogs.*")
+	if isPublicOnly {
+		builder = builder.Where(goqu.Ex{"is_public": true})
+	}
+	sql, params, err := builder.ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build sql: %w", err)
+	}
+	var blogs models.Blogs
+	if err := tx.SelectContext(ctx, &blogs, sql, params...); err != nil {
+		return nil, fmt.Errorf("failed to SelectContext: %w", err)
+	}
+	if len(blogs) == 0 {
+		return []*models.Blog{}, nil
+	}
+	return blogs, nil
+}
+
 func (r *BlogRepository) Get(
 	ctx context.Context, tx infrastracture.TX, id models.BlogId,
 ) (*models.Blog, error) {

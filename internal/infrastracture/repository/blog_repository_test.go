@@ -961,6 +961,221 @@ func Test_BlogRepository_ListByTags(t *testing.T) {
 	}
 }
 
+func Test_BlogRepository_ListByKeyword(t *testing.T) {
+	clocker := &clocker.FiexedClocker{}
+	ctx := context.Background()
+	db, err := testutil.NewDBPostgreSQLForTest(t, ctx)
+	if err != nil {
+		t.Fatalf("failed to create db: %v", err)
+	}
+	testutil.RepositoryTestPrepare(t, ctx, db)
+
+	sut := repository.NewBlogRepository(clocker)
+	type args struct {
+		prepare      func(ctx context.Context, tx infrastracture.TX) error
+		keyword      string
+		isPublicOnly bool
+	}
+	type wants struct {
+		blogs models.Blogs
+		err   error
+	}
+	tests := []struct {
+		name  string
+		args  args
+		wants wants
+	}{
+		{
+			name: "本文に`keyword`が含まれている",
+			args: args{
+				prepare: func(ctx context.Context, tx infrastracture.TX) error {
+					// 検索対象のblogを作成
+					blog := &models.Blog{
+						AuthorId:               1,
+						Title:                  "aaakeywordaaa",
+						Content:                "content",
+						Description:            "description",
+						ThumbnailImageFileName: "thumbnail_image_file_name",
+						IsPublic:               true,
+					}
+					// blogsにinsert
+					_, err := sut.Add(ctx, tx, blog)
+					if err != nil {
+						return fmt.Errorf("failed to Add blog: %w", err)
+					}
+
+					// 検索対象外のblogを作成
+					blog.Title = "aaa"
+					_, err = sut.Add(ctx, tx, blog)
+					if err != nil {
+						return fmt.Errorf("failed to Add blog: %w", err)
+					}
+					return nil
+				},
+				keyword:      "keyword",
+				isPublicOnly: false,
+			},
+			wants: wants{
+				blogs: models.Blogs{
+					{
+						AuthorId:               1,
+						Title:                  "aaakeywordaaa",
+						Content:                "content",
+						Description:            "description",
+						ThumbnailImageFileName: "thumbnail_image_file_name",
+						IsPublic:               true,
+					},
+				},
+				err: nil,
+			},
+		},
+		{
+			name: "概要に`description`が含まれている",
+			args: args{
+				prepare: func(ctx context.Context, tx infrastracture.TX) error {
+					// 検索対象のblogを作成
+					blog := &models.Blog{
+						AuthorId:               1,
+						Title:                  "title",
+						Content:                "content",
+						Description:            "aaadescriptionaaa",
+						ThumbnailImageFileName: "thumbnail_image_file_name",
+						IsPublic:               true,
+					}
+					// blogsにinsert
+					_, err := sut.Add(ctx, tx, blog)
+					if err != nil {
+						return fmt.Errorf("failed to Add blog: %w", err)
+					}
+
+					// 検索対象外のblogを作成
+					blog.Description = "aaa"
+					_, err = sut.Add(ctx, tx, blog)
+					if err != nil {
+						return fmt.Errorf("failed to Add blog: %w", err)
+					}
+					return nil
+				},
+				keyword:      "description",
+				isPublicOnly: false,
+			},
+			wants: wants{
+				blogs: models.Blogs{
+					{
+						AuthorId:               1,
+						Title:                  "title",
+						Content:                "content",
+						Description:            "aaadescriptionaaa",
+						ThumbnailImageFileName: "thumbnail_image_file_name",
+						IsPublic:               true,
+					},
+				},
+				err: nil,
+			},
+		},
+		{
+			name: "公開記事のみ検索する",
+			args: args{
+				prepare: func(ctx context.Context, tx infrastracture.TX) error {
+					blog := &models.Blog{
+						AuthorId:               1,
+						Title:                  "aaakeywordaaa",
+						Content:                "content",
+						Description:            "description",
+						ThumbnailImageFileName: "thumbnail_image_file_name",
+						IsPublic:               true,
+					}
+
+					// blogsにinsert
+					_, err := sut.Add(ctx, tx, blog)
+					if err != nil {
+						return fmt.Errorf("failed to Add blog: %w", err)
+					}
+					blog.IsPublic = false
+					// blogsにinsert
+					_, err = sut.Add(ctx, tx, blog)
+					if err != nil {
+						return fmt.Errorf("failed to Add blog: %w", err)
+					}
+					return nil
+				},
+				keyword:      "keyword",
+				isPublicOnly: true,
+			},
+			wants: wants{
+				blogs: models.Blogs{
+					{
+						AuthorId:               1,
+						Title:                  "aaakeywordaaa",
+						Content:                "content",
+						Description:            "description",
+						ThumbnailImageFileName: "thumbnail_image_file_name",
+						IsPublic:               true,
+					},
+				},
+				err: nil,
+			},
+		},
+		{
+			name: "存在しないkeywordを検索する",
+			args: args{
+				prepare: func(ctx context.Context, tx infrastracture.TX) error {
+					blog := &models.Blog{
+						AuthorId:               1,
+						Title:                  "title",
+						Content:                "content",
+						Description:            "description",
+						ThumbnailImageFileName: "thumbnail_image_file_name",
+						IsPublic:               true,
+					}
+					// blogsにinsert
+					_, err := sut.Add(ctx, tx, blog)
+					if err != nil {
+						return fmt.Errorf("failed to Add blog: %w", err)
+					}
+					return nil
+				},
+				keyword: "test",
+			},
+			wants: wants{
+				blogs: models.Blogs{},
+				err:   nil,
+			},
+		},
+		// { // TODO
+		// 	name: "limitのみ適用",
+		// },
+		// { // TODO
+		// 	name: "offset,limitを適用",
+		// },
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+
+			tx := db.MustBegin()
+			defer tx.Rollback()
+
+			if tt.args.prepare != nil {
+				if err := tt.args.prepare(ctx, tx); err != nil {
+					t.Fatalf("failed to prepare: %v", err)
+				}
+			}
+
+			blogs, err := sut.ListByKeyword(ctx, tx, tt.args.keyword, tt.args.isPublicOnly)
+			if err != tt.wants.err {
+				t.Errorf("failed to ListByTag: %v", err)
+			}
+
+			opt := cmpopts.IgnoreFields(models.Blog{}, "Id", "Created", "Modified")
+			if diff := cmp.Diff(tt.wants.blogs, blogs, opt); diff != "" {
+				t.Errorf("differs: (-want +got)\n%s", diff)
+			}
+		})
+	}
+}
+
 // TODO
 func Test_BlogRepository_SelectBlogsTagsByOtherUsingBlog(t *testing.T) {}
 func Test_BlogRepository_SelectBlogsTags(t *testing.T)                 {}
