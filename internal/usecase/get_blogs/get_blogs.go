@@ -12,6 +12,7 @@ import (
 type BlogRepository interface {
 	List(ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions) ([]*models.Blog, error)
 	ListByTag(ctx context.Context, tx infrastracture.TX, tag string, isPublicOnly bool) (models.Blogs, error)
+	ListByKeyword(ctx context.Context, tx infrastracture.TX, keyword string, isPublicOnly bool) (models.Blogs, error)
 }
 
 type Usecase struct {
@@ -58,26 +59,29 @@ func (u *Usecase) Run(ctx context.Context, input *GetBlogsInput) ([]*models.Blog
 		var blogs models.Blogs
 
 		if input.Tag != nil {
+			// タグ検索
 			b, err := u.BlogRepository.ListByTag(ctx, tx, *input.Tag, *input.IsPublic)
 			if err != nil {
 				return nil, fmt.Errorf("failed to list blogs by tag: %v", err)
 			}
 			blogs = b
+		} else if input.KeyWord != nil {
+			// キーワード検索
+			b, err := u.BlogRepository.ListByKeyword(ctx, tx, *input.KeyWord, *input.IsPublic)
+			if err != nil {
+				return nil, fmt.Errorf("failed to list blogs by keyword: %v", err)
+			}
+			blogs = b
 		} else {
+			// 通常の検索
 			b, err := u.BlogRepository.List(ctx, tx, listOption)
 			if err != nil {
 				return nil, fmt.Errorf("failed to list blogs: %v", err)
 			}
-			// タグの検索を優先する
-			if input.Tag != nil {
-				b = blogs.FilterByTag(*input.Tag)
-			} else if input.KeyWord != nil {
-				b = blogs.FilterByKeyword(*input.KeyWord)
-			}
 			blogs = b
 		}
-		return blogs.ToSlice(), nil
 
+		return blogs.ToSlice(), nil
 	})
 
 	if err != nil {
