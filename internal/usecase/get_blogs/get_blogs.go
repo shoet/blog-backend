@@ -11,6 +11,7 @@ import (
 
 type BlogRepository interface {
 	List(ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions) ([]*models.Blog, error)
+	ListByTag(ctx context.Context, tx infrastracture.TX, tag string, isPublicOnly bool) (models.Blogs, error)
 }
 
 type Usecase struct {
@@ -32,6 +33,8 @@ type GetBlogsInput struct {
 	IsPublic *bool
 	Tag      *string
 	KeyWord  *string
+	Offset   *uint
+	Limit    *uint
 }
 
 func NewGetBlogsInput(
@@ -53,17 +56,28 @@ func (u *Usecase) Run(ctx context.Context, input *GetBlogsInput) ([]*models.Blog
 	result, err := transactor.DoInTx(ctx, func(tx infrastracture.TX) (interface{}, error) {
 		listOption := options.NewListBlogOptions(input.IsPublic, nil)
 		var blogs models.Blogs
-		blogs, err := u.BlogRepository.List(ctx, tx, listOption)
-		if err != nil {
-			return nil, fmt.Errorf("failed to list blogs: %v", err)
-		}
-		// タグの検索を優先する
+
 		if input.Tag != nil {
-			blogs = blogs.FilterByTag(*input.Tag)
-		} else if input.KeyWord != nil {
-			blogs = blogs.FilterByKeyword(*input.KeyWord)
+			b, err := u.BlogRepository.ListByTag(ctx, tx, *input.Tag, *input.IsPublic)
+			if err != nil {
+				return nil, fmt.Errorf("failed to list blogs by tag: %v", err)
+			}
+			blogs = b
+		} else {
+			b, err := u.BlogRepository.List(ctx, tx, listOption)
+			if err != nil {
+				return nil, fmt.Errorf("failed to list blogs: %v", err)
+			}
+			// タグの検索を優先する
+			if input.Tag != nil {
+				b = blogs.FilterByTag(*input.Tag)
+			} else if input.KeyWord != nil {
+				b = blogs.FilterByKeyword(*input.KeyWord)
+			}
+			blogs = b
 		}
 		return blogs.ToSlice(), nil
+
 	})
 
 	if err != nil {
