@@ -301,7 +301,10 @@ func Test_BlogRepository_List(t *testing.T) {
 				t.Fatalf("failed to prepare: %v", err)
 			}
 
-			listOption := options.NewListBlogOptions(&tt.args.isPublic, tt.args.limit)
+			listOption, err := options.NewListBlogOptions(&tt.args.isPublic, tt.args.limit)
+			if err != nil {
+				t.Fatalf("failed to create list option: %v", err)
+			}
 
 			blogs, err := sut.List(ctx, tx, listOption)
 			if err != nil {
