@@ -34,7 +34,7 @@ type GetBlogsInput struct {
 	IsPublic *bool
 	Tag      *string
 	KeyWord  *string
-	Offset   *uint
+	LastId   *models.BlogId
 	Limit    *uint
 }
 
@@ -42,11 +42,15 @@ func NewGetBlogsInput(
 	isPublic *bool,
 	tag *string,
 	keyWord *string,
+	lastId *models.BlogId,
+	limit *uint,
 ) *GetBlogsInput {
 	input := new(GetBlogsInput)
 	input.IsPublic = isPublic
 	input.Tag = tag
 	input.KeyWord = keyWord
+	input.LastId = lastId
+	input.Limit = limit
 	return input
 }
 
@@ -55,7 +59,10 @@ func (u *Usecase) Run(ctx context.Context, input *GetBlogsInput) ([]*models.Blog
 	transactor := infrastracture.NewTransactionProvider(u.DB)
 
 	result, err := transactor.DoInTx(ctx, func(tx infrastracture.TX) (interface{}, error) {
-		listOption := options.NewListBlogOptions(input.IsPublic, nil)
+		listOption, err := options.NewListBlogOptions(input.IsPublic, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create list option: %v", err)
+		}
 		var blogs models.Blogs
 
 		if input.Tag != nil {

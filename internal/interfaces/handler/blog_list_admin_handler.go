@@ -22,7 +22,7 @@ func (l *BlogListAdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)
 
-	input := get_blogs.NewGetBlogsInput(nil, nil, nil)
+	input := get_blogs.NewGetBlogsInput(nil, nil, nil, nil, nil)
 	resp, err := l.Usecase.Run(ctx, input)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to list blog: %v", err))
