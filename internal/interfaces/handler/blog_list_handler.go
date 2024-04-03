@@ -2,10 +2,13 @@ package handler
 
 import (
 	"fmt"
+	"net/http"
+	"strconv"
+
+	"github.com/shoet/blog/internal/infrastracture/models"
 	"github.com/shoet/blog/internal/interfaces/response"
 	"github.com/shoet/blog/internal/logging"
 	"github.com/shoet/blog/internal/usecase/get_blogs"
-	"net/http"
 )
 
 type BlogListHandler struct {
@@ -22,8 +25,8 @@ func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)
 
-	isPublic := func() *bool { var v = true; return &v }()
-	input := get_blogs.NewGetBlogsInput(isPublic, nil, nil, nil, nil)
+	isPublicOnly := func() *bool { var v = true; return &v }()
+	input := get_blogs.NewGetBlogsInput(isPublicOnly, nil, nil, nil, nil)
 	v := r.URL.Query()
 	tag := v.Get("tag")
 	if tag != "" {
@@ -32,6 +35,30 @@ func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	keyword := v.Get("keyword")
 	if keyword != "" {
 		input.KeyWord = &keyword
+	}
+	offsetBlogId := v.Get("offset_id")
+	if offsetBlogId != "" {
+		v, err := strconv.Atoi(offsetBlogId)
+		if err != nil {
+			err := fmt.Errorf("offset_id is invalid")
+			logger.Error(err.Error())
+			response.ResponsdBadRequest(w, r, err)
+			return
+		}
+		blogId := models.BlogId(v)
+		input.OffsetBlogId = &blogId
+	}
+	limit := v.Get("limit")
+	if limit != "" {
+		v, err := strconv.Atoi(limit)
+		if err != nil {
+			err := fmt.Errorf("limit is invalid")
+			logger.Error(err.Error())
+			response.ResponsdBadRequest(w, r, err)
+			return
+		}
+		l := uint(v)
+		input.Limit = &l
 	}
 
 	blogs, err := l.Usecase.Run(ctx, input)

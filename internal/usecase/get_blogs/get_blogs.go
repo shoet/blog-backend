@@ -31,25 +31,25 @@ func NewUsecase(
 }
 
 type GetBlogsInput struct {
-	IsPublic *bool
-	Tag      *string
-	KeyWord  *string
-	LastId   *models.BlogId
-	Limit    *uint
+	IsPublicOnly *bool
+	Tag          *string
+	KeyWord      *string
+	OffsetBlogId *models.BlogId
+	Limit        *uint
 }
 
 func NewGetBlogsInput(
-	isPublic *bool,
+	isPublicOnly *bool,
 	tag *string,
 	keyWord *string,
-	lastId *models.BlogId,
+	offsetBlogId *models.BlogId,
 	limit *uint,
 ) *GetBlogsInput {
 	input := new(GetBlogsInput)
-	input.IsPublic = isPublic
+	input.IsPublicOnly = isPublicOnly
 	input.Tag = tag
 	input.KeyWord = keyWord
-	input.LastId = lastId
+	input.OffsetBlogId = offsetBlogId
 	input.Limit = limit
 	return input
 }
@@ -59,7 +59,7 @@ func (u *Usecase) Run(ctx context.Context, input *GetBlogsInput) ([]*models.Blog
 	transactor := infrastracture.NewTransactionProvider(u.DB)
 
 	result, err := transactor.DoInTx(ctx, func(tx infrastracture.TX) (interface{}, error) {
-		listOption, err := options.NewListBlogOptions(input.IsPublic, nil)
+		listOption, err := options.NewListBlogOptions(input.IsPublicOnly, nil)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create list option: %v", err)
 		}
@@ -67,14 +67,14 @@ func (u *Usecase) Run(ctx context.Context, input *GetBlogsInput) ([]*models.Blog
 
 		if input.Tag != nil {
 			// タグ検索
-			b, err := u.BlogRepository.ListByTag(ctx, tx, *input.Tag, *input.IsPublic)
+			b, err := u.BlogRepository.ListByTag(ctx, tx, *input.Tag, *input.IsPublicOnly)
 			if err != nil {
 				return nil, fmt.Errorf("failed to list blogs by tag: %v", err)
 			}
 			blogs = b
 		} else if input.KeyWord != nil {
 			// キーワード検索
-			b, err := u.BlogRepository.ListByKeyword(ctx, tx, *input.KeyWord, *input.IsPublic)
+			b, err := u.BlogRepository.ListByKeyword(ctx, tx, *input.KeyWord, *input.IsPublicOnly)
 			if err != nil {
 				return nil, fmt.Errorf("failed to list blogs by keyword: %v", err)
 			}
