@@ -10,9 +10,17 @@ import (
 )
 
 type BlogRepository interface {
-	List(ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions) ([]*models.Blog, error)
-	ListByTag(ctx context.Context, tx infrastracture.TX, tag string, isPublicOnly bool) (models.Blogs, error)
-	ListByKeyword(ctx context.Context, tx infrastracture.TX, keyword string, isPublicOnly bool) (models.Blogs, error)
+	List(
+		ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions, offsetBlogId *models.BlogId, limit *uint,
+	) ([]*models.Blog, error)
+
+	ListByTag(
+		ctx context.Context, tx infrastracture.TX, tag string, isPublicOnly bool, offsetBlogId *models.BlogId, limit *uint,
+	) (models.Blogs, error)
+
+	ListByKeyword(
+		ctx context.Context, tx infrastracture.TX, keyword string, isPublicOnly bool, offsetBlogId *models.BlogId, limit *uint,
+	) (models.Blogs, error)
 }
 
 type Usecase struct {
@@ -38,22 +46,6 @@ type GetBlogsInput struct {
 	Limit        *uint
 }
 
-func NewGetBlogsInput(
-	isPublicOnly *bool,
-	tag *string,
-	keyWord *string,
-	offsetBlogId *models.BlogId,
-	limit *uint,
-) *GetBlogsInput {
-	input := new(GetBlogsInput)
-	input.IsPublicOnly = isPublicOnly
-	input.Tag = tag
-	input.KeyWord = keyWord
-	input.OffsetBlogId = offsetBlogId
-	input.Limit = limit
-	return input
-}
-
 func (u *Usecase) Run(ctx context.Context, input *GetBlogsInput) ([]*models.Blog, error) {
 
 	transactor := infrastracture.NewTransactionProvider(u.DB)
@@ -67,21 +59,21 @@ func (u *Usecase) Run(ctx context.Context, input *GetBlogsInput) ([]*models.Blog
 
 		if input.Tag != nil {
 			// タグ検索
-			b, err := u.BlogRepository.ListByTag(ctx, tx, *input.Tag, *input.IsPublicOnly)
+			b, err := u.BlogRepository.ListByTag(ctx, tx, *input.Tag, *input.IsPublicOnly, input.OffsetBlogId, input.Limit)
 			if err != nil {
 				return nil, fmt.Errorf("failed to list blogs by tag: %v", err)
 			}
 			blogs = b
 		} else if input.KeyWord != nil {
 			// キーワード検索
-			b, err := u.BlogRepository.ListByKeyword(ctx, tx, *input.KeyWord, *input.IsPublicOnly)
+			b, err := u.BlogRepository.ListByKeyword(ctx, tx, *input.KeyWord, *input.IsPublicOnly, input.OffsetBlogId, input.Limit)
 			if err != nil {
 				return nil, fmt.Errorf("failed to list blogs by keyword: %v", err)
 			}
 			blogs = b
 		} else {
 			// 通常の検索
-			b, err := u.BlogRepository.List(ctx, tx, listOption)
+			b, err := u.BlogRepository.List(ctx, tx, listOption, input.OffsetBlogId, input.Limit)
 			if err != nil {
 				return nil, fmt.Errorf("failed to list blogs: %v", err)
 			}

@@ -76,7 +76,7 @@ func (r *BlogRepository) WithBlogTags(
 }
 
 func (r *BlogRepository) List(
-	ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions,
+	ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions, offsetBlogId *models.BlogId, limit *uint,
 ) ([]*models.Blog, error) {
 	latest := option.Limit
 	builder := goqu.
@@ -133,7 +133,7 @@ func (r *BlogRepository) List(
 
 // ListByTagはタグ名を持つブログを検索する
 func (r *BlogRepository) ListByTag(
-	ctx context.Context, tx infrastracture.TX, tag string, isPublicOnly bool,
+	ctx context.Context, tx infrastracture.TX, tag string, isPublicOnly bool, offsetBlogId *models.BlogId, limit *uint,
 ) (models.Blogs, error) {
 	// TODO
 	// 開始のblogID以降を検索する
@@ -172,7 +172,7 @@ func (r *BlogRepository) ListByTag(
 }
 
 func (r *BlogRepository) ListByKeyword(
-	ctx context.Context, tx infrastracture.TX, keyword string, isPublicOnly bool,
+	ctx context.Context, tx infrastracture.TX, keyword string, isPublicOnly bool, offsetBlogId *models.BlogId, limit *uint,
 ) (models.Blogs, error) {
 	builder := goqu.
 		From("blogs").

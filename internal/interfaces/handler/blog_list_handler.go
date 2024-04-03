@@ -26,7 +26,7 @@ func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	logger := logging.GetLogger(ctx)
 
 	isPublicOnly := func() *bool { var v = true; return &v }()
-	input := get_blogs.NewGetBlogsInput(isPublicOnly, nil, nil, nil, nil)
+	input := &get_blogs.GetBlogsInput{IsPublicOnly: isPublicOnly}
 	v := r.URL.Query()
 	tag := v.Get("tag")
 	if tag != "" {
