@@ -57,7 +57,7 @@ func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			response.ResponsdBadRequest(w, r, err)
 			return
 		}
-		l := uint(v)
+		l := int64(v)
 		input.Limit = &l
 	}
 

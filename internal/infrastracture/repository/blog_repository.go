@@ -76,7 +76,7 @@ func (r *BlogRepository) WithBlogTags(
 }
 
 func (r *BlogRepository) List(
-	ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions, offsetBlogId *models.BlogId, limit *uint,
+	ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions,
 ) ([]*models.Blog, error) {
 	latest := option.Limit
 	builder := goqu.
@@ -133,7 +133,7 @@ func (r *BlogRepository) List(
 
 // ListByTagはタグ名を持つブログを検索する
 func (r *BlogRepository) ListByTag(
-	ctx context.Context, tx infrastracture.TX, tag string, isPublicOnly bool, offsetBlogId *models.BlogId, limit *uint,
+	ctx context.Context, tx infrastracture.TX, tag string, option *options.ListBlogOptions,
 ) (models.Blogs, error) {
 	// TODO
 	// 開始のblogID以降を検索する
@@ -154,7 +154,7 @@ func (r *BlogRepository) ListByTag(
 			goqu.On(goqu.Ex{"blogs.id": goqu.I("b_t.blog_id")}),
 		).
 		Select("blogs.*")
-	if isPublicOnly {
+	if option.IsPublic {
 		builder = builder.Where(goqu.Ex{"is_public": true})
 	}
 	sql, params, err := builder.ToSQL()
@@ -172,7 +172,7 @@ func (r *BlogRepository) ListByTag(
 }
 
 func (r *BlogRepository) ListByKeyword(
-	ctx context.Context, tx infrastracture.TX, keyword string, isPublicOnly bool, offsetBlogId *models.BlogId, limit *uint,
+	ctx context.Context, tx infrastracture.TX, keyword string, option *options.ListBlogOptions,
 ) (models.Blogs, error) {
 	builder := goqu.
 		From("blogs").
@@ -181,7 +181,7 @@ func (r *BlogRepository) ListByKeyword(
 			"description": goqu.Op{"like": "%" + keyword + "%"},
 		}).
 		Select("blogs.*")
-	if isPublicOnly {
+	if option.IsPublic {
 		builder = builder.Where(goqu.Ex{"is_public": true})
 	}
 	sql, params, err := builder.ToSQL()

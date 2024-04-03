@@ -3,11 +3,14 @@ package options
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/shoet/blog/internal/infrastracture/models"
 )
 
 type ListBlogOptions struct {
-	IsPublic bool
-	Limit    int64
+	IsPublic     bool
+	Limit        int64
+	OffsetBlogId *models.BlogId
 }
 
 const DefaultLimit int64 = 10
@@ -18,7 +21,7 @@ var ErrFieldNotFound = fmt.Errorf("field is not found")
 var ErrDefaultValueUnmatchType = fmt.Errorf("defaultValue is type unmatched")
 
 // NewListBlogOptionsはデフォルト値が設定されたListBlogOptionsを生成する
-func NewListBlogOptions(isPublic *bool, limit *int64) (*ListBlogOptions, error) {
+func NewListBlogOptions(isPublic *bool, offset *models.BlogId, limit *int64) (*ListBlogOptions, error) {
 	option := new(ListBlogOptions)
 	if err := SetDefault(option, "IsPublic", isPublic, DefaultIsPublic); err != nil {
 		return nil, fmt.Errorf("failed to set default value IsPublic: %v", err)
@@ -26,6 +29,7 @@ func NewListBlogOptions(isPublic *bool, limit *int64) (*ListBlogOptions, error) 
 	if err := SetDefault(option, "Limit", limit, DefaultLimit); err != nil {
 		return nil, fmt.Errorf("failed to set default value Limit: %v", err)
 	}
+	option.OffsetBlogId = offset
 	return option, nil
 }
 
