@@ -90,6 +90,9 @@ func (r *BlogRepository) List(
 	if option.IsPublic {
 		builder = builder.Where(goqu.Ex{"is_public": true})
 	}
+	if option.OffsetBlogId != nil {
+		builder = builder.Where(goqu.Ex{"id": goqu.Op{"gt": option.OffsetBlogId}})
+	}
 	sql, params, err := builder.ToSQL()
 	if err != nil {
 		return nil, fmt.Errorf("failed to build sql: %w", err)
