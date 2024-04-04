@@ -8,9 +8,9 @@ import (
 )
 
 type ListBlogOptions struct {
-	IsPublic     bool
-	Limit        int64
-	OffsetBlogId *models.BlogId
+	IsPublic bool
+	Limit    int64
+	CursorId *models.BlogId
 }
 
 const DefaultLimit int64 = 10
@@ -29,7 +29,7 @@ func NewListBlogOptions(isPublic *bool, offset *models.BlogId, limit *int64) (*L
 	if err := SetDefault(option, "Limit", limit, DefaultLimit); err != nil {
 		return nil, fmt.Errorf("failed to set default value Limit: %v", err)
 	}
-	option.OffsetBlogId = offset
+	option.CursorId = offset
 	return option, nil
 }
 

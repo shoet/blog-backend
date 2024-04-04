@@ -90,8 +90,8 @@ func (r *BlogRepository) List(
 	if option.IsPublic {
 		builder = builder.Where(goqu.Ex{"is_public": true})
 	}
-	if option.OffsetBlogId != nil {
-		builder = builder.Where(goqu.Ex{"id": goqu.Op{"gt": option.OffsetBlogId}})
+	if option.CursorId != nil {
+		builder = builder.Where(goqu.Ex{"id": goqu.Op{"gt": option.CursorId}})
 	}
 	sql, params, err := builder.ToSQL()
 	if err != nil {

@@ -36,17 +36,17 @@ func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if keyword != "" {
 		input.KeyWord = &keyword
 	}
-	offsetBlogId := v.Get("offset_id")
-	if offsetBlogId != "" {
-		v, err := strconv.Atoi(offsetBlogId)
+	cursor_id := v.Get("cursor_id")
+	if cursor_id != "" {
+		v, err := strconv.Atoi(cursor_id)
 		if err != nil {
-			err := fmt.Errorf("offset_id is invalid")
+			err := fmt.Errorf("cursor_id is invalid")
 			logger.Error(err.Error())
 			response.ResponsdBadRequest(w, r, err)
 			return
 		}
 		blogId := models.BlogId(v)
-		input.OffsetBlogId = &blogId
+		input.CursorId = &blogId
 	}
 	limit := v.Get("limit")
 	if limit != "" {
