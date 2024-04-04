@@ -955,8 +955,13 @@ func Test_BlogRepository_ListByTags(t *testing.T) {
 					t.Fatalf("failed to prepare: %v", err)
 				}
 			}
+			// TODO 修正
+			option, err := options.NewListBlogOptions(&tt.args.isPublicOnly, nil, nil)
+			if err != nil {
+				t.Fatalf("failed to create list option: %v", err)
+			}
 
-			blogs, err := sut.ListByTag(ctx, tx, tt.args.tag, tt.args.isPublicOnly)
+			blogs, err := sut.ListByTag(ctx, tx, tt.args.tag, option)
 			if err != tt.wants.err {
 				t.Errorf("failed to ListByTag: %v", err)
 			}
@@ -1171,7 +1176,13 @@ func Test_BlogRepository_ListByKeyword(t *testing.T) {
 				}
 			}
 
-			blogs, err := sut.ListByKeyword(ctx, tx, tt.args.keyword, tt.args.isPublicOnly)
+			// TODO 修正
+			option, err := options.NewListBlogOptions(&tt.args.isPublicOnly, nil, nil)
+			if err != nil {
+				t.Fatalf("failed to create list option: %v", err)
+			}
+
+			blogs, err := sut.ListByKeyword(ctx, tx, tt.args.keyword, option)
 			if err != tt.wants.err {
 				t.Errorf("failed to ListByTag: %v", err)
 			}
