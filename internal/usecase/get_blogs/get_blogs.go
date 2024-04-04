@@ -39,11 +39,12 @@ func NewUsecase(
 }
 
 type GetBlogsInput struct {
-	Tag          *string
-	KeyWord      *string
-	IsPublicOnly *bool
-	CursorId     *models.BlogId
-	Limit        *int64
+	Tag           *string
+	KeyWord       *string
+	IsPublicOnly  *bool
+	CursorId      *models.BlogId
+	PageDirection *string
+	Limit         *int64
 }
 
 func (u *Usecase) Run(ctx context.Context, input *GetBlogsInput) ([]*models.Blog, error) {
@@ -51,7 +52,7 @@ func (u *Usecase) Run(ctx context.Context, input *GetBlogsInput) ([]*models.Blog
 	transactor := infrastracture.NewTransactionProvider(u.DB)
 
 	result, err := transactor.DoInTx(ctx, func(tx infrastracture.TX) (interface{}, error) {
-		option, err := options.NewListBlogOptions(input.IsPublicOnly, input.CursorId, input.Limit)
+		option, err := options.NewListBlogOptions(input.IsPublicOnly, input.CursorId, input.Limit, input.PageDirection)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create list option: %v", err)
 		}

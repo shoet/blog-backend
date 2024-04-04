@@ -36,7 +36,7 @@ func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if keyword != "" {
 		input.KeyWord = &keyword
 	}
-	cursor_id := v.Get("cursor_id")
+	cursor_id := v.Get("cursor_id") // ページネーションのカーソルID
 	if cursor_id != "" {
 		v, err := strconv.Atoi(cursor_id)
 		if err != nil {
@@ -47,6 +47,16 @@ func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		blogId := models.BlogId(v)
 		input.CursorId = &blogId
+	}
+	direction := v.Get("direction") // ページネーションの方向
+	if direction != "" {
+		if direction != "prev" && direction != "next" {
+			err := fmt.Errorf("direction is invalid")
+			logger.Error(err.Error())
+			response.ResponsdBadRequest(w, r, err)
+			return
+		}
+		input.PageDirection = &direction
 	}
 	limit := v.Get("limit")
 	if limit != "" {
@@ -74,7 +84,15 @@ func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := response.RespondJSON(w, r, http.StatusOK, blogs); err != nil {
+	type ResponseBody struct {
+		Blog []*models.Blog `json:"blogs"`
+	}
+
+	body := &ResponseBody{
+		Blog: blogs,
+	}
+
+	if err := response.RespondJSON(w, r, http.StatusOK, body); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
 }

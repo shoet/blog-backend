@@ -8,20 +8,22 @@ import (
 )
 
 type ListBlogOptions struct {
-	IsPublic bool
-	Limit    int64
-	CursorId *models.BlogId
+	IsPublic      bool
+	Limit         int64
+	CursorId      *models.BlogId
+	PageDirection string
 }
 
 const DefaultLimit int64 = 10
 const DefaultIsPublic bool = false
+const DefaultPageDirection string = "next"
 
 var ErrNotPointer = fmt.Errorf("v is not pointer")
 var ErrFieldNotFound = fmt.Errorf("field is not found")
 var ErrDefaultValueUnmatchType = fmt.Errorf("defaultValue is type unmatched")
 
 // NewListBlogOptionsはデフォルト値が設定されたListBlogOptionsを生成する
-func NewListBlogOptions(isPublic *bool, offset *models.BlogId, limit *int64) (*ListBlogOptions, error) {
+func NewListBlogOptions(isPublic *bool, cursorId *models.BlogId, limit *int64, pageDirection *string) (*ListBlogOptions, error) {
 	option := new(ListBlogOptions)
 	if err := SetDefault(option, "IsPublic", isPublic, DefaultIsPublic); err != nil {
 		return nil, fmt.Errorf("failed to set default value IsPublic: %v", err)
@@ -29,7 +31,10 @@ func NewListBlogOptions(isPublic *bool, offset *models.BlogId, limit *int64) (*L
 	if err := SetDefault(option, "Limit", limit, DefaultLimit); err != nil {
 		return nil, fmt.Errorf("failed to set default value Limit: %v", err)
 	}
-	option.CursorId = offset
+	if err := SetDefault(option, "PageDirection", pageDirection, DefaultPageDirection); err != nil {
+		return nil, fmt.Errorf("failed to set default value PageDirection: %v", err)
+	}
+	option.CursorId = cursorId
 	return option, nil
 }
 

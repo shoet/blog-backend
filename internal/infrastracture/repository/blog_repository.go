@@ -85,13 +85,18 @@ func (r *BlogRepository) List(
 			"thumbnail_image_file_name", "is_public", "created", "modified",
 		).
 		From("blogs").
-		Order(goqu.I("id").Desc()). // 連番なのでPKでソートする
+		Order(goqu.I("id").Desc()).
 		Limit(uint(latest))
 	if option.IsPublic {
 		builder = builder.Where(goqu.Ex{"is_public": true})
 	}
 	if option.CursorId != nil {
-		builder = builder.Where(goqu.Ex{"id": goqu.Op{"gt": option.CursorId}})
+		if option.PageDirection == "prev" {
+			builder = builder.Where(goqu.Ex{"id": goqu.Op{"gt": option.CursorId}}).Order(goqu.I("id").Asc())
+		}
+		if option.PageDirection == "next" {
+			builder = builder.Where(goqu.Ex{"id": goqu.Op{"lt": option.CursorId}}).Order(goqu.I("id").Desc())
+		}
 	}
 	sql, params, err := builder.ToSQL()
 	if err != nil {
@@ -131,6 +136,7 @@ func (r *BlogRepository) List(
 			Modified:               t.Modified,
 		})
 	}
+	sort.SliceStable(blogs, func(i, j int) bool { return blogs[i].Id > blogs[j].Id })
 	return blogs, nil
 }
 
