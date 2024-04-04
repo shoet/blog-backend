@@ -146,6 +146,7 @@ func Test_BlogRepository_List(t *testing.T) {
 
 	type args struct {
 		limit    *int64
+		offset   *models.BlogId
 		isPublic bool
 		prepare  func(ctx context.Context, tx infrastracture.TX) error
 	}
@@ -164,6 +165,7 @@ func Test_BlogRepository_List(t *testing.T) {
 			args: args{
 				isPublic: true,
 				limit:    func() *int64 { var v int64 = 20; return &v }(),
+				offset:   nil,
 				prepare: func(ctx context.Context, tx infrastracture.TX) error {
 					// blogを20個作成する
 					blogs := generateTestBlogs(t, 20, clocker.Now())
@@ -195,7 +197,8 @@ func Test_BlogRepository_List(t *testing.T) {
 		{
 			id: "limit 10",
 			args: args{
-				limit: func() *int64 { var v int64 = 10; return &v }(),
+				limit:  func() *int64 { var v int64 = 10; return &v }(),
+				offset: nil,
 				prepare: func(ctx context.Context, tx infrastracture.TX) error {
 					// blogを20個作成する
 					blogs := generateTestBlogs(t, 20, clocker.Now())
@@ -228,6 +231,7 @@ func Test_BlogRepository_List(t *testing.T) {
 			id: "publicな記事のみ取得される",
 			args: args{
 				limit:    func() *int64 { var v int64 = 20; return &v }(),
+				offset:   nil,
 				isPublic: true,
 				prepare: func(ctx context.Context, tx infrastracture.TX) error {
 					// publicなblogを10個、privateなblogを10個作成する
@@ -261,6 +265,7 @@ func Test_BlogRepository_List(t *testing.T) {
 			id: "public/publicでない記事両方とも取得される",
 			args: args{
 				limit:    func() *int64 { var v int64 = 20; return &v }(),
+				offset:   nil,
 				isPublic: false,
 				prepare: func(ctx context.Context, tx infrastracture.TX) error {
 					// publicなblogを10個、privateなblogを10個作成する
@@ -301,7 +306,7 @@ func Test_BlogRepository_List(t *testing.T) {
 				t.Fatalf("failed to prepare: %v", err)
 			}
 
-			listOption, err := options.NewListBlogOptions(&tt.args.isPublic, tt.args.limit)
+			listOption, err := options.NewListBlogOptions(&tt.args.isPublic, nil, tt.args.limit)
 			if err != nil {
 				t.Fatalf("failed to create list option: %v", err)
 			}
