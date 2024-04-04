@@ -154,6 +154,10 @@ func (t *TransactionProvider) DoInTx(
 	return v, nil
 }
 
+func (t *TransactionProvider) GetTx(ctx context.Context) (TX, error) {
+	return t.db.BeginTxx(ctx, nil)
+}
+
 type SQLQueryLoggerHooks struct{}
 
 func (s *SQLQueryLoggerHooks) Before(

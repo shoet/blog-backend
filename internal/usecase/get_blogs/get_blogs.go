@@ -10,7 +10,17 @@ import (
 )
 
 type BlogRepository interface {
-	List(ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions) ([]*models.Blog, error)
+	List(
+		ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions,
+	) ([]*models.Blog, error)
+
+	ListByTag(
+		ctx context.Context, tx infrastracture.TX, tag string, option *options.ListBlogOptions,
+	) (models.Blogs, error)
+
+	ListByKeyword(
+		ctx context.Context, tx infrastracture.TX, keyword string, option *options.ListBlogOptions,
+	) (models.Blogs, error)
 }
 
 type Usecase struct {
@@ -29,21 +39,11 @@ func NewUsecase(
 }
 
 type GetBlogsInput struct {
-	IsPublic *bool
-	Tag      *string
-	KeyWord  *string
-}
-
-func NewGetBlogsInput(
-	isPublic *bool,
-	tag *string,
-	keyWord *string,
-) *GetBlogsInput {
-	input := new(GetBlogsInput)
-	input.IsPublic = isPublic
-	input.Tag = tag
-	input.KeyWord = keyWord
-	return input
+	Tag          *string
+	KeyWord      *string
+	IsPublicOnly *bool
+	OffsetBlogId *models.BlogId
+	Limit        *int64
 }
 
 func (u *Usecase) Run(ctx context.Context, input *GetBlogsInput) ([]*models.Blog, error) {
@@ -51,18 +51,35 @@ func (u *Usecase) Run(ctx context.Context, input *GetBlogsInput) ([]*models.Blog
 	transactor := infrastracture.NewTransactionProvider(u.DB)
 
 	result, err := transactor.DoInTx(ctx, func(tx infrastracture.TX) (interface{}, error) {
-		listOption := options.NewListBlogOptions(input.IsPublic, nil)
-		var blogs models.Blogs
-		blogs, err := u.BlogRepository.List(ctx, tx, listOption)
+		option, err := options.NewListBlogOptions(input.IsPublicOnly, input.OffsetBlogId, input.Limit)
 		if err != nil {
-			return nil, fmt.Errorf("failed to list blogs: %v", err)
+			return nil, fmt.Errorf("failed to create list option: %v", err)
 		}
-		// タグの検索を優先する
+		var blogs models.Blogs
+
 		if input.Tag != nil {
-			blogs = blogs.FilterByTag(*input.Tag)
+			// タグ検索
+			b, err := u.BlogRepository.ListByTag(ctx, tx, *input.Tag, option)
+			if err != nil {
+				return nil, fmt.Errorf("failed to list blogs by tag: %v", err)
+			}
+			blogs = b
 		} else if input.KeyWord != nil {
-			blogs = blogs.FilterByKeyword(*input.KeyWord)
+			// キーワード検索
+			b, err := u.BlogRepository.ListByKeyword(ctx, tx, *input.KeyWord, option)
+			if err != nil {
+				return nil, fmt.Errorf("failed to list blogs by keyword: %v", err)
+			}
+			blogs = b
+		} else {
+			// 通常の検索
+			b, err := u.BlogRepository.List(ctx, tx, option)
+			if err != nil {
+				return nil, fmt.Errorf("failed to list blogs: %v", err)
+			}
+			blogs = b
 		}
+
 		return blogs.ToSlice(), nil
 	})
 

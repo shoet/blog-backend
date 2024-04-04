@@ -8,6 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.40.2
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/caarlos0/env/v9 v9.0.0
+	github.com/doug-martin/goqu v5.0.0+incompatible
 	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/go-playground/validator/v10 v10.15.5
@@ -48,6 +49,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.17.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.23.2 // indirect
 	github.com/aws/smithy-go v1.15.0 // indirect
+	github.com/c2fo/testify v0.0.0-20150827203832-fba96363964a // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cockroachdb/apd v1.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -77,5 +79,7 @@ require (
 	golang.org/x/tools v0.15.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
+	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
+	gopkg.in/doug-martin/goqu.v5 v5.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

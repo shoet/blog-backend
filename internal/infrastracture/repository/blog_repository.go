@@ -90,6 +90,9 @@ func (r *BlogRepository) List(
 	if option.IsPublic {
 		builder = builder.Where(goqu.Ex{"is_public": true})
 	}
+	if option.OffsetBlogId != nil {
+		builder = builder.Where(goqu.Ex{"id": goqu.Op{"gt": option.OffsetBlogId}})
+	}
 	sql, params, err := builder.ToSQL()
 	if err != nil {
 		return nil, fmt.Errorf("failed to build sql: %w", err)
@@ -127,6 +130,73 @@ func (r *BlogRepository) List(
 			Created:                t.Created,
 			Modified:               t.Modified,
 		})
+	}
+	return blogs, nil
+}
+
+// ListByTagはタグ名を持つブログを検索する
+func (r *BlogRepository) ListByTag(
+	ctx context.Context, tx infrastracture.TX, tag string, option *options.ListBlogOptions,
+) (models.Blogs, error) {
+	// TODO
+	// 開始のblogID以降を検索する
+	// n件でlimitする
+	builder := goqu.
+		From("blogs_tags").
+		Join(
+			goqu.T("tags"),
+			goqu.On(goqu.Ex{"blogs_tags.tag_id": goqu.I("tags.id")}),
+		).
+		Where(goqu.Ex{"tags.name": tag}).
+		Select("blogs_tags.blog_id", "blogs_tags.tag_id", "tags.name").
+		As("b_t")
+	builder = goqu.
+		From("blogs").
+		Join(
+			builder,
+			goqu.On(goqu.Ex{"blogs.id": goqu.I("b_t.blog_id")}),
+		).
+		Select("blogs.*")
+	if option.IsPublic {
+		builder = builder.Where(goqu.Ex{"is_public": true})
+	}
+	sql, params, err := builder.ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build sql: %w", err)
+	}
+	var blogs models.Blogs
+	if err := tx.SelectContext(ctx, &blogs, sql, params...); err != nil {
+		return nil, fmt.Errorf("failed to SelectContext: %w", err)
+	}
+	if len(blogs) == 0 {
+		return []*models.Blog{}, nil
+	}
+	return blogs, nil
+}
+
+func (r *BlogRepository) ListByKeyword(
+	ctx context.Context, tx infrastracture.TX, keyword string, option *options.ListBlogOptions,
+) (models.Blogs, error) {
+	builder := goqu.
+		From("blogs").
+		Where(goqu.ExOr{
+			"title":       goqu.Op{"like": "%" + keyword + "%"},
+			"description": goqu.Op{"like": "%" + keyword + "%"},
+		}).
+		Select("blogs.*")
+	if option.IsPublic {
+		builder = builder.Where(goqu.Ex{"is_public": true})
+	}
+	sql, params, err := builder.ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build sql: %w", err)
+	}
+	var blogs models.Blogs
+	if err := tx.SelectContext(ctx, &blogs, sql, params...); err != nil {
+		return nil, fmt.Errorf("failed to SelectContext: %w", err)
+	}
+	if len(blogs) == 0 {
+		return []*models.Blog{}, nil
 	}
 	return blogs, nil
 }
