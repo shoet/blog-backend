@@ -75,6 +75,7 @@ func (r *BlogRepository) WithBlogTags(
 	return tagResult, nil
 }
 
+// TODO: List()に１本化する
 func (r *BlogRepository) List(
 	ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions,
 ) ([]*models.Blog, error) {
@@ -140,13 +141,9 @@ func (r *BlogRepository) List(
 }
 
 // ListByTagはタグ名を持つブログを検索する
-// TODO: ページング
 func (r *BlogRepository) ListByTag(
 	ctx context.Context, tx infrastracture.TX, tag string, option *options.ListBlogOptions,
 ) (models.Blogs, error) {
-	// TODO
-	// 開始のblogID以降を検索する
-	// n件でlimitする
 	builder := goqu.
 		From("blogs_tags").
 		Join(
