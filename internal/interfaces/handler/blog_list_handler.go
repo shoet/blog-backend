@@ -71,7 +71,7 @@ func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		input.Limit = &l
 	}
 
-	blogs, err := l.Usecase.Run(ctx, input)
+	blogs, prevEOF, nextEOF, err := l.Usecase.Run(ctx, input)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to list blog: %v", err))
 		response.ResponsdInternalServerError(w, r, err)
@@ -85,11 +85,15 @@ func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type ResponseBody struct {
-		Blog []*models.Blog `json:"blogs"`
+		Blog    []*models.Blog `json:"blogs"`
+		PrevEOF bool           `json:"prevEOF"`
+		NextEOF bool           `json:"nextEOF"`
 	}
 
 	body := &ResponseBody{
-		Blog: blogs,
+		Blog:    blogs,
+		PrevEOF: prevEOF,
+		NextEOF: nextEOF,
 	}
 
 	if err := response.RespondJSON(w, r, http.StatusOK, body); err != nil {

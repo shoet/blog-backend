@@ -23,12 +23,15 @@ func (l *BlogListAdminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	logger := logging.GetLogger(ctx)
 
 	input := &get_blogs.GetBlogsInput{}
-	resp, err := l.Usecase.Run(ctx, input)
+	resp, prevEOF, nextEOF, err := l.Usecase.Run(ctx, input)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to list blog: %v", err))
 		response.ResponsdInternalServerError(w, r, err)
 		return
 	}
+	// TODO: 直近は管理画面ではページネーションを使わないため、EOFフラグは使わない
+	_ = prevEOF
+	_ = nextEOF
 	if resp == nil {
 		if err := response.RespondJSON(w, r, http.StatusOK, []interface{}{}); err != nil {
 			logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
