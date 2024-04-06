@@ -822,7 +822,6 @@ func Test_BlogRepository_ListByTags(t *testing.T) {
 					{
 						AuthorId:               1,
 						Title:                  "title",
-						Content:                "content",
 						Description:            "description",
 						ThumbnailImageFileName: "thumbnail_image_file_name",
 						IsPublic:               true,
@@ -888,7 +887,6 @@ func Test_BlogRepository_ListByTags(t *testing.T) {
 					{
 						AuthorId:               1,
 						Title:                  "title",
-						Content:                "content",
 						Description:            "description",
 						ThumbnailImageFileName: "thumbnail_image_file_name",
 						IsPublic:               true,
@@ -1032,7 +1030,6 @@ func Test_BlogRepository_ListByKeyword(t *testing.T) {
 					{
 						AuthorId:               1,
 						Title:                  "aaakeywordaaa",
-						Content:                "content",
 						Description:            "description",
 						ThumbnailImageFileName: "thumbnail_image_file_name",
 						IsPublic:               true,
@@ -1049,7 +1046,6 @@ func Test_BlogRepository_ListByKeyword(t *testing.T) {
 					blog := &models.Blog{
 						AuthorId:               1,
 						Title:                  "title",
-						Content:                "content",
 						Description:            "aaadescriptionaaa",
 						ThumbnailImageFileName: "thumbnail_image_file_name",
 						IsPublic:               true,
@@ -1076,7 +1072,6 @@ func Test_BlogRepository_ListByKeyword(t *testing.T) {
 					{
 						AuthorId:               1,
 						Title:                  "title",
-						Content:                "content",
 						Description:            "aaadescriptionaaa",
 						ThumbnailImageFileName: "thumbnail_image_file_name",
 						IsPublic:               true,
@@ -1119,7 +1114,6 @@ func Test_BlogRepository_ListByKeyword(t *testing.T) {
 					{
 						AuthorId:               1,
 						Title:                  "aaakeywordaaa",
-						Content:                "content",
 						Description:            "description",
 						ThumbnailImageFileName: "thumbnail_image_file_name",
 						IsPublic:               true,
