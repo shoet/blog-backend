@@ -75,23 +75,28 @@ func (r *BlogRepository) WithBlogTags(
 	return tagResult, nil
 }
 
+// TODO: List()に１本化する
 func (r *BlogRepository) List(
 	ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions,
 ) ([]*models.Blog, error) {
-	latest := option.Limit
 	builder := goqu.
 		Select(
 			"id", "author_id", "title", "description",
 			"thumbnail_image_file_name", "is_public", "created", "modified",
 		).
 		From("blogs").
-		Order(goqu.I("id").Desc()). // 連番なのでPKでソートする
-		Limit(uint(latest))
+		Order(goqu.I("id").Desc()).
+		Limit(uint(option.Limit))
 	if option.IsPublic {
 		builder = builder.Where(goqu.Ex{"is_public": true})
 	}
-	if option.OffsetBlogId != nil {
-		builder = builder.Where(goqu.Ex{"id": goqu.Op{"gt": option.OffsetBlogId}})
+	if option.CursorId != nil {
+		if option.PageDirection == "prev" {
+			builder = builder.Where(goqu.Ex{"id": goqu.Op{"gt": option.CursorId}}).Order(goqu.I("id").Asc())
+		}
+		if option.PageDirection == "next" {
+			builder = builder.Where(goqu.Ex{"id": goqu.Op{"lt": option.CursorId}}).Order(goqu.I("id").Desc())
+		}
 	}
 	sql, params, err := builder.ToSQL()
 	if err != nil {
@@ -131,6 +136,7 @@ func (r *BlogRepository) List(
 			Modified:               t.Modified,
 		})
 	}
+	sort.SliceStable(blogs, func(i, j int) bool { return blogs[i].Id > blogs[j].Id })
 	return blogs, nil
 }
 
@@ -138,9 +144,6 @@ func (r *BlogRepository) List(
 func (r *BlogRepository) ListByTag(
 	ctx context.Context, tx infrastracture.TX, tag string, option *options.ListBlogOptions,
 ) (models.Blogs, error) {
-	// TODO
-	// 開始のblogID以降を検索する
-	// n件でlimitする
 	builder := goqu.
 		From("blogs_tags").
 		Join(
@@ -156,9 +159,22 @@ func (r *BlogRepository) ListByTag(
 			builder,
 			goqu.On(goqu.Ex{"blogs.id": goqu.I("b_t.blog_id")}),
 		).
-		Select("blogs.*")
+		Order(goqu.I("id").Desc()).
+		Select(
+			"id", "author_id", "title", "description",
+			"thumbnail_image_file_name", "is_public", "created", "modified",
+		).
+		Limit(uint(option.Limit))
 	if option.IsPublic {
 		builder = builder.Where(goqu.Ex{"is_public": true})
+	}
+	if option.CursorId != nil {
+		if option.PageDirection == "prev" {
+			builder = builder.Where(goqu.Ex{"id": goqu.Op{"gt": option.CursorId}}).Order(goqu.I("id").Asc())
+		}
+		if option.PageDirection == "next" {
+			builder = builder.Where(goqu.Ex{"id": goqu.Op{"lt": option.CursorId}}).Order(goqu.I("id").Desc())
+		}
 	}
 	sql, params, err := builder.ToSQL()
 	if err != nil {
@@ -171,9 +187,11 @@ func (r *BlogRepository) ListByTag(
 	if len(blogs) == 0 {
 		return []*models.Blog{}, nil
 	}
+	sort.SliceStable(blogs, func(i, j int) bool { return blogs[i].Id > blogs[j].Id })
 	return blogs, nil
 }
 
+// TODO: ページング
 func (r *BlogRepository) ListByKeyword(
 	ctx context.Context, tx infrastracture.TX, keyword string, option *options.ListBlogOptions,
 ) (models.Blogs, error) {
@@ -183,9 +201,22 @@ func (r *BlogRepository) ListByKeyword(
 			"title":       goqu.Op{"like": "%" + keyword + "%"},
 			"description": goqu.Op{"like": "%" + keyword + "%"},
 		}).
-		Select("blogs.*")
+		Order(goqu.I("id").Desc()).
+		Select(
+			"id", "author_id", "title", "description",
+			"thumbnail_image_file_name", "is_public", "created", "modified",
+		).
+		Limit(uint(option.Limit))
 	if option.IsPublic {
 		builder = builder.Where(goqu.Ex{"is_public": true})
+	}
+	if option.CursorId != nil {
+		if option.PageDirection == "prev" {
+			builder = builder.Where(goqu.Ex{"id": goqu.Op{"gt": option.CursorId}}).Order(goqu.I("id").Asc())
+		}
+		if option.PageDirection == "next" {
+			builder = builder.Where(goqu.Ex{"id": goqu.Op{"lt": option.CursorId}}).Order(goqu.I("id").Desc())
+		}
 	}
 	sql, params, err := builder.ToSQL()
 	if err != nil {
@@ -198,6 +229,7 @@ func (r *BlogRepository) ListByKeyword(
 	if len(blogs) == 0 {
 		return []*models.Blog{}, nil
 	}
+	sort.SliceStable(blogs, func(i, j int) bool { return blogs[i].Id > blogs[j].Id })
 	return blogs, nil
 }
 

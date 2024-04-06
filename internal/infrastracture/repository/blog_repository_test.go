@@ -306,7 +306,7 @@ func Test_BlogRepository_List(t *testing.T) {
 				t.Fatalf("failed to prepare: %v", err)
 			}
 
-			listOption, err := options.NewListBlogOptions(&tt.args.isPublic, nil, tt.args.limit)
+			listOption, err := options.NewListBlogOptions(&tt.args.isPublic, nil, tt.args.limit, nil)
 			if err != nil {
 				t.Fatalf("failed to create list option: %v", err)
 			}
@@ -318,7 +318,6 @@ func Test_BlogRepository_List(t *testing.T) {
 			if tt.want.count != len(blogs) {
 				t.Fatalf("unmatch blogs count want: %d, got: %d", tt.want.count, len(blogs))
 			}
-
 		})
 	}
 }
@@ -823,7 +822,6 @@ func Test_BlogRepository_ListByTags(t *testing.T) {
 					{
 						AuthorId:               1,
 						Title:                  "title",
-						Content:                "content",
 						Description:            "description",
 						ThumbnailImageFileName: "thumbnail_image_file_name",
 						IsPublic:               true,
@@ -889,7 +887,6 @@ func Test_BlogRepository_ListByTags(t *testing.T) {
 					{
 						AuthorId:               1,
 						Title:                  "title",
-						Content:                "content",
 						Description:            "description",
 						ThumbnailImageFileName: "thumbnail_image_file_name",
 						IsPublic:               true,
@@ -956,7 +953,7 @@ func Test_BlogRepository_ListByTags(t *testing.T) {
 				}
 			}
 			// TODO 修正
-			option, err := options.NewListBlogOptions(&tt.args.isPublicOnly, nil, nil)
+			option, err := options.NewListBlogOptions(&tt.args.isPublicOnly, nil, nil, nil)
 			if err != nil {
 				t.Fatalf("failed to create list option: %v", err)
 			}
@@ -1033,7 +1030,6 @@ func Test_BlogRepository_ListByKeyword(t *testing.T) {
 					{
 						AuthorId:               1,
 						Title:                  "aaakeywordaaa",
-						Content:                "content",
 						Description:            "description",
 						ThumbnailImageFileName: "thumbnail_image_file_name",
 						IsPublic:               true,
@@ -1050,7 +1046,6 @@ func Test_BlogRepository_ListByKeyword(t *testing.T) {
 					blog := &models.Blog{
 						AuthorId:               1,
 						Title:                  "title",
-						Content:                "content",
 						Description:            "aaadescriptionaaa",
 						ThumbnailImageFileName: "thumbnail_image_file_name",
 						IsPublic:               true,
@@ -1077,7 +1072,6 @@ func Test_BlogRepository_ListByKeyword(t *testing.T) {
 					{
 						AuthorId:               1,
 						Title:                  "title",
-						Content:                "content",
 						Description:            "aaadescriptionaaa",
 						ThumbnailImageFileName: "thumbnail_image_file_name",
 						IsPublic:               true,
@@ -1120,7 +1114,6 @@ func Test_BlogRepository_ListByKeyword(t *testing.T) {
 					{
 						AuthorId:               1,
 						Title:                  "aaakeywordaaa",
-						Content:                "content",
 						Description:            "description",
 						ThumbnailImageFileName: "thumbnail_image_file_name",
 						IsPublic:               true,
@@ -1177,7 +1170,7 @@ func Test_BlogRepository_ListByKeyword(t *testing.T) {
 			}
 
 			// TODO 修正
-			option, err := options.NewListBlogOptions(&tt.args.isPublicOnly, nil, nil)
+			option, err := options.NewListBlogOptions(&tt.args.isPublicOnly, nil, nil, nil)
 			if err != nil {
 				t.Fatalf("failed to create list option: %v", err)
 			}

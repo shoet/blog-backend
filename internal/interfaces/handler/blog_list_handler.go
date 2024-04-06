@@ -36,17 +36,27 @@ func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if keyword != "" {
 		input.KeyWord = &keyword
 	}
-	offsetBlogId := v.Get("offset_id")
-	if offsetBlogId != "" {
-		v, err := strconv.Atoi(offsetBlogId)
+	cursor_id := v.Get("cursor_id") // ページネーションのカーソルID
+	if cursor_id != "" {
+		v, err := strconv.Atoi(cursor_id)
 		if err != nil {
-			err := fmt.Errorf("offset_id is invalid")
+			err := fmt.Errorf("cursor_id is invalid")
 			logger.Error(err.Error())
 			response.ResponsdBadRequest(w, r, err)
 			return
 		}
 		blogId := models.BlogId(v)
-		input.OffsetBlogId = &blogId
+		input.CursorId = &blogId
+	}
+	direction := v.Get("direction") // ページネーションの方向
+	if direction != "" {
+		if direction != "prev" && direction != "next" {
+			err := fmt.Errorf("direction is invalid")
+			logger.Error(err.Error())
+			response.ResponsdBadRequest(w, r, err)
+			return
+		}
+		input.PageDirection = &direction
 	}
 	limit := v.Get("limit")
 	if limit != "" {
@@ -61,7 +71,7 @@ func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		input.Limit = &l
 	}
 
-	blogs, err := l.Usecase.Run(ctx, input)
+	blogs, prevEOF, nextEOF, err := l.Usecase.Run(ctx, input)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to list blog: %v", err))
 		response.ResponsdInternalServerError(w, r, err)
@@ -74,7 +84,19 @@ func (l *BlogListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := response.RespondJSON(w, r, http.StatusOK, blogs); err != nil {
+	type ResponseBody struct {
+		Blog    []*models.Blog `json:"blogs"`
+		PrevEOF bool           `json:"prevEOF"`
+		NextEOF bool           `json:"nextEOF"`
+	}
+
+	body := &ResponseBody{
+		Blog:    blogs,
+		PrevEOF: prevEOF,
+		NextEOF: nextEOF,
+	}
+
+	if err := response.RespondJSON(w, r, http.StatusOK, body); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
 }
