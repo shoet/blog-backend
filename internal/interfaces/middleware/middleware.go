@@ -65,15 +65,10 @@ func (a *AuthorizationMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		logger := logging.GetLogger(ctx)
-		token := r.Header.Get("Authorization")
-		if token == "" {
-			logger.Error("failed to get authorization header")
-			response.RespondUnauthorized(w, r, fmt.Errorf("failed to get authorization header"))
-			return
-		}
 
-		if !strings.HasPrefix(token, "Bearer ") {
-			logger.Error("failed invalid authorization header")
+		token, err := a.ChallengeAuthorizationHeader(r.Header)
+		if err != nil {
+			logger.Error(fmt.Sprintf("failed to get authorization header: %v", err))
 			response.RespondUnauthorized(w, r, fmt.Errorf("failed to get authorization header"))
 			return
 		}
@@ -90,4 +85,21 @@ func (a *AuthorizationMiddleware) Middleware(next http.Handler) http.Handler {
 		ctx = session.SetUserId(ctx, userId)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// ChallengeAuthorizationHeader は、Authorizationヘッダが大文字・小文字のどちらであっても認証トークンを受け取れるようにする
+func (a *AuthorizationMiddleware) ChallengeAuthorizationHeader(h http.Header) (string, error) {
+	authorizationHeader := []string{"Authorization", "authorization"}
+	for _, a := range authorizationHeader {
+		token := h.Get(a)
+		if token == "" {
+			return "", fmt.Errorf("failed to get authorization header")
+		}
+
+		if !strings.HasPrefix(token, "Bearer ") {
+			return "", fmt.Errorf("failed invalid authorization header")
+		}
+		return token, nil
+	}
+	return "", fmt.Errorf("failed to get authorization header is not found")
 }
