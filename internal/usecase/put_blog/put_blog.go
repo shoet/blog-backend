@@ -96,9 +96,10 @@ func (u *Usecase) Run(ctx context.Context, blog *models.Blog) (*models.Blog, err
 				if err := u.BlogRepository.DeleteTag(ctx, tx, tag.TagId); err != nil {
 					return nil, fmt.Errorf("failed to delete tags: %w", err)
 				}
-				if err := u.BlogRepository.DeleteBlogsTags(ctx, tx, blog.Id, tag.TagId); err != nil {
-					return nil, fmt.Errorf("failed to delete blogs_tags: %w", err)
-				}
+			}
+			// ブログとタグのリレーションを削除
+			if err := u.BlogRepository.DeleteBlogsTags(ctx, tx, blog.Id, tag.TagId); err != nil {
+				return nil, fmt.Errorf("failed to delete blogs_tags: %w", err)
 			}
 		}
 
