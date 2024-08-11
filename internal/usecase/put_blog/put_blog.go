@@ -48,29 +48,28 @@ func (u *Usecase) Run(ctx context.Context, blog *models.Blog) (*models.Blog, err
 
 	transactor := infrastracture.NewTransactionProvider(u.DB)
 	result, err := transactor.DoInTx(ctx, func(tx infrastracture.TX) (interface{}, error) {
+		// このブログに紐づいているタグで、他のブログで使用されているタグを取得する
 		var usingTagsByOtherBlog models.BlogsTagsArray
 		usingTagsByOtherBlog, err = u.BlogRepository.SelectBlogsTagsByOtherUsingBlog(ctx, tx, blog.Id)
 		if err != nil {
 			return nil, fmt.Errorf("failed to select using tags: %w", err)
 		}
-		isUsing := func(tag string) bool { return slices.Contains(usingTagsByOtherBlog.TagNames(), tag) }
 
+		// このブログに紐づいているタグを取得する
 		var currentTags models.BlogsTagsArray
 		currentTags, err := u.BlogRepository.SelectBlogsTags(ctx, tx, blog.Id)
 		if err != nil {
 			return nil, fmt.Errorf("failed to select current tags: %w", err)
 		}
-		isCurrent := func(tag string) bool { return slices.Contains(currentTags.TagNames(), tag) }
 
-		isContainsNew := func(tag string) bool { return slices.Contains(blog.Tags, tag) }
-
+		// 新規のタグ追加
 		for _, tag := range blog.Tags {
-			if !isCurrent(tag) {
+			if !currentTags.Contains(tag) {
 				tags, err := u.BlogRepository.SelectTags(ctx, tx, tag)
 				if err != nil {
 					return nil, fmt.Errorf("failed to select tag: %w", err)
 				}
-				// add tags
+				// タグを追加
 				var tagId models.TagId
 				if len(tags) == 0 {
 					tagId, err = u.BlogRepository.AddTag(ctx, tx, tag)
@@ -80,34 +79,37 @@ func (u *Usecase) Run(ctx context.Context, blog *models.Blog) (*models.Blog, err
 				} else {
 					tagId = tags[0].Id
 				}
-				// add blogs_tags
+				// タグのリレーションを追加
 				if _, err := u.BlogRepository.AddBlogTag(ctx, tx, blog.Id, tagId); err != nil {
 					return nil, fmt.Errorf("failed to add blogs_tags: %w", err)
 				}
 			}
 		}
 
+		// 不要となったタグの削除
 		for _, tag := range currentTags {
-			if isContainsNew(tag.Name) {
+			if slices.Contains(blog.Tags, tag.Name) {
 				continue
 			}
-			if !isUsing(tag.Name) {
-				// delete tags
+			if !usingTagsByOtherBlog.Contains(tag.Name) {
+				// 他のブログで使用されていないタグは削除
 				if err := u.BlogRepository.DeleteTag(ctx, tx, tag.TagId); err != nil {
 					return nil, fmt.Errorf("failed to delete tags: %w", err)
 				}
-				if err := u.BlogRepository.DeleteBlogsTags(ctx, tx, blog.Id, tag.TagId); err != nil {
-					return nil, fmt.Errorf("failed to delete blogs_tags: %w", err)
-				}
+			}
+			// ブログとタグのリレーションを削除
+			if err := u.BlogRepository.DeleteBlogsTags(ctx, tx, blog.Id, tag.TagId); err != nil {
+				return nil, fmt.Errorf("failed to delete blogs_tags: %w", err)
 			}
 		}
 
-		// put blog
+		// ブログの更新
 		id, err := u.BlogRepository.Put(ctx, tx, blog)
 		if err != nil {
 			return nil, fmt.Errorf("failed to put blog: %w", err)
 		}
 
+		// 更新後のブログを取得
 		newBlog, err := u.BlogRepository.Get(ctx, tx, id)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get blog: %w", err)

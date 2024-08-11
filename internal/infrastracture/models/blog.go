@@ -1,6 +1,7 @@
 package models
 
 import (
+	"slices"
 	"strings"
 )
 
@@ -92,8 +93,10 @@ type BlogsTags struct {
 	Name   string `json:"name" db:"name"`
 }
 
+// BlogsTagsArray は、ブログとタグのリレーションを保持する構造体のスライス
 type BlogsTagsArray []*BlogsTags
 
+// TagIds は、リレーションのスライスからタグIDのスライスを取得する関数
 func (arr BlogsTagsArray) TagIds() []TagId {
 	var tags []TagId
 	for _, bt := range arr {
@@ -102,10 +105,16 @@ func (arr BlogsTagsArray) TagIds() []TagId {
 	return tags
 }
 
+// TagNames は、リレーションのスライスからタグ名のスライスを取得する関数
 func (arr BlogsTagsArray) TagNames() []string {
 	var tags []string
 	for _, t := range arr {
 		tags = append(tags, t.Name)
 	}
 	return tags
+}
+
+// Contains は、リレーションのスライスに指定したタグが含まれているかを判定する関数
+func (arr BlogsTagsArray) Contains(tag string) bool {
+	return slices.Contains(arr.TagNames(), tag)
 }
