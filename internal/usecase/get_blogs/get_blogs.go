@@ -23,6 +23,8 @@ type BlogRepository interface {
 	) (models.Blogs, error)
 }
 
+// get_blogs.Usecaseはブログ一覧を取得するユースケースです。
+// ページングはカーソル方式で実装しています。
 type Usecase struct {
 	DB             infrastracture.DB
 	BlogRepository BlogRepository
