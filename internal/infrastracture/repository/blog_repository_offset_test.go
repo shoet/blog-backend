@@ -44,10 +44,6 @@ func Test_BlogRepositoryOffset_List(t *testing.T) {
 		{Id: 15, AuthorId: 1, Title: "title15", Content: "content15", Description: "description15", ThumbnailImageFileName: "thumbnail15", IsPublic: true},
 	}
 
-	ptrInt64 := func(v int64) *int64 {
-		return &v
-	}
-
 	type args struct {
 		option *options.ListBlogOptions
 	}
@@ -66,7 +62,7 @@ func Test_BlogRepositoryOffset_List(t *testing.T) {
 				option: &options.ListBlogOptions{
 					IsPublic: true,
 					Limit:    5,
-					Page:     ptrInt64(1),
+					Page:     1,
 				},
 			},
 			wants: wants{
@@ -86,7 +82,7 @@ func Test_BlogRepositoryOffset_List(t *testing.T) {
 				option: &options.ListBlogOptions{
 					IsPublic: true,
 					Limit:    5,
-					Page:     ptrInt64(2),
+					Page:     2,
 				},
 			},
 			wants: wants{
@@ -106,7 +102,7 @@ func Test_BlogRepositoryOffset_List(t *testing.T) {
 				option: &options.ListBlogOptions{
 					IsPublic: true,
 					Limit:    6,
-					Page:     ptrInt64(3),
+					Page:     3,
 				},
 			},
 			wants: wants{
@@ -123,7 +119,7 @@ func Test_BlogRepositoryOffset_List(t *testing.T) {
 				option: &options.ListBlogOptions{
 					IsPublic: true,
 					Limit:    5,
-					Page:     ptrInt64(4),
+					Page:     4,
 				},
 			},
 			wants: wants{
@@ -136,7 +132,7 @@ func Test_BlogRepositoryOffset_List(t *testing.T) {
 			args: args{
 				option: &options.ListBlogOptions{
 					Limit: 5,
-					Page:  ptrInt64(3),
+					Page:  3,
 				},
 			},
 			wants: wants{
@@ -259,10 +255,6 @@ func Test_BlogRepositoryOffset_ListByTag(t *testing.T) {
 		{BlogId: 1, TagId: 3},
 	}
 
-	ptrInt64 := func(v int64) *int64 {
-		return &v
-	}
-
 	type args struct {
 		option *options.ListBlogOptions
 		tag    string
@@ -282,7 +274,7 @@ func Test_BlogRepositoryOffset_ListByTag(t *testing.T) {
 				option: &options.ListBlogOptions{
 					IsPublic: true,
 					Limit:    3,
-					Page:     ptrInt64(1),
+					Page:     1,
 				},
 				tag: "tag1",
 			},
@@ -301,7 +293,7 @@ func Test_BlogRepositoryOffset_ListByTag(t *testing.T) {
 				option: &options.ListBlogOptions{
 					IsPublic: true,
 					Limit:    3,
-					Page:     ptrInt64(2),
+					Page:     2,
 				},
 				tag: "tag1",
 			},
@@ -319,7 +311,7 @@ func Test_BlogRepositoryOffset_ListByTag(t *testing.T) {
 				option: &options.ListBlogOptions{
 					IsPublic: true,
 					Limit:    5,
-					Page:     ptrInt64(1),
+					Page:     1,
 				},
 				tag: "tag3",
 			},
@@ -340,7 +332,7 @@ func Test_BlogRepositoryOffset_ListByTag(t *testing.T) {
 				option: &options.ListBlogOptions{
 					IsPublic: false,
 					Limit:    5,
-					Page:     ptrInt64(1),
+					Page:     1,
 				},
 				tag: "tag3",
 			},
@@ -520,10 +512,6 @@ func Test_BlogRepositoryOffset_ListByKeyword(t *testing.T) {
 		{Id: 15, AuthorId: 1, Title: "title15ZZZ", Content: "content15CCC", Description: "description15CCC", ThumbnailImageFileName: "thumbnail15", IsPublic: true},
 	}
 
-	ptrInt64 := func(v int64) *int64 {
-		return &v
-	}
-
 	type args struct {
 		keyword string
 		option  *options.ListBlogOptions
@@ -544,7 +532,7 @@ func Test_BlogRepositoryOffset_ListByKeyword(t *testing.T) {
 				option: &options.ListBlogOptions{
 					IsPublic: true,
 					Limit:    2,
-					Page:     ptrInt64(2),
+					Page:     2,
 				},
 			},
 			wants: wants{
@@ -562,7 +550,7 @@ func Test_BlogRepositoryOffset_ListByKeyword(t *testing.T) {
 				option: &options.ListBlogOptions{
 					IsPublic: true,
 					Limit:    3,
-					Page:     ptrInt64(2),
+					Page:     2,
 				},
 			},
 			wants: wants{
