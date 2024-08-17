@@ -76,6 +76,7 @@ func (r *BlogRepository) WithBlogTags(
 }
 
 // TODO: List()に１本化する
+// カーソルページング実装
 func (r *BlogRepository) List(
 	ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions,
 ) ([]*models.Blog, error) {
@@ -141,6 +142,7 @@ func (r *BlogRepository) List(
 }
 
 // ListByTagはタグ名を持つブログを検索する
+// カーソルページング実装
 func (r *BlogRepository) ListByTag(
 	ctx context.Context, tx infrastracture.TX, tag string, option *options.ListBlogOptions,
 ) (models.Blogs, error) {
@@ -192,6 +194,7 @@ func (r *BlogRepository) ListByTag(
 }
 
 // TODO: ページング
+// カーソルページング実装
 func (r *BlogRepository) ListByKeyword(
 	ctx context.Context, tx infrastracture.TX, keyword string, option *options.ListBlogOptions,
 ) (models.Blogs, error) {
