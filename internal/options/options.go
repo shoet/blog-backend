@@ -15,7 +15,7 @@ type ListBlogOptions struct {
 	// PageDirectionはカーソル方式のページネーションで使用するページの方向
 	PageDirection string
 	// Pageはオフセット方式のページネーションで使用するページ番号
-	Page *int64
+	Page int64
 }
 
 const DefaultLimit int64 = 10

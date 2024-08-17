@@ -46,10 +46,10 @@ func (r *BlogRepositoryOffset) List(
 	if option.IsPublic {
 		builder = builder.Where(goqu.Ex{"is_public": true})
 	}
-	if option.Page != nil {
-		offset := r.buildOffset(*option.Page, option.Limit)
-		builder = builder.Offset(uint(offset))
-	}
+
+	offset := r.buildOffset(option.Page, option.Limit)
+	builder = builder.Offset(uint(offset))
+
 	sql, params, err := builder.ToSQL()
 	if err != nil {
 		return nil, fmt.Errorf("failed to build sql: %w", err)
@@ -63,7 +63,7 @@ func (r *BlogRepositoryOffset) List(
 	}
 	blogs := make([]*models.Blog, 0)
 	for _, t := range temp {
-		blogTag, err := r.WithBlogTags(ctx, tx, t.Id)
+		blogTag, err := r.BlogRepository.WithBlogTags(ctx, tx, t.Id)
 		if err != nil {
 			return nil, fmt.Errorf("failed to select blogs_tags: %w", err)
 		}
@@ -119,10 +119,8 @@ func (r *BlogRepositoryOffset) ListByTag(
 	if option.IsPublic {
 		builder = builder.Where(goqu.Ex{"is_public": true})
 	}
-	if option.Page != nil {
-		offset := r.buildOffset(*option.Page, option.Limit)
-		builder = builder.Offset(uint(offset))
-	}
+	offset := r.buildOffset(option.Page, option.Limit)
+	builder = builder.Offset(uint(offset))
 	sql, params, err := builder.ToSQL()
 	if err != nil {
 		return nil, fmt.Errorf("failed to build sql: %w", err)
@@ -156,10 +154,8 @@ func (r *BlogRepositoryOffset) ListByKeyword(
 	if option.IsPublic {
 		builder = builder.Where(goqu.Ex{"is_public": true})
 	}
-	if option.Page != nil {
-		offset := r.buildOffset(*option.Page, option.Limit)
-		builder = builder.Offset(uint(offset))
-	}
+	offset := r.buildOffset(option.Page, option.Limit)
+	builder = builder.Offset(uint(offset))
 	sql, params, err := builder.ToSQL()
 	if err != nil {
 		return nil, fmt.Errorf("failed to build sql: %w", err)
