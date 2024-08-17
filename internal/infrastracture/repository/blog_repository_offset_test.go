@@ -440,7 +440,7 @@ func Test_BlogRepositoryOffset_ListByTag(t *testing.T) {
 			}
 
 			options := cmp.Options{
-				cmpopts.IgnoreFields(models.Blog{}, "Created", "Modified", "Tags", "Content"),
+				cmpopts.IgnoreFields(models.Blog{}, "Created", "Modified", "Content"),
 			}
 
 			if diff := cmp.Diff(tt.wants.blogs, got, options); diff != "" {
@@ -489,4 +489,147 @@ func Test_BlogRepositoryOffset_ListByTag(t *testing.T) {
 		t.Fatalf("failed to delete test data: %v", err)
 	}
 
+}
+
+func Test_BlogRepositoryOffset_ListByKeyword(t *testing.T) {
+	ctx := context.Background()
+	clocker := &clocker.FiexedClocker{}
+	db, err := testutil.NewDBPostgreSQLForTest(t, ctx)
+	if err != nil {
+		t.Fatalf("failed to create db: %v", err)
+	}
+	testutil.RepositoryTestPrepare(t, ctx, db)
+
+	sut := repository.NewBlogRepositoryOffset(clocker)
+
+	testdata := []*models.Blog{
+		{Id: 1, AuthorId: 1, Title: "title1XXX", Content: "content1AAA", Description: "description1AAA", ThumbnailImageFileName: "thumbnail1", IsPublic: false},
+		{Id: 2, AuthorId: 1, Title: "title2XXX", Content: "content2AAA", Description: "description2AAA", ThumbnailImageFileName: "thumbnail2", IsPublic: true},
+		{Id: 3, AuthorId: 1, Title: "title3XXX", Content: "content3AAA", Description: "description3AAA", ThumbnailImageFileName: "thumbnail3", IsPublic: true},
+		{Id: 4, AuthorId: 1, Title: "title4XXX", Content: "content4AAA", Description: "description4AAA", ThumbnailImageFileName: "thumbnail4", IsPublic: true},
+		{Id: 5, AuthorId: 1, Title: "title5XXX", Content: "content5AAA", Description: "description5AAA", ThumbnailImageFileName: "thumbnail5", IsPublic: true},
+		{Id: 6, AuthorId: 1, Title: "title6YYY", Content: "content6BBB", Description: "description6BBB", ThumbnailImageFileName: "thumbnail6", IsPublic: true},
+		{Id: 7, AuthorId: 1, Title: "title7YYY", Content: "content7BBB", Description: "description7BBB", ThumbnailImageFileName: "thumbnail7", IsPublic: true},
+		{Id: 8, AuthorId: 1, Title: "title8YYY", Content: "content8BBB", Description: "description8BBB", ThumbnailImageFileName: "thumbnail8", IsPublic: true},
+		{Id: 9, AuthorId: 1, Title: "title9YYY", Content: "content9BBB", Description: "description9BBB", ThumbnailImageFileName: "thumbnail9", IsPublic: true},
+		{Id: 10, AuthorId: 1, Title: "title10YYY", Content: "content10BBB", Description: "description10BBB", ThumbnailImageFileName: "thumbnail10", IsPublic: true},
+		{Id: 11, AuthorId: 1, Title: "title11ZZZ", Content: "content11CCC", Description: "description11CCC", ThumbnailImageFileName: "thumbnail11", IsPublic: true},
+		{Id: 12, AuthorId: 1, Title: "title12ZZZ", Content: "content12CCC", Description: "description12CCC", ThumbnailImageFileName: "thumbnail12", IsPublic: true},
+		{Id: 13, AuthorId: 1, Title: "title13ZZZ", Content: "content13CCC", Description: "description13CCC", ThumbnailImageFileName: "thumbnail13", IsPublic: true},
+		{Id: 14, AuthorId: 1, Title: "title14ZZZ", Content: "content14CCC", Description: "description14CCC", ThumbnailImageFileName: "thumbnail14", IsPublic: true},
+		{Id: 15, AuthorId: 1, Title: "title15ZZZ", Content: "content15CCC", Description: "description15CCC", ThumbnailImageFileName: "thumbnail15", IsPublic: true},
+	}
+
+	ptrInt64 := func(v int64) *int64 {
+		return &v
+	}
+
+	type args struct {
+		keyword string
+		option  *options.ListBlogOptions
+	}
+	type wants struct {
+		blogs models.Blogs
+		err   error
+	}
+	tests := []struct {
+		name  string
+		args  args
+		wants wants
+	}{
+		{
+			name: "Descriptionで絞り込んで2ページ目を取得する",
+			args: args{
+				keyword: "AAA",
+				option: &options.ListBlogOptions{
+					IsPublic: true,
+					Limit:    2,
+					Page:     ptrInt64(2),
+				},
+			},
+			wants: wants{
+				blogs: []*models.Blog{
+					{Id: 3, AuthorId: 1, Title: "title3XXX", Content: "content3AAA", Description: "description3AAA", ThumbnailImageFileName: "thumbnail3", IsPublic: true},
+					{Id: 2, AuthorId: 1, Title: "title2XXX", Content: "content2AAA", Description: "description2AAA", ThumbnailImageFileName: "thumbnail2", IsPublic: true},
+				},
+				err: nil,
+			},
+		},
+		{
+			name: "Titleで絞り込んで2ページ目を取得する",
+			args: args{
+				keyword: "ZZZ",
+				option: &options.ListBlogOptions{
+					IsPublic: true,
+					Limit:    3,
+					Page:     ptrInt64(2),
+				},
+			},
+			wants: wants{
+				blogs: []*models.Blog{
+					{Id: 12, AuthorId: 1, Title: "title12ZZZ", Content: "content12CCC", Description: "description12CCC", ThumbnailImageFileName: "thumbnail12", IsPublic: true},
+					{Id: 11, AuthorId: 1, Title: "title11ZZZ", Content: "content11CCC", Description: "description11CCC", ThumbnailImageFileName: "thumbnail11", IsPublic: true},
+				},
+				err: nil,
+			},
+		},
+	}
+
+	testdataVals := []goqu.Record{}
+	for _, d := range testdata {
+		goquVal := goqu.Record{
+			"id":                        d.Id,
+			"author_id":                 d.AuthorId,
+			"title":                     d.Title,
+			"content":                   d.Content,
+			"description":               d.Description,
+			"thumbnail_image_file_name": d.ThumbnailImageFileName,
+			"is_public":                 d.IsPublic,
+		}
+		testdataVals = append(testdataVals, goquVal)
+	}
+
+	sql, params, err := goqu.
+		Insert("blogs").
+		Rows(testdataVals).
+		ToSQL()
+	if err != nil {
+		t.Fatalf("failed to build sql: %v", err)
+	}
+	_, err = db.ExecContext(ctx, sql, params...)
+	if err != nil {
+		t.Fatalf("failed to insert test data: %v", err)
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			got, err := sut.ListByKeyword(ctx, db, tt.args.keyword, tt.args.option)
+			if diff := cmp.Diff(tt.wants.err, err); diff != "" {
+				t.Errorf("unexpected error: %v", diff)
+			}
+
+			options := cmp.Options{
+				cmpopts.IgnoreFields(models.Blog{}, "Created", "Modified", "Tags", "Content"),
+			}
+
+			if diff := cmp.Diff(tt.wants.blogs, got, options); diff != "" {
+				t.Errorf("unexpected blogs: %v", diff)
+			}
+
+		})
+	}
+
+	sql, params, err = goqu.
+		Delete("blogs").
+		Where(goqu.I("id").Gte(1)).
+		Where(goqu.I("id").Lte(15)).
+		ToSQL()
+	if err != nil {
+		t.Fatalf("failed to build sql: %v", err)
+	}
+	_, err = db.ExecContext(ctx, sql, params...)
+	if err != nil {
+		t.Fatalf("failed to delete test data: %v", err)
+	}
 }

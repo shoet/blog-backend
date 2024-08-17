@@ -138,3 +138,39 @@ func (r *BlogRepositoryOffset) ListByTag(
 	return blogs, nil
 }
 
+func (r *BlogRepositoryOffset) ListByKeyword(
+	ctx context.Context, tx infrastracture.TX, keyword string, option *options.ListBlogOptions,
+) (models.Blogs, error) {
+	builder := goqu.
+		From("blogs").
+		Where(goqu.ExOr{
+			"title":       goqu.Op{"like": "%" + keyword + "%"},
+			"description": goqu.Op{"like": "%" + keyword + "%"},
+		}).
+		Order(goqu.I("id").Desc()).
+		Select(
+			"id", "author_id", "title", "description",
+			"thumbnail_image_file_name", "is_public", "created", "modified",
+		).
+		Limit(uint(option.Limit))
+	if option.IsPublic {
+		builder = builder.Where(goqu.Ex{"is_public": true})
+	}
+	if option.Page != nil {
+		offset := r.buildOffset(*option.Page, option.Limit)
+		builder = builder.Offset(uint(offset))
+	}
+	sql, params, err := builder.ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build sql: %w", err)
+	}
+	var blogs models.Blogs
+	if err := tx.SelectContext(ctx, &blogs, sql, params...); err != nil {
+		return nil, fmt.Errorf("failed to SelectContext: %w", err)
+	}
+	if len(blogs) == 0 {
+		return []*models.Blog{}, nil
+	}
+	sort.SliceStable(blogs, func(i, j int) bool { return blogs[i].Id > blogs[j].Id })
+	return blogs, nil
+}
