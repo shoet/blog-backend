@@ -34,7 +34,7 @@ func (r *BlogRepositoryOffset) buildOffset(page int64, limit int64) int64 {
 
 func (r *BlogRepositoryOffset) List(
 	ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions,
-) ([]*models.Blog, error) {
+) (models.Blogs, error) {
 	builder := goqu.
 		Select(
 			"id", "author_id", "title", "description",
@@ -87,6 +87,52 @@ func (r *BlogRepositoryOffset) List(
 			Created:                t.Created,
 			Modified:               t.Modified,
 		})
+	}
+	sort.SliceStable(blogs, func(i, j int) bool { return blogs[i].Id > blogs[j].Id })
+	return blogs, nil
+}
+
+func (r *BlogRepositoryOffset) ListByTag(
+	ctx context.Context, tx infrastracture.TX, tag string, option *options.ListBlogOptions,
+) (models.Blogs, error) {
+	builder := goqu.
+		From("blogs_tags").
+		Join(
+			goqu.T("tags"),
+			goqu.On(goqu.Ex{"blogs_tags.tag_id": goqu.I("tags.id")}),
+		).
+		Where(goqu.Ex{"tags.name": tag}).
+		Select("blogs_tags.blog_id", "blogs_tags.tag_id", "tags.name").
+		As("b_t")
+	builder = goqu.
+		From("blogs").
+		Join(
+			builder,
+			goqu.On(goqu.Ex{"blogs.id": goqu.I("b_t.blog_id")}),
+		).
+		Order(goqu.I("id").Desc()).
+		Select(
+			"id", "author_id", "title", "description",
+			"thumbnail_image_file_name", "is_public", "created", "modified",
+		).
+		Limit(uint(option.Limit))
+	if option.IsPublic {
+		builder = builder.Where(goqu.Ex{"is_public": true})
+	}
+	if option.Page != nil {
+		offset := r.buildOffset(*option.Page, option.Limit)
+		builder = builder.Offset(uint(offset))
+	}
+	sql, params, err := builder.ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build sql: %w", err)
+	}
+	var blogs models.Blogs
+	if err := tx.SelectContext(ctx, &blogs, sql, params...); err != nil {
+		return nil, fmt.Errorf("failed to SelectContext: %w", err)
+	}
+	if len(blogs) == 0 {
+		return []*models.Blog{}, nil
 	}
 	sort.SliceStable(blogs, func(i, j int) bool { return blogs[i].Id > blogs[j].Id })
 	return blogs, nil
