@@ -1,8 +1,9 @@
 package models
 
 import (
-	"slices"
 	"strings"
+
+	"golang.org/x/exp/slices"
 )
 
 type BlogId int64

@@ -23,6 +23,7 @@ import (
 	"github.com/shoet/blog/internal/usecase/delete_blog"
 	"github.com/shoet/blog/internal/usecase/get_blog_detail"
 	"github.com/shoet/blog/internal/usecase/get_blogs"
+	"github.com/shoet/blog/internal/usecase/get_blogs_offset_paging"
 	"github.com/shoet/blog/internal/usecase/get_github_contributions"
 	"github.com/shoet/blog/internal/usecase/get_github_contributions_latest_week"
 	"github.com/shoet/blog/internal/usecase/get_tags"
@@ -34,18 +35,19 @@ import (
 )
 
 type MuxDependencies struct {
-	Config           *config.Config
-	DB               infrastracture.DB
-	BlogRepository   *repository.BlogRepository
-	BlogService      *blog_service.BlogService
-	AuthService      *auth_service.AuthService
-	ContentsService  *contents_service.ContentsService
-	JWTer            *jwt_service.JWTService
-	Logger           *logging.Logger
-	Validator        *validator.Validate
-	Cookie           *cookie.CookieController
-	GitHubAPIAdapter *adapter.GitHubV4APIClient
-	Clocker          clocker.Clocker
+	Config               *config.Config
+	DB                   infrastracture.DB
+	BlogRepository       *repository.BlogRepository
+	BlogRepositoryOffset *repository.BlogRepositoryOffset
+	BlogService          *blog_service.BlogService
+	AuthService          *auth_service.AuthService
+	ContentsService      *contents_service.ContentsService
+	JWTer                *jwt_service.JWTService
+	Logger               *logging.Logger
+	Validator            *validator.Validate
+	Cookie               *cookie.CookieController
+	GitHubAPIAdapter     *adapter.GitHubV4APIClient
+	Clocker              clocker.Clocker
 }
 
 func NewMux(
@@ -98,6 +100,13 @@ func setBlogsRoute(
 		buh := handler.NewBlogPutHandler(
 			put_blog.NewUsecase(deps.DB, deps.BlogRepository), deps.Validator)
 		r.With(authMiddleWare.Middleware).Put("/{id}", buh.ServeHTTP)
+	})
+
+	r.Route("/v2/blogs", func(r chi.Router) {
+		blh := handler.NewBlogGetOffsetPagingHandler(
+			get_blogs_offset_paging.NewUsecase(deps.DB, deps.BlogRepositoryOffset),
+		)
+		r.Get("/", blh.ServeHTTP)
 	})
 }
 

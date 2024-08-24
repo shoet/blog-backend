@@ -77,6 +77,7 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 	jwtService := jwt_service.NewJWTService(kvs, &c, []byte(cfg.JWTSecret), cfg.JWTExpiresInSec)
 
 	blogRepo := repository.NewBlogRepository(&c)
+	blogOffsetRepo := repository.NewBlogRepositoryOffset(&c)
 	blogService := blog_service.NewBlogService()
 
 	userRepo, err := repository.NewUserRepository(&c)
@@ -102,18 +103,19 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 	gitHubAPIAdapter := adapter.NewGitHubV4APIClient(cfg.GitHubPersonalAccessToken)
 
 	return &MuxDependencies{
-		Config:           cfg,
-		DB:               db,
-		BlogRepository:   blogRepo,
-		BlogService:      blogService,
-		AuthService:      authService,
-		ContentsService:  contentsService,
-		JWTer:            jwtService,
-		Logger:           logger,
-		Validator:        validator,
-		Cookie:           cookie,
-		GitHubAPIAdapter: gitHubAPIAdapter,
-		Clocker:          &c,
+		Config:               cfg,
+		DB:                   db,
+		BlogRepository:       blogRepo,
+		BlogRepositoryOffset: blogOffsetRepo,
+		BlogService:          blogService,
+		AuthService:          authService,
+		ContentsService:      contentsService,
+		JWTer:                jwtService,
+		Logger:               logger,
+		Validator:            validator,
+		Cookie:               cookie,
+		GitHubAPIAdapter:     gitHubAPIAdapter,
+		Clocker:              &c,
 	}, nil
 }
 
