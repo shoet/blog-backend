@@ -75,7 +75,7 @@ func (l *BlogGetOffsetPagingHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 
 	type ResponseBody struct {
 		Blog       []*models.Blog `json:"blogs"`
-		TotalCount int64          `json:"total_count"`
+		TotalCount int64          `json:"totalCount"`
 	}
 
 	body := &ResponseBody{
