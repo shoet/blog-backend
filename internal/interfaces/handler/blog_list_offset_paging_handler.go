@@ -60,7 +60,7 @@ func (l *BlogGetOffsetPagingHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		input.Page = &p
 	}
 
-	blogs, err := l.Usecase.Run(ctx, input)
+	blogs, blogsCount, err := l.Usecase.Run(ctx, input)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to list blog: %v", err))
 		response.ResponsdInternalServerError(w, r, err)
@@ -74,11 +74,13 @@ func (l *BlogGetOffsetPagingHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	}
 
 	type ResponseBody struct {
-		Blog []*models.Blog `json:"blogs"`
+		Blog       []*models.Blog `json:"blogs"`
+		TotalCount int64          `json:"total_count"`
 	}
 
 	body := &ResponseBody{
-		Blog: blogs,
+		Blog:       blogs,
+		TotalCount: blogsCount,
 	}
 
 	if err := response.RespondJSON(w, r, http.StatusOK, body); err != nil {

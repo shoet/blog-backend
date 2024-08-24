@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -169,4 +170,105 @@ func (r *BlogRepositoryOffset) ListByKeyword(
 	}
 	sort.SliceStable(blogs, func(i, j int) bool { return blogs[i].Id > blogs[j].Id })
 	return blogs, nil
+}
+
+func (r *BlogRepositoryOffset) CountBlogs(
+	ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions,
+) (int64, error) {
+	builder := goqu.Select(goqu.COUNT("*").As("count")).From("blogs")
+	if option.IsPublic {
+		builder = builder.Where(goqu.Ex{"is_public": true})
+	}
+	sql, params, err := builder.ToSQL()
+	if err != nil {
+		return 0, fmt.Errorf("failed to build sql: %w", err)
+	}
+	type Row struct {
+		Count int64 `db:"count"`
+	}
+	var row Row
+	if err := r.scanQueryRowStruct(ctx, tx, &row, sql, params...); err != nil {
+		return 0, fmt.Errorf("failed to scan result: %w", err)
+	}
+	return row.Count, nil
+}
+
+func (r *BlogRepositoryOffset) CountBlogsByTag(
+	ctx context.Context, tx infrastracture.TX, tag string, option *options.ListBlogOptions,
+) (int64, error) {
+	builder := goqu.
+		From("blogs_tags").
+		Join(
+			goqu.T("tags"),
+			goqu.On(goqu.Ex{"blogs_tags.tag_id": goqu.I("tags.id")}),
+		).
+		Where(goqu.Ex{"tags.name": tag}).
+		Select("blogs_tags.blog_id", "blogs_tags.tag_id", "tags.name").
+		As("b_t")
+	builder = goqu.
+		From("blogs").
+		Join(
+			builder,
+			goqu.On(goqu.Ex{"blogs.id": goqu.I("b_t.blog_id")}),
+		).
+		Select(goqu.COUNT("*").As("count"))
+	if option.IsPublic {
+		builder = builder.Where(goqu.Ex{"is_public": true})
+	}
+	sql, params, err := builder.ToSQL()
+	if err != nil {
+		return 0, fmt.Errorf("failed to build sql: %w", err)
+	}
+	type Row struct {
+		Count int64 `db:"count"`
+	}
+	var row Row
+	if err := r.scanQueryRowStruct(ctx, tx, &row, sql, params...); err != nil {
+		return 0, fmt.Errorf("failed to scan result: %w", err)
+	}
+	return row.Count, nil
+}
+
+func (r *BlogRepositoryOffset) CountBlogsByKeyword(
+	ctx context.Context, tx infrastracture.TX, keyword string, option *options.ListBlogOptions,
+) (int64, error) {
+	builder := goqu.
+		From("blogs").
+		Where(goqu.ExOr{
+			"title":       goqu.Op{"like": "%" + keyword + "%"},
+			"description": goqu.Op{"like": "%" + keyword + "%"},
+		}).
+		Select(goqu.COUNT("*").As("count"))
+	if option.IsPublic {
+		builder = builder.Where(goqu.Ex{"is_public": true})
+	}
+	sql, params, err := builder.ToSQL()
+	if err != nil {
+		return 0, fmt.Errorf("failed to build sql: %w", err)
+	}
+	type Row struct {
+		Count int64 `db:"count"`
+	}
+	var row Row
+	if err := r.scanQueryRowStruct(ctx, tx, &row, sql, params...); err != nil {
+		return 0, fmt.Errorf("failed to scan result: %w", err)
+	}
+	return row.Count, nil
+}
+
+// scanQueryRowStruct はクエリの結果を構造体にスキャンします。
+// v はポインタ型である必要があります。
+func (r *BlogRepositoryOffset) scanQueryRowStruct(ctx context.Context, tx infrastracture.TX, v interface{}, sql string, params ...interface{}) error {
+	// v がポインタ型でない場合はエラーを返す
+	if reflect.ValueOf(v).Kind() != reflect.Ptr {
+		return fmt.Errorf("v must be a pointer")
+	}
+	result := tx.QueryRowxContext(ctx, sql, params...)
+	if result.Err() != nil {
+		return fmt.Errorf("failed to select blogs: %w", result.Err())
+	}
+	if err := result.StructScan(v); err != nil {
+		return fmt.Errorf("failed to scan result: %w", err)
+	}
+	return nil
 }
