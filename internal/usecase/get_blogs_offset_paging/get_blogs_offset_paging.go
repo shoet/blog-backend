@@ -74,7 +74,7 @@ func (u *Usecase) Run(ctx context.Context, input *Input) ([]*models.Blog, int64,
 	}
 	result, err := transactor.DoInTx(ctx, func(tx infrastracture.TX) (interface{}, error) {
 		var blogs models.Blogs
-		var blogsCount int64 = 0
+		var blogsCount int64
 
 		if input.Tag != nil {
 			// タグ検索
