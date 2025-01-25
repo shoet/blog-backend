@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	_ "github.com/jackc/pgx/stdlib"
+	"github.com/lib/pq"
 	"github.com/shoet/blog/internal/config"
 	"github.com/shoet/blog/internal/logging"
 
@@ -96,7 +97,13 @@ func NewDBPostgres(ctx context.Context, cfg *config.Config) (*sqlx.DB, error) {
 		dbDsn += fmt.Sprintf("?sslmode=%s", cfg.DBSSLMode)
 	}
 
-	db, err := sql.Open("pgx", dbDsn)
+	// register sql query logger
+	withHooksDriverName, err := InitSQLDriverWithLogs("pgx", &pq.Driver{})
+	if err != nil {
+		return nil, fmt.Errorf("failed init sql driver: %w", err)
+	}
+
+	db, err := sql.Open(withHooksDriverName, dbDsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed open postgres: %w", err)
 	}
