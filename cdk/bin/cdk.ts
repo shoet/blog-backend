@@ -9,4 +9,15 @@ declare module "aws-cdk-lib" {
 }
 
 const app = new cdk.App();
-new BlogAppStack(app, "BlogAppStack", {});
+
+const stage = process.env.STAGE;
+if (!stage) {
+  throw new Error("STAGE is required");
+}
+if (!["dev", "prod"].includes(stage)) {
+  throw new Error("STAGE must be either dev or prod");
+}
+
+console.log(`Deploying to stage: ${stage}`);
+
+new BlogAppStack(app, `BlogAppStack-${stage}`, { stage: stage });

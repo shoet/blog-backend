@@ -100,7 +100,7 @@ export class Lambda extends Construct {
     lambdaEnvironmentKeys.forEach((key) => {
       const value = cdk.aws_ssm.StringParameter.valueForStringParameter(
         this,
-        `/blog-api/${key}`
+        `/blog-api/${this.stage}/${key}`
       );
       env[key] = value;
     });
