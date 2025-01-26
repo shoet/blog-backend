@@ -2,15 +2,18 @@ import { Construct } from "constructs";
 import * as cdk from "aws-cdk-lib";
 
 type Props = {
-  ContentsBucketArn: string;
+  stage: string;
+  contentsBucketArn: string;
 };
 
 export class Lambda extends Construct {
+  public readonly stage: string;
   public readonly function: cdk.aws_lambda.Function;
   public readonly functionUrl: cdk.aws_lambda.FunctionUrl;
 
   constructor(scope: Construct, id: string, props: Props) {
     super(scope, id);
+    this.stage = props.stage;
 
     const cdkRoot = process.cwd();
 
@@ -21,7 +24,7 @@ export class Lambda extends Construct {
           statements: [
             new cdk.aws_iam.PolicyStatement({
               actions: ["s3:GetObject", "s3:PutObject"],
-              resources: [props.ContentsBucketArn],
+              resources: [props.contentsBucketArn],
             }),
           ],
         }),
