@@ -64,7 +64,7 @@ export class Lambda extends Construct {
 
     this.functionUrl = new cdk.aws_lambda.FunctionUrl(this, "FunctionUrl", {
       function: this.function,
-      authType: cdk.aws_lambda.FunctionUrlAuthType.NONE,
+      authType: cdk.aws_lambda.FunctionUrlAuthType.AWS_IAM,
     });
   }
 

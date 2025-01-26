@@ -1,6 +1,6 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { Lambda } from "./constructs";
+import { CloudFront, Lambda } from "./constructs";
 
 export class BlogAppStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: cdk.StackProps) {
@@ -17,15 +17,23 @@ export class BlogAppStack extends cdk.Stack {
       BucketName
     );
 
-    s3Bucket.bucketArn;
-
     const lambda = new Lambda(this, "Lambda", {
       stage: props.stage,
       contentsBucketArn: s3Bucket.bucketArn,
     });
 
+    const cloudfront = new CloudFront(this, "CloudFront", {
+      stage: props.stage,
+      lambdaFunction: lambda.function,
+      lambdaFunctionUrl: lambda.functionUrl,
+    });
+
     new cdk.CfnOutput(this, "FunctionUrl", {
       value: lambda.functionUrl.url,
+    });
+
+    new cdk.CfnOutput(this, "DistributionDomainName", {
+      value: cloudfront.distribution.domainName,
     });
   }
 }
