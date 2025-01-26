@@ -60,7 +60,7 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 	if err != nil {
 		return nil, fmt.Errorf("failed to create db: %w", err)
 	}
-	log.Println("end connection KVS")
+	log.Println("start connection KVS")
 	kvs, err := infrastracture.NewRedisKVS(
 		ctx,
 		cfg.KVSHost,
