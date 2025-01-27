@@ -9,7 +9,6 @@ type Props = {
 export class Lambda extends Construct {
   public readonly stage: string;
   public readonly function: cdk.aws_lambda.Function;
-  public readonly functionUrl: cdk.aws_lambda.FunctionUrl;
 
   constructor(scope: Construct, id: string, props: Props) {
     super(scope, id);
@@ -61,11 +60,6 @@ export class Lambda extends Construct {
         timeout: cdk.Duration.seconds(30),
       }
     );
-
-    this.functionUrl = new cdk.aws_lambda.FunctionUrl(this, "FunctionUrl", {
-      function: this.function,
-      authType: cdk.aws_lambda.FunctionUrlAuthType.AWS_IAM,
-    });
   }
 
   getLambdaEnvironment(): { [key: string]: string } {
