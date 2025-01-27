@@ -1,6 +1,7 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { Lambda } from "./constructs";
+import { APIGateway } from "./constructs/APIGateway";
 
 export class BlogAppStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: cdk.StackProps) {
@@ -22,5 +23,12 @@ export class BlogAppStack extends cdk.Stack {
       contentsBucketArn: s3Bucket.bucketArn,
     });
 
+    const apiGateway = new APIGateway(this, "APIGateway", {
+      lambdaFunction: lambda.function,
+    });
+
+    new cdk.CfnOutput(this, "APIGatewayUrl", {
+      value: apiGateway.httpAPI.url || "",
+    });
   }
 }
