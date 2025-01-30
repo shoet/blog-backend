@@ -1,5 +1,6 @@
 import { Construct } from "constructs";
 import * as cdk from "aws-cdk-lib";
+import { getAppParameter } from "../SSM";
 
 type Props = {
   stage: string;
@@ -92,11 +93,7 @@ export class Lambda extends Construct {
 
     let env: { [key: string]: string } = {};
     lambdaEnvironmentKeys.forEach((key) => {
-      const value = cdk.aws_ssm.StringParameter.valueForStringParameter(
-        this,
-        `/blog-api/${this.stage}/${key}`
-      );
-      env[key] = value;
+      env[key] = getAppParameter(this, this.stage, key);
     });
     // アプリケーション上のポートはLambdaWebAdapterと合わせるためにビルド時に固定
     env["BLOG_APP_PORT"] = "3000";

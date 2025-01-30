@@ -1,2 +1,2 @@
 export * from "./Lambda";
-export * from "./CloudFront";
+export * from "./APIGateway";
