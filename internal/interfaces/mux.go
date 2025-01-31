@@ -70,6 +70,7 @@ func NewMux(
 	return router, nil
 }
 
+// health check
 func setHealthRoute(r chi.Router) {
 	r.Route("/health", func(r chi.Router) {
 		hh := &handler.HealthCheckHandler{}
@@ -77,6 +78,7 @@ func setHealthRoute(r chi.Router) {
 	})
 }
 
+// blogs
 func setBlogsRoute(
 	r chi.Router, deps *MuxDependencies, authMiddleWare *middleware.AuthorizationMiddleware,
 ) {
@@ -110,6 +112,7 @@ func setBlogsRoute(
 	})
 }
 
+// tags
 func setTagsRoute(r chi.Router, deps *MuxDependencies) {
 	r.Route("/tags", func(r chi.Router) {
 		th := handler.NewTagListHandler(*get_tags.NewUsecase(deps.DB, deps.BlogRepository))
@@ -117,6 +120,7 @@ func setTagsRoute(r chi.Router, deps *MuxDependencies) {
 	})
 }
 
+// files
 func setFilesRoute(
 	r chi.Router, deps *MuxDependencies, authMiddleWare *middleware.AuthorizationMiddleware,
 ) {
@@ -133,6 +137,7 @@ func setFilesRoute(
 	})
 }
 
+// auth
 func setAuthRoute(r chi.Router, deps *MuxDependencies) {
 	r.Route("/auth", func(r chi.Router) {
 		ah := handler.NewAuthLoginHandler(
@@ -149,6 +154,7 @@ func setAuthRoute(r chi.Router, deps *MuxDependencies) {
 	})
 }
 
+// admin
 func setAdminRoute(
 	r chi.Router, deps *MuxDependencies, authMiddleWare *middleware.AuthorizationMiddleware,
 ) {
@@ -158,6 +164,7 @@ func setAdminRoute(
 	})
 }
 
+// github
 func setGitHubRoute(
 	r chi.Router, deps *MuxDependencies,
 ) {

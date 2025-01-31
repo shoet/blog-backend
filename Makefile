@@ -1,8 +1,12 @@
 .DEFAULT_GOAL := help
 
-.PHONY: deploy
-deploy: ## Deploy by serverless framework
-	sls deploy --stage production --verbose
+.PHONY: deploy-dev
+deploy-dev: ## Deploy by AWS CDK
+	cd cdk && npm run deploy
+
+.PHONY: deploy-prod
+deploy-prod: ## Deploy by AWS CDK
+	cd cdk && npm run deploy:prod
 
 .PHONY: build
 build: ## Build docker image to local development
