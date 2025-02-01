@@ -4,15 +4,12 @@ import * as cdk from "aws-cdk-lib";
 type Props = {
   lambdaFunction: cdk.aws_lambda.Function;
   acmCertificate: cdk.aws_certificatemanager.ICertificate;
-  domainName: string;
-  route53HostedZoneId: string;
-  route53HostedZoneName: string;
+  customDomainName: string;
 };
 
 export class APIGateway extends Construct {
   public readonly httpAPI: cdk.aws_apigatewayv2.HttpApi;
-  public readonly domainName: cdk.aws_apigatewayv2.DomainName;
-  public readonly apiDomain: string;
+  public readonly customDomainName: cdk.aws_apigatewayv2.DomainName;
 
   constructor(scope: Construct, id: string, props: Props) {
     super(scope, id);
@@ -36,41 +33,26 @@ export class APIGateway extends Construct {
       integration: lambdaIntegration,
     });
 
-    this.domainName = new cdk.aws_apigatewayv2.DomainName(
+    this.customDomainName = new cdk.aws_apigatewayv2.DomainName(
       this,
       "CustomDomain",
       {
         certificate: props.acmCertificate,
-        domainName: props.domainName,
+        domainName: props.customDomainName,
       }
     );
 
     new cdk.aws_apigatewayv2.ApiMapping(this, "BasePathMapping", {
-      domainName: this.domainName,
+      domainName: this.customDomainName,
       api: this.httpAPI,
       stage: this.httpAPI.defaultStage,
     });
+  }
 
-    const hostedZone = cdk.aws_route53.HostedZone.fromHostedZoneAttributes(
-      this,
-      "HostedZone",
-      {
-        hostedZoneId: props.route53HostedZoneId,
-        zoneName: props.route53HostedZoneName,
-      }
+  public getRoute53AliasRecordTarget(): cdk.aws_route53.IAliasRecordTarget {
+    return new cdk.aws_route53_targets.ApiGatewayv2DomainProperties(
+      this.customDomainName.regionalDomainName,
+      this.customDomainName.regionalHostedZoneId
     );
-
-    new cdk.aws_route53.ARecord(this, "AliasRecord", {
-      zone: hostedZone,
-      recordName: `${props.domainName}.`,
-      target: cdk.aws_route53.RecordTarget.fromAlias(
-        new cdk.aws_route53_targets.ApiGatewayv2DomainProperties(
-          this.domainName.regionalDomainName,
-          this.domainName.regionalHostedZoneId
-        )
-      ),
-    });
-
-    this.apiDomain = props.domainName;
   }
 }
