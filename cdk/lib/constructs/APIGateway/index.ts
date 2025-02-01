@@ -3,7 +3,7 @@ import * as cdk from "aws-cdk-lib";
 
 type Props = {
   lambdaFunction: cdk.aws_lambda.Function;
-  acmCertificateArn: string;
+  acmCertificate: cdk.aws_certificatemanager.ICertificate;
   domainName: string;
   route53HostedZoneId: string;
   route53HostedZoneName: string;
@@ -36,18 +36,11 @@ export class APIGateway extends Construct {
       integration: lambdaIntegration,
     });
 
-    const acmCertificate =
-      cdk.aws_certificatemanager.Certificate.fromCertificateArn(
-        this,
-        "ACMCertificate",
-        props.acmCertificateArn
-      );
-
     this.domainName = new cdk.aws_apigatewayv2.DomainName(
       this,
       "CustomDomain",
       {
-        certificate: acmCertificate,
+        certificate: props.acmCertificate,
         domainName: props.domainName,
       }
     );
