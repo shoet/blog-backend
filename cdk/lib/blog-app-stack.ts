@@ -53,12 +53,13 @@ export class BlogAppStack extends cdk.Stack {
       apiGateway.getRoute53AliasRecordTarget()
     );
 
-    new cdk.CfnOutput(this, "APIGatewayUrl", {
+    new cdk.CfnOutput(this, `APIGatewayUrl`, {
       value: apiGateway.httpAPI.url || "",
     });
 
-    new cdk.CfnOutput(this, "APIUrl", {
-      value: `https://${domainName}/`,
+    new cdk.CfnOutput(this, `APIUrl`, {
+      exportName: `BlogAppStackApiUrl-${props.stage}`,
+      value: `https://${domainName}`,
     });
   }
 }
