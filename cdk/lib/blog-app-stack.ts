@@ -1,7 +1,8 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { Lambda, APIGateway } from "./constructs";
+import { Lambda, APIGateway, ACM, Route53 } from "./constructs";
 import { getAppParameter, getInfraParameter } from "./constructs/SSM";
+import { Route53DomainNameWithDot } from "./constructs/Route53";
 
 export class BlogAppStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: cdk.StackProps) {
@@ -18,32 +19,47 @@ export class BlogAppStack extends cdk.Stack {
       contentsBucketArn: s3Bucket.bucketArn,
     });
 
-    const apiGateway = new APIGateway(this, "APIGateway", {
-      lambdaFunction: lambda.function,
-      domainName: getInfraParameter(this, props.stage, "DOMAIN_NAME"),
-      acmCertificateArn: getInfraParameter(
+    const acm = new ACM(this, "ACM", {
+      certificateArn: getInfraParameter(
         this,
         props.stage,
         "ACM_CERTIFICATE_ARN"
       ),
-      route53HostedZoneId: getInfraParameter(
+    });
+
+    const domainName = getInfraParameter(this, props.stage, "DOMAIN_NAME");
+
+    const apiGateway = new APIGateway(this, "APIGateway", {
+      lambdaFunction: lambda.function,
+      customDomainName: domainName,
+      acmCertificate: acm.certificate,
+    });
+
+    const route53 = new Route53(this, "Route53", {
+      hostedZoneId: getInfraParameter(
         this,
         props.stage,
         "ROUTE53_HOSTED_ZONE_ID"
       ),
-      route53HostedZoneName: getInfraParameter(
+      hostedZoneName: getInfraParameter(
         this,
         props.stage,
         "ROUTE53_HOSTED_ZONE_NAME"
       ),
     });
 
-    new cdk.CfnOutput(this, "APIGatewayUrl", {
+    route53.createAliasRecord(
+      new Route53DomainNameWithDot(domainName),
+      apiGateway.getRoute53AliasRecordTarget()
+    );
+
+    new cdk.CfnOutput(this, `APIGatewayUrl`, {
       value: apiGateway.httpAPI.url || "",
     });
 
-    new cdk.CfnOutput(this, "APIUrl", {
-      value: `https://${apiGateway.apiDomain}/`,
+    new cdk.CfnOutput(this, `APIUrl`, {
+      exportName: `BlogAppStackApiUrl-${props.stage}`,
+      value: `https://${domainName}`,
     });
   }
 }
