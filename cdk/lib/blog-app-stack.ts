@@ -75,5 +75,9 @@ export class BlogAppStack extends cdk.Stack {
       exportName: `BlogAppStackApiUrl-${props.stage}`,
       value: `https://${domainName}`,
     });
+
+    new cdk.CfnOutput(this, "LambdaLogGroupName", {
+      value: lambda.function.logGroup.logGroupName,
+    });
   }
 }
