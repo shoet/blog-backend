@@ -58,7 +58,7 @@ export class Lambda extends Construct {
      */
     const deployedImage = new imagedeploy.DockerImageDeployment(
       this,
-      "ExampleImageDeploymentWithTag",
+      "CDKDockerImageDeployment",
       {
         source: imagedeploy.Source.directory(`${cdkRoot}/../`, {
           platform: cdk.aws_ecr_assets.Platform.LINUX_ARM64,
