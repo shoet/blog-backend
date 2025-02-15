@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 import * as cdk from "aws-cdk-lib";
-import { BlogAppStack } from "../lib/blog-app-stack";
+import { BlogBackendAppStack } from "../lib/blog-backend-app-stack";
 
 declare module "aws-cdk-lib" {
   interface StackProps {
     stage: string;
+    commitHash?: string;
   }
 }
 
@@ -18,6 +19,11 @@ if (!["dev", "prod"].includes(stage)) {
   throw new Error("STAGE must be either dev or prod");
 }
 
+const commitHash = process.env.COMMIT_HASH;
+
 console.log(`Deploying to stage: ${stage}`);
 
-new BlogAppStack(app, `BlogAppStack-${stage}`, { stage: stage });
+new BlogBackendAppStack(app, `BlogBackendAppStack-${stage}`, {
+  stage: stage,
+  commitHash: commitHash,
+});

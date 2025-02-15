@@ -8,10 +8,10 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "synth": "STAGE=dev cdk synth",
-    "deploy": "STAGE=dev cdk deploy",
+    "synth": "COMMIT_HASH=$(git rev-parse HEAD) STAGE=dev cdk synth",
+    "deploy": "COMMIT_HASH=$(git rev-parse HEAD) STAGE=dev cdk deploy",
     "destroy": "STAGE=dev cdk destroy",
-    "deploy:prod": "STAGE=prod cdk deploy"
+    "deploy:prod": "COMMIT_HASH=$(git rev-parse HEAD) STAGE=prod cdk deploy"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "aws-cdk-lib": "2.173.2",
+    "cdk-docker-image-deployment": "^0.0.729",
     "constructs": "^10.0.0",
     "zod": "^3.24.1"
   }
