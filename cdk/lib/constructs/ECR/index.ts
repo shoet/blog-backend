@@ -12,6 +12,12 @@ export class ECR extends Construct {
 
     this.repository = new cdk.aws_ecr.Repository(this, "Repository", {
       repositoryName: props.repositoryName,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      lifecycleRules: [
+        {
+          maxImageCount: 3,
+        },
+      ],
     });
   }
 }
