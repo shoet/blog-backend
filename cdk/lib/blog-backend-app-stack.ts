@@ -4,7 +4,7 @@ import { Lambda, APIGateway, ACM, Route53, ECR } from "./constructs";
 import { getAppParameter, getInfraParameter } from "./constructs/SSM";
 import { Route53DomainNameWithDot } from "./constructs/Route53";
 
-export class BlogAppStack extends cdk.Stack {
+export class BlogBackendAppStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: cdk.StackProps) {
     super(scope, id, props);
 
@@ -72,7 +72,7 @@ export class BlogAppStack extends cdk.Stack {
     });
 
     new cdk.CfnOutput(this, "APIUrl", {
-      exportName: `BlogAppStackApiUrl-${props.stage}`,
+      exportName: `BlogBackendAppStackApiUrl-${props.stage}`,
       value: `https://${domainName}`,
     });
 

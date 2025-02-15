@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import * as cdk from "aws-cdk-lib";
-import { BlogAppStack } from "../lib/blog-app-stack";
+import { BlogBackendAppStack } from "../lib/blog-backend-app-stack";
 
 declare module "aws-cdk-lib" {
   interface StackProps {
@@ -23,7 +23,7 @@ const commitHash = process.env.COMMIT_HASH;
 
 console.log(`Deploying to stage: ${stage}`);
 
-new BlogAppStack(app, `BlogAppStack-${stage}`, {
+new BlogBackendAppStack(app, `BlogBackendAppStack-${stage}`, {
   stage: stage,
   commitHash: commitHash,
 });
