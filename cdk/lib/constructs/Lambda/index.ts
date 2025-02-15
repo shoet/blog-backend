@@ -1,10 +1,13 @@
 import { Construct } from "constructs";
 import * as cdk from "aws-cdk-lib";
 import { getAppParameter } from "../SSM";
+import * as imagedeploy from "cdk-docker-image-deployment";
 
 type Props = {
   stage: string;
   contentsBucketArn: string;
+  ecrRepository: cdk.aws_ecr.IRepository;
+  commitHash?: string;
 };
 
 export class Lambda extends Construct {
@@ -45,15 +48,34 @@ export class Lambda extends Construct {
 
     const lambdaEnvironment = this.getLambdaEnvironment();
 
-    this.function = new cdk.aws_lambda.DockerImageFunction(
+    const imageTag = props.commitHash || "latest";
+
+    /* 公式のCDKではcdk.aws_lambda.DockerImageCode.fromImageAsset()で作成したイメージは
+     * CDK用のECRにまとめられてしまうため、cdk-docker-image-deploymentを利用して
+     * 作成したイメージをECRにデプロイする
+     */
+    const deployedImage = new imagedeploy.DockerImageDeployment(
       this,
-      "DockerImageFunction",
+      "ExampleImageDeploymentWithTag",
       {
-        code: cdk.aws_lambda.DockerImageCode.fromImageAsset(`${cdkRoot}/../`, {
+        source: imagedeploy.Source.directory(`${cdkRoot}/../`, {
           platform: cdk.aws_ecr_assets.Platform.LINUX_ARM64,
           buildArgs: {
             PORT: lambdaEnvironment["BLOG_APP_PORT"],
           },
+        }),
+        destination: imagedeploy.Destination.ecr(props.ecrRepository, {
+          tag: imageTag,
+        }),
+      }
+    );
+
+    this.function = new cdk.aws_lambda.DockerImageFunction(
+      this,
+      "DockerImageFunction",
+      {
+        code: cdk.aws_lambda.DockerImageCode.fromEcr(props.ecrRepository, {
+          tag: imageTag,
         }),
         architecture: cdk.aws_lambda.Architecture.ARM_64,
         role: functionRole,
@@ -61,6 +83,8 @@ export class Lambda extends Construct {
         timeout: cdk.Duration.seconds(30),
       }
     );
+
+    this.function.node.addDependency(deployedImage);
   }
 
   getLambdaEnvironment(): { [key: string]: string } {
