@@ -2,10 +2,10 @@
 
 ## リリース
 
-ServerlessFramework でデプロイする。
+AWS CDK でデプロイする。
 
 ```
-make deploy
+make deploy-dev
 ```
 
 ## DB のマイグレーション
