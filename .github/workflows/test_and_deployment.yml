@@ -81,6 +81,7 @@ jobs:
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ env.OIDC_ROLE_ARN }}
+          mask-aws-account-id: true
       - run: go test ./... -coverprofile=coverage.out
       - name: report coverage
         uses: k1LoW/octocov-action@v1
@@ -101,6 +102,7 @@ jobs:
         with:
           role-to-assume: ${{ env.OIDC_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+          mask-aws-account-id: true
       - name: deploy development
         if: ${{ startsWith(github.ref, 'refs/heads/feature') }}
         run: cd cdk && npm install && npm run deploy
