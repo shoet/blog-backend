@@ -8,13 +8,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: golangci-lint
         uses: reviewdog/action-golangci-lint@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           golangci_lint_flags: "--config=./.golangci.yml ./..."
-          fail_on_error: true
+          fail_level: warning
           reporter: "github-pr-review"
 
   test:
@@ -44,6 +44,8 @@ jobs:
       BLOG_KVS_USER: default
       BLOG_KVS_PASS: redispw
       BLOG_KVS_TLS_ENABLED: false
+      OIDC_ROLE_ARN: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
 
     services:
       postgresql:
@@ -70,20 +72,22 @@ jobs:
           - 6379:6379
 
     steps:
-      - uses: actions/setup-go@v3
+      - uses: actions/setup-go@v5
         with:
-          go-version: ">=1.19"
-      - uses: actions/checkout@v3
-      - uses: aws-actions/configure-aws-credentials@v1
+          go-version: ">=1.22"
+          cache: false
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: ${{ secrets.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ env.OIDC_ROLE_ARN }}
       - run: go test ./... -coverprofile=coverage.out
       - name: report coverage
         uses: k1LoW/octocov-action@v1
 
   deploy:
     runs-on: ubuntu-latest
+    needs: [golangci-lint, test]
     permissions:
       id-token: write
     env:
