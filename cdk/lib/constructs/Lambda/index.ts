@@ -21,6 +21,7 @@ export class Lambda extends Construct {
     const stack = cdk.Stack.of(this);
 
     const cdkRoot = process.cwd();
+    const { platform, architecture } = getPlatform();
 
     const functionRole = new cdk.aws_iam.Role(this, "FunctionRole", {
       assumedBy: new cdk.aws_iam.ServicePrincipal("lambda.amazonaws.com"),
@@ -61,10 +62,11 @@ export class Lambda extends Construct {
       "CDKDockerImageDeployment",
       {
         source: imagedeploy.Source.directory(`${cdkRoot}/../`, {
-          platform: cdk.aws_ecr_assets.Platform.LINUX_ARM64,
+          platform: platform,
           buildArgs: {
             PORT: lambdaEnvironment["BLOG_APP_PORT"],
           },
+          target: "production",
         }),
         destination: imagedeploy.Destination.ecr(props.ecrRepository, {
           tag: imageTag,
@@ -89,7 +91,7 @@ export class Lambda extends Construct {
         code: cdk.aws_lambda.DockerImageCode.fromEcr(props.ecrRepository, {
           tag: imageTag,
         }),
-        architecture: cdk.aws_lambda.Architecture.ARM_64,
+        architecture: architecture,
         role: functionRole,
         environment: lambdaEnvironment,
         timeout: cdk.Duration.seconds(30),
@@ -137,3 +139,24 @@ export class Lambda extends Construct {
     return env;
   }
 }
+
+const getPlatform = () => {
+  const architecture = process.arch;
+  switch (architecture) {
+    case "arm64":
+      return {
+        architecture: cdk.aws_lambda.Architecture.ARM_64,
+        platform: cdk.aws_ecr_assets.Platform.LINUX_ARM64,
+      };
+    case "x64":
+      return {
+        architecture: cdk.aws_lambda.Architecture.X86_64,
+        platform: cdk.aws_ecr_assets.Platform.LINUX_AMD64,
+      };
+    default:
+      return {
+        architecture: cdk.aws_lambda.Architecture.X86_64,
+        platform: cdk.aws_ecr_assets.Platform.LINUX_AMD64,
+      };
+  }
+};
