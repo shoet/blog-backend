@@ -86,9 +86,11 @@ jobs:
       - name: report coverage
         uses: k1LoW/octocov-action@v1
 
-  deploy:
+  deploy-development:
     runs-on: ubuntu-latest
     needs: [golangci-lint, test]
+    environment: development
+    if: ${{ github.ref == 'refs/heads/master' }}
     permissions:
       id-token: write
     env:
@@ -104,8 +106,26 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
           mask-aws-account-id: true
       - name: deploy development
-        if: ${{ startsWith(github.ref, 'refs/heads/feature') }}
         run: cd cdk && npm install && npm run deploy
-      - name: deploy production
-        if: ${{ github.ref == 'refs/heads/master' }}
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: [golangci-lint, test]
+    environment: production
+    if: ${{ github.ref == 'refs/heads/master' }}
+    permissions:
+      id-token: write
+    env:
+      OIDC_ROLE_ARN: ${{ secrets.AWS_OIDC_DEPLOY_ROLE_ARN }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.OIDC_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          mask-aws-account-id: true
+      - name: deploy
         run: cd cdk && npm install && npm run deploy:prod
