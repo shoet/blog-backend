@@ -30,7 +30,7 @@ export class Lambda extends Construct {
           statements: [
             new cdk.aws_iam.PolicyStatement({
               actions: ["s3:GetObject", "s3:PutObject"],
-              resources: [props.contentsBucketArn],
+              resources: [`${props.contentsBucketArn}/*`],
             }),
           ],
         }),

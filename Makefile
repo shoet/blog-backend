@@ -36,6 +36,10 @@ ps: ## Check container status
 generate: ## Generate codes
 	go generate ./...
 
+.PHONY: migration
+migration: ## DB migration
+	cd _tools && sql-migrate up -config=dbconfig.yml -env="development-pg"
+
 .PHONY: help
 help: ## Show options
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
