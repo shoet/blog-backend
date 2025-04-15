@@ -11,7 +11,7 @@ declare module "aws-cdk-lib" {
 
 const app = new cdk.App();
 
-const stage = process.env.STAGE;
+const stage = app.node.tryGetContext("STAGE");
 if (!stage) {
   throw new Error("STAGE is required");
 }
@@ -19,7 +19,7 @@ if (!["dev", "prod"].includes(stage)) {
   throw new Error("STAGE must be either dev or prod");
 }
 
-const commitHash = process.env.COMMIT_HASH;
+const commitHash = app.node.tryGetContext("COMMIT_HASH");
 
 console.log(`Deploying to stage: ${stage}`);
 
