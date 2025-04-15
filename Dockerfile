@@ -40,7 +40,7 @@ RUN apt update -y
 COPY --from=builder /app/cmd/bin/api .
 COPY --from=builder /app/cmd/bin/cli .
 
-COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.7.2 /lambda-adapter /opt/extensions/lambda-adapter
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.0 /lambda-adapter /opt/extensions/lambda-adapter
 
 ENV PORT=${PORT:-8080}
 ENV READINESS_CHECK_PATH=/health
