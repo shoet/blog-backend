@@ -1,8 +1,6 @@
 module github.com/shoet/blog
 
-go 1.22.0
-
-toolchain go1.23.2
+go 1.24.2
 
 require (
 	github.com/aws/aws-cdk-go/awscdk/v2 v2.176.0
