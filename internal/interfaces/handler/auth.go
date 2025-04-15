@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -91,14 +92,14 @@ func (a *AuthSessionLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	if token == "" {
 		msg := "failed to get authorization header"
 		logger.Error(msg)
-		response.RespondUnauthorized(w, r, fmt.Errorf(msg))
+		response.RespondUnauthorized(w, r, errors.New(msg))
 		return
 	}
 
 	if !strings.HasPrefix(token, "Bearer ") {
 		msg := "passing invalid authorization header format"
 		logger.Error(msg)
-		response.RespondUnauthorized(w, r, fmt.Errorf(msg))
+		response.RespondUnauthorized(w, r, errors.New(msg))
 		return
 	}
 
