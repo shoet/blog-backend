@@ -144,7 +144,7 @@ export class BlogCDNStack extends cdk.Stack {
         "CloudFrontCloudFrontOriginAccessIdentity",
         {
           cloudFrontOriginAccessIdentityConfig: {
-            comment: `${s3BucketBlog.attrDomainName} CloudFront Origin Access Identity`,
+            comment: `${s3BucketBlog.attrDomainName} ${props.stage} CloudFront Origin Access Identity`,
           },
         }
       );
