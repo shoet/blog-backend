@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import * as cdk from "aws-cdk-lib";
 import { BlogBackendAppStack } from "../lib/blog-backend-app-stack";
-import { BlogCDNStack } from "../lib/blog-cdk-stack";
+import { BlogCDNStack } from "../lib/blog-cdn-stack";
 
 declare module "aws-cdk-lib" {
   interface StackProps {
