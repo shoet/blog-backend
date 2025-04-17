@@ -12,204 +12,53 @@ export class BlogCDNStack extends cdk.Stack {
       `/blog-backend/infra/${props.stage}/CONTENTS_BUCKET_NAME`
     );
 
-    const s3BucketBlog = new cdk.aws_s3.CfnBucket(this, "s3BucketBlog", {
-      publicAccessBlockConfiguration: {
-        restrictPublicBuckets: false,
-        ignorePublicAcls: false,
-        blockPublicPolicy: false,
-        blockPublicAcls: false,
-      },
+    const s3Bucket = new cdk.aws_s3.Bucket(this, "s3BucketBlog", {
       bucketName: bucketName,
-      ownershipControls: {
-        rules: [
-          {
-            objectOwnership: "BucketOwnerPreferred",
-          },
-        ],
-      },
-      bucketEncryption: {
-        serverSideEncryptionConfiguration: [
-          {
-            bucketKeyEnabled: false,
-            serverSideEncryptionByDefault: {
-              sseAlgorithm: "AES256",
-            },
-          },
-        ],
-      },
+      blockPublicAccess: cdk.aws_s3.BlockPublicAccess.BLOCK_ALL,
+      objectOwnership: cdk.aws_s3.ObjectOwnership.BUCKET_OWNER_PREFERRED,
+      encryption: cdk.aws_s3.BucketEncryption.S3_MANAGED,
+      bucketKeyEnabled: false,
     });
-    s3BucketBlog.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.RETAIN;
+    (s3Bucket.node.defaultChild as cdk.aws_s3.CfnBucket).overrideLogicalId(
+      "s3BucketBlog"
+    );
 
-    const cloudFrontCachePolicy = new cdk.aws_cloudfront.CfnCachePolicy(
+    const originAccessControl = new cdk.aws_cloudfront.S3OriginAccessControl(
       this,
-      "CloudFrontCachePolicy",
+      "CloudFrontOriginAccessControl",
       {
-        cachePolicyConfig: {
-          comment:
-            "Policy with caching enabled. Supports Gzip and Brotli compression.",
-          minTtl: 1,
-          maxTtl: 31536000,
-          parametersInCacheKeyAndForwardedToOrigin: {
-            queryStringsConfig: {
-              queryStringBehavior: "none",
-            },
-            enableAcceptEncodingBrotli: true,
-            headersConfig: {
-              headerBehavior: "none",
-            },
-            cookiesConfig: {
-              cookieBehavior: "none",
-            },
-            enableAcceptEncodingGzip: true,
-          },
-          defaultTtl: 86400,
-          name: "Managed-CachingOptimized",
-        },
+        originAccessControlName: s3Bucket.bucketDomainName,
+        signing: cdk.aws_cloudfront.Signing.SIGV4_ALWAYS,
       }
     );
-    cloudFrontCachePolicy.cfnOptions.deletionPolicy =
-      cdk.CfnDeletionPolicy.RETAIN;
+    (
+      originAccessControl.node
+        .defaultChild as cdk.aws_cloudfront.CfnOriginAccessControl
+    ).overrideLogicalId("CloudFrontOriginAccessControl");
 
-    const cloudFrontOriginRequestPolicy =
-      new cdk.aws_cloudfront.CfnOriginRequestPolicy(
-        this,
-        "CloudFrontOriginRequestPolicy",
-        {
-          originRequestPolicyConfig: {
-            queryStringsConfig: {
-              queryStringBehavior: "none",
-            },
-            comment: "Policy for S3 origin with CORS",
-            headersConfig: {
-              headerBehavior: "whitelist",
-              headers: [
-                "origin",
-                "access-control-request-headers",
-                "access-control-request-method",
-              ],
-            },
-            cookiesConfig: {
-              cookieBehavior: "none",
-            },
-            name: "Managed-CORS-S3Origin",
-          },
-        }
-      );
-    cloudFrontOriginRequestPolicy.cfnOptions.deletionPolicy =
-      cdk.CfnDeletionPolicy.RETAIN;
-
-    const cloudFrontOriginAccessControl =
-      new cdk.aws_cloudfront.CfnOriginAccessControl(
-        this,
-        "CloudFrontOriginAccessControl",
-        {
-          originAccessControlConfig: {
-            signingBehavior: "always",
-            description: "",
-            signingProtocol: "sigv4",
-            originAccessControlOriginType: "s3",
-            name: s3BucketBlog.attrDomainName,
-          },
-        }
-      );
-    cloudFrontOriginAccessControl.cfnOptions.deletionPolicy =
-      cdk.CfnDeletionPolicy.DELETE;
-
-    const cloudFrontDistribution = new cdk.aws_cloudfront.CfnDistribution(
+    const distribution = new cdk.aws_cloudfront.Distribution(
       this,
       "CloudFrontDistribution",
       {
-        distributionConfig: {
-          logging: {
-            includeCookies: false,
-            bucket: "",
-            prefix: "",
-          },
-          comment: "",
-          defaultRootObject: "",
-          origins: [
-            {
-              connectionTimeout: 10,
-              originAccessControlId: cloudFrontOriginAccessControl.attrId,
-              connectionAttempts: 3,
-              originCustomHeaders: [],
-              domainName: `${bucketName}.s3.${stack.region}.amazonaws.com`,
-              originShield: {
-                enabled: false,
-              },
-              s3OriginConfig: {},
-              originPath: "",
-              id: `${bucketName}.s3.${stack.region}.amazonaws.com`,
-            },
-          ],
-          viewerCertificate: {
-            cloudFrontDefaultCertificate: true,
-          },
-          priceClass: "PriceClass_All",
-          defaultCacheBehavior: {
-            compress: true,
-            functionAssociations: [],
-            lambdaFunctionAssociations: [],
-            targetOriginId: `${bucketName}.s3.${stack.region}.amazonaws.com`,
-            viewerProtocolPolicy: "allow-all",
-            responseHeadersPolicyId: "5cc3b908-e619-4b99-88e5-2cf7f45965bd", // Managed-CORS-With-Preflight
-            trustedSigners: [],
-            fieldLevelEncryptionId: "",
-            trustedKeyGroups: [],
-            allowedMethods: ["HEAD", "GET"],
-            cachedMethods: ["HEAD", "GET"],
-            smoothStreaming: false,
-            originRequestPolicyId: cloudFrontOriginRequestPolicy.ref,
-            cachePolicyId: cloudFrontCachePolicy.ref,
-          },
-          staging: false,
-          customErrorResponses: [],
-          continuousDeploymentPolicyId: "",
-          originGroups: {
-            quantity: 0,
-            items: [],
-          },
-          enabled: true,
-          aliases: [],
-          ipv6Enabled: true,
-          webAclId: "",
-          httpVersion: "http2",
-          restrictions: {
-            geoRestriction: {
-              locations: [],
-              restrictionType: "none",
-            },
-          },
-          cacheBehaviors: [],
+        defaultBehavior: {
+          origin:
+            cdk.aws_cloudfront_origins.S3BucketOrigin.withOriginAccessControl(
+              s3Bucket,
+              {
+                originAccessControl: originAccessControl,
+              }
+            ),
+          viewerProtocolPolicy:
+            cdk.aws_cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          cachePolicy: cdk.aws_cloudfront.CachePolicy.CACHING_OPTIMIZED,
+          compress: true,
+          cachedMethods: cdk.aws_cloudfront.CachedMethods.CACHE_GET_HEAD,
+          allowedMethods: cdk.aws_cloudfront.AllowedMethods.ALLOW_GET_HEAD,
         },
       }
     );
-    cloudFrontDistribution.cfnOptions.deletionPolicy =
-      cdk.CfnDeletionPolicy.RETAIN;
-
-    const s3BucketPolicyBlog = new cdk.aws_s3.CfnBucketPolicy(
-      this,
-      "S3BucketPolicyBlog",
-      {
-        bucket: s3BucketBlog.ref,
-        policyDocument: {
-          Version: "2012-10-17",
-          Statement: [
-            {
-              Resource: [
-                `${s3BucketBlog.attrArn}/thumbnail/*`,
-                `${s3BucketBlog.attrArn}/content/*`,
-              ],
-              Action: "s3:GetObject",
-              Effect: "Allow",
-              Principal: {
-                Service: "cloudfront.amazonaws.com",
-              },
-            },
-          ],
-        },
-      }
-    );
-    s3BucketPolicyBlog.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.DELETE;
+    (
+      distribution.node.defaultChild as cdk.aws_cloudfront.CfnDistribution
+    ).overrideLogicalId("CloudFrontDistribution");
   }
 }
