@@ -40,29 +40,6 @@ export class BlogCDNStack extends cdk.Stack {
     });
     s3BucketBlog.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.RETAIN;
 
-    const s3BucketPolicyBlog = new cdk.aws_s3.CfnBucketPolicy(
-      this,
-      "S3BucketPolicyBlog",
-      {
-        bucket: s3BucketBlog.ref,
-        policyDocument: {
-          Version: "2012-10-17",
-          Statement: [
-            {
-              Resource: [
-                `${s3BucketBlog.attrArn}/thumbnail/*`,
-                `${s3BucketBlog.attrArn}/content/*`,
-              ],
-              Action: "s3:GetObject",
-              Effect: "Allow",
-              Principal: "*",
-            },
-          ],
-        },
-      }
-    );
-    s3BucketPolicyBlog.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.RETAIN;
-
     const cloudFrontCachePolicy = new cdk.aws_cloudfront.CfnCachePolicy(
       this,
       "CloudFrontCachePolicy",
@@ -93,23 +70,6 @@ export class BlogCDNStack extends cdk.Stack {
     cloudFrontCachePolicy.cfnOptions.deletionPolicy =
       cdk.CfnDeletionPolicy.RETAIN;
 
-    const cloudFrontOriginAccessControl =
-      new cdk.aws_cloudfront.CfnOriginAccessControl(
-        this,
-        "CloudFrontOriginAccessControl",
-        {
-          originAccessControlConfig: {
-            signingBehavior: "always",
-            description: "",
-            signingProtocol: "sigv4",
-            originAccessControlOriginType: "s3",
-            name: s3BucketBlog.attrDomainName,
-          },
-        }
-      );
-    cloudFrontOriginAccessControl.cfnOptions.deletionPolicy =
-      cdk.CfnDeletionPolicy.RETAIN;
-
     const cloudFrontOriginRequestPolicy =
       new cdk.aws_cloudfront.CfnOriginRequestPolicy(
         this,
@@ -138,18 +98,22 @@ export class BlogCDNStack extends cdk.Stack {
     cloudFrontOriginRequestPolicy.cfnOptions.deletionPolicy =
       cdk.CfnDeletionPolicy.RETAIN;
 
-    const cloudFrontCloudFrontOriginAccessIdentity =
-      new cdk.aws_cloudfront.CfnCloudFrontOriginAccessIdentity(
+    const cloudFrontOriginAccessControl =
+      new cdk.aws_cloudfront.CfnOriginAccessControl(
         this,
-        "CloudFrontCloudFrontOriginAccessIdentity",
+        "CloudFrontOriginAccessControl",
         {
-          cloudFrontOriginAccessIdentityConfig: {
-            comment: `${s3BucketBlog.attrDomainName} ${props.stage} CloudFront Origin Access Identity`,
+          originAccessControlConfig: {
+            signingBehavior: "always",
+            description: "",
+            signingProtocol: "sigv4",
+            originAccessControlOriginType: "s3",
+            name: s3BucketBlog.attrDomainName,
           },
         }
       );
-    cloudFrontCloudFrontOriginAccessIdentity.cfnOptions.deletionPolicy =
-      cdk.CfnDeletionPolicy.RETAIN;
+    cloudFrontOriginAccessControl.cfnOptions.deletionPolicy =
+      cdk.CfnDeletionPolicy.DELETE;
 
     const cloudFrontDistribution = new cdk.aws_cloudfront.CfnDistribution(
       this,
@@ -166,23 +130,19 @@ export class BlogCDNStack extends cdk.Stack {
           origins: [
             {
               connectionTimeout: 10,
-              originAccessControlId: "",
+              originAccessControlId: cloudFrontOriginAccessControl.attrId,
               connectionAttempts: 3,
               originCustomHeaders: [],
               domainName: `${bucketName}.s3.${stack.region}.amazonaws.com`,
               originShield: {
                 enabled: false,
               },
-              s3OriginConfig: {
-                originAccessIdentity: `origin-access-identity/cloudfront/${cloudFrontCloudFrontOriginAccessIdentity.attrId}`,
-              },
+              s3OriginConfig: {},
               originPath: "",
               id: `${bucketName}.s3.${stack.region}.amazonaws.com`,
             },
           ],
           viewerCertificate: {
-            minimumProtocolVersion: "TLSv1",
-            sslSupportMethod: "vip",
             cloudFrontDefaultCertificate: true,
           },
           priceClass: "PriceClass_All",
@@ -226,5 +186,30 @@ export class BlogCDNStack extends cdk.Stack {
     );
     cloudFrontDistribution.cfnOptions.deletionPolicy =
       cdk.CfnDeletionPolicy.RETAIN;
+
+    const s3BucketPolicyBlog = new cdk.aws_s3.CfnBucketPolicy(
+      this,
+      "S3BucketPolicyBlog",
+      {
+        bucket: s3BucketBlog.ref,
+        policyDocument: {
+          Version: "2012-10-17",
+          Statement: [
+            {
+              Resource: [
+                `${s3BucketBlog.attrArn}/thumbnail/*`,
+                `${s3BucketBlog.attrArn}/content/*`,
+              ],
+              Action: "s3:GetObject",
+              Effect: "Allow",
+              Principal: {
+                Service: "cloudfront.amazonaws.com",
+              },
+            },
+          ],
+        },
+      }
+    );
+    s3BucketPolicyBlog.cfnOptions.deletionPolicy = cdk.CfnDeletionPolicy.DELETE;
   }
 }
