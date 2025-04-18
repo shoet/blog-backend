@@ -1,5 +1,5 @@
 # ===== build stage ====
-FROM golang:1.22-bullseye as builder
+FROM golang:1.24.2-bullseye as builder
 
 WORKDIR /app
 
@@ -21,7 +21,7 @@ RUN --mount=type=cache,target=/gomod-cache \
   go build -trimpath -ldflags="-w -s" -o cmd/bin/cli cmd/cli/main.go
 
 # ===== local development stage ====
-FROM golang:1.22-bullseye as dev
+FROM golang:1.24.2-bullseye as dev
 
 WORKDIR /app
 
@@ -29,7 +29,7 @@ RUN go install github.com/cosmtrek/air@v1.51.0
 CMD ["air"]
 
 # ===== deploy stage ====
-FROM golang:1.22-bullseye as production
+FROM golang:1.24.2-bullseye as production
 
 ARG PORT
 
@@ -40,7 +40,7 @@ RUN apt update -y
 COPY --from=builder /app/cmd/bin/api .
 COPY --from=builder /app/cmd/bin/cli .
 
-COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.7.2 /lambda-adapter /opt/extensions/lambda-adapter
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.0 /lambda-adapter /opt/extensions/lambda-adapter
 
 ENV PORT=${PORT:-8080}
 ENV READINESS_CHECK_PATH=/health

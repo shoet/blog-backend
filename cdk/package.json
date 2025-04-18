@@ -8,10 +8,10 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "synth": "COMMIT_HASH=$(git rev-parse HEAD) STAGE=dev cdk synth",
-    "deploy": "COMMIT_HASH=$(git rev-parse HEAD) STAGE=dev cdk deploy --require-approval never",
-    "destroy": "STAGE=dev cdk destroy",
-    "deploy:prod": "COMMIT_HASH=$(git rev-parse HEAD) STAGE=prod cdk deploy --require-approval never"
+    "synth": "npx cdk synth -c COMMIT_HASH=$(git rev-parse HEAD) -c STAGE=dev",
+    "deploy": "npx cdk deploy -c STAGE=dev -c COMMIT_HASH=$(git rev-parse HEAD) --require-approval never",
+    "destroy": "npx cdk destroy -c STAGE=dev",
+    "deploy:prod": "npx cdk deploy -c COMMIT_HASH=$(git rev-parse HEAD) -c STAGE=prod --require-approval never"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
