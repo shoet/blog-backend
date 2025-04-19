@@ -1,24 +1,14 @@
-development:
-  dialect: mysql
-  datasource: blog:blog@tcp(127.0.0.1)/blog?charset=utf8mb4&parseTime=true
-  dir: migrations/mysql
-
-production:
-  dialect: mysql
-  datasource: ${DBDSN}
-  dir: migrations/mysql
-
-local-pg:
+local:
   dialect: postgres
-  datasource: user=blog password=blog host=127.0.0.1 port=5432 dbname=blog sslmode=disable
+  datasource: postgres://blog:blog@127.0.0.1:5432/blog?sslmode=disable
   dir: migrations/postgres
 
-development-pg:
+development:
   dialect: postgres
   datasource: ${DBDSN_DEV}
   dir: migrations/postgres
 
-production-pg:
+production:
   dialect: postgres
   datasource: ${DBDSN}
   dir: migrations/postgres
