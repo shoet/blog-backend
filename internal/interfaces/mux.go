@@ -39,6 +39,7 @@ type MuxDependencies struct {
 	DB                   infrastracture.DB
 	BlogRepository       *repository.BlogRepository
 	BlogRepositoryOffset *repository.BlogRepositoryOffset
+	CommentRepository    *repository.CommentRepository
 	BlogService          *blog_service.BlogService
 	AuthService          *auth_service.AuthService
 	ContentsService      *contents_service.ContentsService
@@ -92,7 +93,7 @@ func setBlogsRoute(
 		r.With(authMiddleWare.Middleware).Post("/", bah.ServeHTTP)
 
 		bgh := handler.NewBlogGetHandler(
-			get_blog_detail.NewUsecase(deps.DB, deps.BlogRepository), deps.JWTer)
+			get_blog_detail.NewUsecase(deps.DB, deps.BlogRepository, deps.CommentRepository), deps.JWTer)
 		r.Get("/{id}", bgh.ServeHTTP)
 
 		bdh := handler.NewBlogDeleteHandler(
