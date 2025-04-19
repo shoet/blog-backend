@@ -25,6 +25,11 @@ func NewBlogGetHandler(usecase *get_blog_detail.Usecase, jwter JWTService) *Blog
 	}
 }
 
+type BlogGetResponse struct {
+	*models.Blog
+	Comments []*models.Comment `json:"comments"`
+}
+
 func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)
@@ -40,7 +45,7 @@ func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		response.ResponsdBadRequest(w, r, err)
 		return
 	}
-	blog, err := l.Usecase.Run(ctx, models.BlogId(idInt))
+	blog, comments, err := l.Usecase.Run(ctx, models.BlogId(idInt))
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to get blog: %v", err))
 		response.ResponsdInternalServerError(w, r, err)
@@ -73,7 +78,13 @@ func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if err := response.RespondJSON(w, r, http.StatusOK, blog); err != nil {
+	res := &BlogGetResponse{
+		Blog: blog,
+	}
+	if comments != nil {
+		res.Comments = comments
+	}
+	if err := response.RespondJSON(w, r, http.StatusOK, res); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
 }

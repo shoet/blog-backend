@@ -22,13 +22,13 @@ sql-migrate new <ファイル名>
 - マイグレーションの実施
 
 ```
-cd_tools
-sql-migrate up [-dryrun]
+cd _tools
+sql-migrate up -config=dbconfig.yml -env=<env> [-dryrun]
 ```
 
 - マイグレーションの巻き戻し
 
 ```
-cd_tools
-sql-migrate down [-limit=n]
+cd _tools
+sql-migrate down -config=dbconfig.yml -env=<env> [-limit=n]
 ```

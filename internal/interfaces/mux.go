@@ -29,6 +29,7 @@ import (
 	"github.com/shoet/blog/internal/usecase/get_tags"
 	"github.com/shoet/blog/internal/usecase/login_user"
 	"github.com/shoet/blog/internal/usecase/login_user_session"
+	"github.com/shoet/blog/internal/usecase/post_comment"
 	"github.com/shoet/blog/internal/usecase/put_blog"
 	"github.com/shoet/blog/internal/usecase/storage_presigned_content"
 	"github.com/shoet/blog/internal/usecase/storage_presigned_thumbnail"
@@ -39,6 +40,7 @@ type MuxDependencies struct {
 	DB                   infrastracture.DB
 	BlogRepository       *repository.BlogRepository
 	BlogRepositoryOffset *repository.BlogRepositoryOffset
+	CommentRepository    *repository.CommentRepository
 	BlogService          *blog_service.BlogService
 	AuthService          *auth_service.AuthService
 	ContentsService      *contents_service.ContentsService
@@ -92,7 +94,7 @@ func setBlogsRoute(
 		r.With(authMiddleWare.Middleware).Post("/", bah.ServeHTTP)
 
 		bgh := handler.NewBlogGetHandler(
-			get_blog_detail.NewUsecase(deps.DB, deps.BlogRepository), deps.JWTer)
+			get_blog_detail.NewUsecase(deps.DB, deps.BlogRepository, deps.CommentRepository), deps.JWTer)
 		r.Get("/{id}", bgh.ServeHTTP)
 
 		bdh := handler.NewBlogDeleteHandler(
@@ -102,6 +104,10 @@ func setBlogsRoute(
 		buh := handler.NewBlogPutHandler(
 			put_blog.NewUsecase(deps.DB, deps.BlogRepository), deps.Validator)
 		r.With(authMiddleWare.Middleware).Put("/{id}", buh.ServeHTTP)
+
+		pch := handler.NewPostCommentHandler(
+			post_comment.NewUsecase(deps.DB, deps.CommentRepository), deps.JWTer, deps.Validator)
+		r.Post("/{id}/comment", pch.ServeHTTP)
 	})
 
 	r.Route("/v2/blogs", func(r chi.Router) {

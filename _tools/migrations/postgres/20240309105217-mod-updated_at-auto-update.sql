@@ -10,12 +10,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER update_blogs_trigger_mod
+CREATE OR REPLACE TRIGGER update_blogs_trigger_mod
 BEFORE UPDATE ON blogs
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_users_trigger_mod
+CREATE OR REPLACE TRIGGER update_users_trigger_mod
 BEFORE UPDATE ON users
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
