@@ -52,3 +52,32 @@ func (r *CommentRepository) CreateComment(
 	}
 	return commentId, nil
 }
+
+func (r *CommentRepository) GetByBlogId(
+	ctx context.Context,
+	tx infrastracture.TX,
+	blogId models.BlogId,
+) ([]*models.Comment, error) {
+	builder := goqu.
+		Select("comment_id", "blog_id", "client_id", "user_id", "content", "is_edited", "is_deleted", "created", "modified").
+		From("comments").
+		Where(goqu.Ex{"blog_id": blogId}).
+		Order(goqu.I("created").Asc())
+	query, params, err := builder.ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build query: %w", err)
+	}
+	rows, err := tx.QueryxContext(ctx, query, params...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get comments: %w", rows.Err())
+	}
+	comments := make([]*models.Comment, 0, 0)
+	for rows.Next() {
+		comment := models.Comment{}
+		if err := rows.StructScan(&comment); err != nil {
+			return nil, fmt.Errorf("failed to scan comment: %w", err)
+		}
+		comments = append(comments, &comment)
+	}
+	return comments, nil
+}

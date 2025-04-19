@@ -3,13 +3,13 @@ package models
 type CommentId int64
 
 type Comment struct {
-	CommentId CommentId `json:"comment_id"`
-	BlogId    BlogId    `json:"blog_id"`
-	ClientId  *string   `json:"client_id,omitempty"`
-	UserId    *UserId   `json:"user_id,omitempty"`
-	Content   string    `json:"content"`
-	IsEdited  bool      `json:"is_edited"`
-	IsDeleted bool      `json:"is_deleted"`
-	Created   int64     `json:"created"`
-	Modified  int64     `json:"modified"`
+	CommentId CommentId `json:"comment_id" db:"comment_id"`
+	BlogId    BlogId    `json:"blog_id" db:"blog_id"`
+	ClientId  *string   `json:"client_id,omitempty" db:"client_id"`
+	UserId    *UserId   `json:"user_id,omitempty" db:"user_id"`
+	Content   string    `json:"content" db:"content"`
+	IsEdited  bool      `json:"is_edited" db:"is_edited"`
+	IsDeleted bool      `json:"is_deleted" db:"is_deleted"`
+	Created   int64     `json:"created" db:"created"`
+	Modified  int64     `json:"modified" db:"modified"`
 }
