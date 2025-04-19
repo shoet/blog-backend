@@ -13,7 +13,9 @@ type BlogRepository interface {
 }
 
 type CommentRepository interface {
-	GetByBlogId(ctx context.Context, tx infrastracture.TX, blogId models.BlogId) ([]*models.Comment, error)
+	GetByBlogId(
+		ctx context.Context, tx infrastracture.TX, blogId models.BlogId, excludeDeleted bool,
+	) ([]*models.Comment, error)
 }
 
 type Usecase struct {
@@ -30,28 +32,18 @@ func NewUsecase(db infrastracture.DB, blogRepository BlogRepository, commentRepo
 	}
 }
 
-func (u *Usecase) Run(ctx context.Context, blogId models.BlogId) (*models.Blog, error) {
-	transactor := infrastracture.NewTransactionProvider(u.DB)
-
-	result, err := transactor.DoInTx(ctx, func(tx infrastracture.TX) (any, error) {
-		blog, err := u.BlogRepository.Get(ctx, tx, blogId)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get blog: %v", err)
-		}
-		comments, err := u.CommentRepository.GetByBlogId(ctx, tx, blogId)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get comments: %v", err)
-		}
-		blog.Comments = comments
-		return blog, nil
-	})
+func (u *Usecase) Run(ctx context.Context, blogId models.BlogId) (*models.Blog, []*models.Comment, error) {
+	blog, err := u.BlogRepository.Get(ctx, u.DB, blogId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get blog: %v", err)
+		return nil, nil, fmt.Errorf("failed to get blog: %v", err)
 	}
-	blog, ok := result.(*models.Blog)
-	if !ok {
-		return nil, fmt.Errorf("failed to cast *models.Blog")
+	if blog == nil {
+		return nil, nil, nil
 	}
-	return blog, nil
+	comments, err := u.CommentRepository.GetByBlogId(ctx, u.DB, blogId, true)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get comments: %v", err)
+	}
+	return blog, comments, nil
 
 }
