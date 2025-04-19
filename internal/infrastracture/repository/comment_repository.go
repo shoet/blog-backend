@@ -57,11 +57,13 @@ func (r *CommentRepository) GetByBlogId(
 	ctx context.Context,
 	tx infrastracture.TX,
 	blogId models.BlogId,
+	excludeDeleted bool,
 ) ([]*models.Comment, error) {
 	builder := goqu.
 		Select("comment_id", "blog_id", "client_id", "user_id", "content", "is_edited", "is_deleted", "created", "modified").
 		From("comments").
 		Where(goqu.Ex{"blog_id": blogId}).
+		Where(goqu.Ex{"is_deleted": !excludeDeleted}).
 		Order(goqu.I("created").Asc())
 	query, params, err := builder.ToSQL()
 	if err != nil {

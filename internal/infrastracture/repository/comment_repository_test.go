@@ -267,22 +267,31 @@ func Test_CommentRepository_GetByBlogId(t *testing.T) {
 
 	builder = goqu.
 		Insert("comments").
-		Cols("comment_id", "blog_id", "client_id", "user_id", "content", "created", "modified").
+		Cols("comment_id", "blog_id", "client_id", "user_id", "content", "is_deleted", "created", "modified").
 		Rows(
 			goqu.Record{
 				"comment_id": 1,
 				"blog_id":    1, "client_id": strPtr("a"), "user_id": nil, "content": "comment1",
-				"created": clocker.Now().Unix() + 2, "modified": clocker.Now().Unix(),
+				"is_deleted": false,
+				"created":    clocker.Now().Unix() + 2, "modified": clocker.Now().Unix(),
 			},
 			goqu.Record{
 				"comment_id": 2,
 				"blog_id":    1, "client_id": strPtr("a"), "user_id": nil, "content": "comment2",
-				"created": clocker.Now().Unix() + 1, "modified": clocker.Now().Unix(),
+				"is_deleted": false,
+				"created":    clocker.Now().Unix() + 1, "modified": clocker.Now().Unix(),
 			},
 			goqu.Record{
 				"comment_id": 3,
 				"blog_id":    2, "client_id": strPtr("a"), "user_id": nil, "content": "comment3",
-				"created": clocker.Now().Unix() + 3, "modified": clocker.Now().Unix(),
+				"is_deleted": false,
+				"created":    clocker.Now().Unix() + 3, "modified": clocker.Now().Unix(),
+			},
+			goqu.Record{
+				"comment_id": 4,
+				"blog_id":    1, "client_id": strPtr("a"), "user_id": nil, "content": "comment4",
+				"is_deleted": true,
+				"created":    clocker.Now().Unix() + 3, "modified": clocker.Now().Unix(),
 			},
 		)
 	query, params, err = builder.ToSQL()
@@ -293,7 +302,8 @@ func Test_CommentRepository_GetByBlogId(t *testing.T) {
 		t.Fatalf("failed to insert comments: %v", err)
 	}
 
-	got, err := sut.GetByBlogId(ctx, tx, 1)
+	excludeDeleted := true
+	got, err := sut.GetByBlogId(ctx, tx, 1, excludeDeleted)
 	if err != nil {
 		t.Fatalf("failed to get comments: %v", err)
 	}
