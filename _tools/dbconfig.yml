@@ -8,9 +8,14 @@ production:
   datasource: ${DBDSN}
   dir: migrations/mysql
 
-development-pg:
+local-pg:
   dialect: postgres
   datasource: user=blog password=blog host=127.0.0.1 port=5432 dbname=blog sslmode=disable
+  dir: migrations/postgres
+
+development-pg:
+  dialect: postgres
+  datasource: ${DBDSN_DEV}
   dir: migrations/postgres
 
 production-pg:
