@@ -29,6 +29,7 @@ import (
 	"github.com/shoet/blog/internal/usecase/get_tags"
 	"github.com/shoet/blog/internal/usecase/login_user"
 	"github.com/shoet/blog/internal/usecase/login_user_session"
+	"github.com/shoet/blog/internal/usecase/post_comment"
 	"github.com/shoet/blog/internal/usecase/put_blog"
 	"github.com/shoet/blog/internal/usecase/storage_presigned_content"
 	"github.com/shoet/blog/internal/usecase/storage_presigned_thumbnail"
@@ -103,6 +104,10 @@ func setBlogsRoute(
 		buh := handler.NewBlogPutHandler(
 			put_blog.NewUsecase(deps.DB, deps.BlogRepository), deps.Validator)
 		r.With(authMiddleWare.Middleware).Put("/{id}", buh.ServeHTTP)
+
+		pch := handler.NewPostCommentHandler(
+			post_comment.NewUsecase(deps.DB, deps.CommentRepository), deps.JWTer, deps.Validator)
+		r.Post("/{id}/comment", pch.ServeHTTP)
 	})
 
 	r.Route("/v2/blogs", func(r chi.Router) {
