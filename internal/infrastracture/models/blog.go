@@ -22,10 +22,8 @@ type Blog struct {
 }
 
 func (blog *Blog) HavingTag(tag string) bool {
-	for _, t := range blog.Tags {
-		if t == tag {
-			return true
-		}
+	if slices.Contains(blog.Tags, tag) {
+		return true
 	}
 	return false
 }
