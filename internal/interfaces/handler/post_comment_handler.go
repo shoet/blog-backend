@@ -47,13 +47,13 @@ func (h *PostCommentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	if id == "" {
 		logger.Error("failed to get id from url")
-		response.ResponsdBadRequest(w, r, nil)
+		response.RespondBadRequest(w, r, nil)
 		return
 	}
 	idInt, err := strconv.Atoi(strings.TrimSpace(id))
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to convert id to int: %v", err))
-		response.ResponsdBadRequest(w, r, err)
+		response.RespondBadRequest(w, r, err)
 		return
 	}
 
@@ -62,17 +62,17 @@ func (h *PostCommentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var req PostCommentRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		logger.Error(fmt.Sprintf("failed to decode request body: %v", err))
-		response.ResponsdBadRequest(w, r, err)
+		response.RespondBadRequest(w, r, err)
 		return
 	}
 	if err := h.Validator.Struct(req); err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
-		response.ResponsdBadRequest(w, r, err)
+		response.RespondBadRequest(w, r, err)
 		return
 	}
 	if req.UserId == nil && req.ClientId == nil {
 		logger.Error("client_id or user_id is required")
-		response.ResponsdBadRequest(w, r, nil)
+		response.RespondBadRequest(w, r, nil)
 		return
 	}
 
@@ -108,7 +108,7 @@ func (h *PostCommentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	commentId, err := h.Usecase.Run(ctx, models.BlogId(idInt), req.UserId, req.ClientId, req.ThreadCommentId, req.Content)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to post comment: %v", err))
-		response.ResponsdInternalServerError(w, r, err)
+		response.RespondInternalServerError(w, r, err)
 		return
 	}
 	res := PostCommentResponse{

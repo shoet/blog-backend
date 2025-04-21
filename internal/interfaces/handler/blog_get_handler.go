@@ -36,23 +36,23 @@ func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	if id == "" {
 		logger.Error("failed to get id from url")
-		response.ResponsdBadRequest(w, r, nil)
+		response.RespondBadRequest(w, r, nil)
 		return
 	}
 	idInt, err := strconv.Atoi(strings.TrimSpace(id))
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to convert id to int: %v", err))
-		response.ResponsdBadRequest(w, r, err)
+		response.RespondBadRequest(w, r, err)
 		return
 	}
 	blog, comments, err := l.Usecase.Run(ctx, models.BlogId(idInt))
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to get blog: %v", err))
-		response.ResponsdInternalServerError(w, r, err)
+		response.RespondInternalServerError(w, r, err)
 		return
 	}
 	if blog == nil {
-		response.ResponsdNotFound(w, r, err)
+		response.RespondNotFound(w, r, err)
 		return
 	}
 	// 非公開のBlogは認証が必要
@@ -60,13 +60,13 @@ func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		token := r.Header.Get("Authorization")
 		if token == "" {
 			logger.Error("failed to get authorization header")
-			response.ResponsdNotFound(w, r, err)
+			response.RespondNotFound(w, r, err)
 			return
 		}
 
 		if !strings.HasPrefix(token, "Bearer ") {
 			logger.Error("failed to get authorization token")
-			response.ResponsdNotFound(w, r, err)
+			response.RespondNotFound(w, r, err)
 			return
 		}
 
@@ -74,7 +74,7 @@ func (l *BlogGetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		_, err := l.jwter.VerifyToken(ctx, token)
 		if err != nil {
 			logger.Error(fmt.Sprintf("failed to verify token: %v", err))
-			response.ResponsdNotFound(w, r, err)
+			response.RespondNotFound(w, r, err)
 			return
 		}
 	}

@@ -41,13 +41,13 @@ func (a *AuthLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	if err := response.JsonToStruct(r, &reqBody); err != nil {
 		logger.Error(fmt.Sprintf("failed to parse request body: %v", err))
-		response.ResponsdBadRequest(w, r, err)
+		response.RespondBadRequest(w, r, err)
 		return
 	}
 
 	if err := a.Validator.Struct(reqBody); err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
-		response.ResponsdBadRequest(w, r, err)
+		response.RespondBadRequest(w, r, err)
 		return
 	}
 
@@ -64,7 +64,7 @@ func (a *AuthLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := a.Cookie.SetCookie(w, "authToken", resp.AuthToken); err != nil {
 		logger.Error(fmt.Sprintf("failed to set cookie: %v", err))
-		response.ResponsdInternalServerError(w, r, err)
+		response.RespondInternalServerError(w, r, err)
 		return
 	}
 

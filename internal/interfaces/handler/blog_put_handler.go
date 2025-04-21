@@ -41,13 +41,13 @@ func (p *BlogPutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	if err := response.JsonToStruct(r, &reqBody); err != nil {
 		logger.Error(fmt.Sprintf("failed to parse request body: %v", err))
-		response.ResponsdBadRequest(w, r, err)
+		response.RespondBadRequest(w, r, err)
 		return
 	}
 
 	if err := p.Validator.Struct(reqBody); err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
-		response.ResponsdBadRequest(w, r, err)
+		response.RespondBadRequest(w, r, err)
 		return
 	}
 
@@ -65,7 +65,7 @@ func (p *BlogPutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	newBlog, err := p.Usecase.Run(ctx, blog)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to put blog: %v", err))
-		response.ResponsdInternalServerError(w, r, err)
+		response.RespondInternalServerError(w, r, err)
 		return
 	}
 	if err := response.RespondJSON(w, r, http.StatusOK, newBlog); err != nil {

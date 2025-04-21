@@ -41,7 +41,7 @@ func (l *BlogGetOffsetPagingHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		if err != nil {
 			err := fmt.Errorf("limit is invalid")
 			logger.Error(err.Error())
-			response.ResponsdBadRequest(w, r, err)
+			response.RespondBadRequest(w, r, err)
 			return
 		}
 		l := int64(v)
@@ -53,7 +53,7 @@ func (l *BlogGetOffsetPagingHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 		if err != nil {
 			err := fmt.Errorf("page is invalid")
 			logger.Error(err.Error())
-			response.ResponsdBadRequest(w, r, err)
+			response.RespondBadRequest(w, r, err)
 			return
 		}
 		p := int64(v)
@@ -63,7 +63,7 @@ func (l *BlogGetOffsetPagingHandler) ServeHTTP(w http.ResponseWriter, r *http.Re
 	blogs, blogsCount, err := l.Usecase.Run(ctx, input)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to list blog: %v", err))
-		response.ResponsdInternalServerError(w, r, err)
+		response.RespondInternalServerError(w, r, err)
 		return
 	}
 	if blogs == nil {
