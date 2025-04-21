@@ -68,13 +68,13 @@ func (u *Usecase) Run(
 				tid := uuid.New().String()
 				threadId = &tid
 			}
+			if err := u.CommentRepository.UpdateThreadId(ctx, tx, models.CommentId(*threadCommentId), *threadId); err != nil {
+				return 0, fmt.Errorf("failed to update thread id: %w", err)
+			}
 		}
 		commentId, err := u.CommentRepository.CreateComment(ctx, tx, blogId, userId, clientId, threadId, content)
 		if err != nil {
 			return 0, fmt.Errorf("failed to create comment")
-		}
-		if err := u.CommentRepository.UpdateThreadId(ctx, tx, models.CommentId(*threadCommentId), *threadId); err != nil {
-			return 0, fmt.Errorf("failed to update thread id: %w", err)
 		}
 		return commentId, nil
 	})
