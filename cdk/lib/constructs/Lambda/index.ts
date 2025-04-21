@@ -88,6 +88,7 @@ export class Lambda extends Construct {
       this,
       "DockerImageFunction",
       {
+        functionName: `blog-backend-api-${this.stage}`,
         code: cdk.aws_lambda.DockerImageCode.fromEcr(props.ecrRepository, {
           tag: imageTag,
         }),
