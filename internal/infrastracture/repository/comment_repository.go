@@ -26,15 +26,16 @@ func (r *CommentRepository) CreateComment(
 	blogId models.BlogId,
 	userId *models.UserId,
 	clientId *string,
+	threadId *string,
 	content string,
 ) (models.CommentId, error) {
 	builder := goqu.
 		Insert("comments").
-		Cols("blog_id", "client_id", "user_id", "content", "created", "modified").
+		Cols("blog_id", "client_id", "user_id", "thread_id", "content", "created", "modified").
 		Returning("comment_id").
 		Rows(
 			goqu.Record{
-				"blog_id": blogId, "client_id": clientId, "user_id": userId, "content": content,
+				"blog_id": blogId, "client_id": clientId, "thread_id": threadId, "user_id": userId, "content": content,
 				"created": r.Clocker.Now().Unix(), "modified": r.Clocker.Now().Unix(),
 			},
 		)
@@ -53,6 +54,50 @@ func (r *CommentRepository) CreateComment(
 	return commentId, nil
 }
 
+func (r *CommentRepository) Get(
+	ctx context.Context,
+	tx infrastracture.TX,
+	commentId models.CommentId,
+) (*models.Comment, error) {
+	builder := goqu.
+		Select("comment_id", "blog_id", "client_id", "user_id", "thread_id", "content", "is_edited", "is_deleted", "created", "modified").
+		From("comments").
+		Where(goqu.Ex{"comment_id": commentId})
+	query, params, err := builder.ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build query: %w", err)
+	}
+	row := tx.QueryRowxContext(ctx, query, params...)
+	if row.Err() != nil {
+		return nil, fmt.Errorf("failed to get comment: %w", row.Err())
+	}
+	comment := &models.Comment{}
+	if err := row.StructScan(comment); err != nil {
+		return nil, fmt.Errorf("failed to scan comment: %w", err)
+	}
+	return comment, nil
+}
+
+func (r *CommentRepository) UpdateThreadId(
+	ctx context.Context,
+	tx infrastracture.TX,
+	commentId models.CommentId,
+	threadId string,
+) error {
+	builder := goqu.
+		Update("comments").
+		Set(goqu.Record{"thread_id": threadId}).
+		Where(goqu.Ex{"comment_id": commentId})
+	query, params, err := builder.ToSQL()
+	if err != nil {
+		return fmt.Errorf("failed to build query: %w", err)
+	}
+	if _, err := tx.ExecContext(ctx, query, params...); err != nil {
+		return fmt.Errorf("failed to update comment: %w", err)
+	}
+	return nil
+}
+
 func (r *CommentRepository) GetByBlogId(
 	ctx context.Context,
 	tx infrastracture.TX,
@@ -60,7 +105,7 @@ func (r *CommentRepository) GetByBlogId(
 	excludeDeleted bool,
 ) ([]*models.Comment, error) {
 	builder := goqu.
-		Select("comment_id", "blog_id", "client_id", "user_id", "content", "is_edited", "is_deleted", "created", "modified").
+		Select("comment_id", "blog_id", "client_id", "user_id", "thread_id", "content", "is_edited", "is_deleted", "created", "modified").
 		From("comments").
 		Where(goqu.Ex{"blog_id": blogId}).
 		Where(goqu.Ex{"is_deleted": !excludeDeleted}).

@@ -31,9 +31,10 @@ func NewPostCommentHandler(usecase *post_comment.Usecase, jwter JWTService, vali
 }
 
 type PostCommentRequest struct {
-	UserId   *models.UserId `json:"user_id"`
-	ClientId *string        `json:"client_id"`
-	Content  string         `json:"content" validate:"required"`
+	UserId          *models.UserId `json:"user_id"`
+	ClientId        *string        `json:"client_id"`
+	Content         string         `json:"content" validate:"required"`
+	ThreadCommentId *int64         `json:"thread_comment_id,omitempty"`
 }
 
 type PostCommentResponse struct {
@@ -104,7 +105,7 @@ func (h *PostCommentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	commentId, err := h.Usecase.Run(ctx, models.BlogId(idInt), req.UserId, req.ClientId, req.Content)
+	commentId, err := h.Usecase.Run(ctx, models.BlogId(idInt), req.UserId, req.ClientId, req.ThreadCommentId, req.Content)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to post comment: %v", err))
 		response.ResponsdInternalServerError(w, r, err)

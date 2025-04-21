@@ -32,6 +32,7 @@ func Test_CommentRepository_CreateComment(t *testing.T) {
 		userId   *models.UserId
 		clientId *string
 		content  string
+		threadId *string
 	}
 
 	type want struct {
@@ -63,6 +64,7 @@ func Test_CommentRepository_CreateComment(t *testing.T) {
 				userId:   nil,
 				clientId: strPtr("abcd"),
 				content:  "comment",
+				threadId: nil,
 			},
 			want: want{
 				Comment: &models.Comment{
@@ -71,6 +73,7 @@ func Test_CommentRepository_CreateComment(t *testing.T) {
 					UserId:    nil,
 					ClientId:  strPtr("abcd"),
 					Content:   "comment",
+					ThreadId:  nil,
 					IsEdited:  false,
 					IsDeleted: false,
 					Created:   clocker.Now().Unix(),
@@ -94,6 +97,7 @@ func Test_CommentRepository_CreateComment(t *testing.T) {
 				userId:   nil,
 				clientId: strPtr("abcd"),
 				content:  "comment",
+				threadId: nil,
 			},
 			want: want{
 				Comment: &models.Comment{
@@ -125,6 +129,7 @@ func Test_CommentRepository_CreateComment(t *testing.T) {
 				userId:   nil,
 				clientId: strPtr("abcd"),
 				content:  "comment",
+				threadId: nil,
 			},
 			want: want{
 				Comment: &models.Comment{
@@ -135,6 +140,7 @@ func Test_CommentRepository_CreateComment(t *testing.T) {
 					Content:   "comment",
 					IsEdited:  false,
 					IsDeleted: false,
+					ThreadId:  nil,
 					Created:   clocker.Now().Unix(),
 					Modified:  clocker.Now().Unix(),
 				},
@@ -172,7 +178,7 @@ func Test_CommentRepository_CreateComment(t *testing.T) {
 
 			commentId, gotErr := sut.CreateComment(
 				ctx, tx,
-				tt.args.blog.Id, tt.args.userId, tt.args.clientId, tt.args.content,
+				tt.args.blog.Id, tt.args.userId, tt.args.clientId, tt.args.threadId, tt.args.content,
 			)
 			if gotErr != nil {
 				if tt.want.err != nil {
@@ -186,7 +192,7 @@ func Test_CommentRepository_CreateComment(t *testing.T) {
 			var got models.Comment
 			if err := row.Scan(
 				&got.CommentId, &got.BlogId, &got.ClientId, &got.UserId,
-				&got.Content, &got.IsEdited, &got.IsDeleted,
+				&got.Content, &got.IsEdited, &got.IsDeleted, &got.ThreadId,
 				&got.Created, &got.Modified,
 			); err != nil {
 				t.Fatalf("failed to scan row: %v", err)
@@ -202,6 +208,7 @@ func Test_CommentRepository_CreateComment(t *testing.T) {
 					Content:   tt.want.Comment.Content,
 					IsEdited:  tt.want.Comment.IsEdited,
 					IsDeleted: tt.want.Comment.IsDeleted,
+					ThreadId:  tt.want.Comment.ThreadId,
 					Created:   tt.want.Comment.Created,
 					Modified:  tt.want.Comment.Modified,
 				}
@@ -211,6 +218,86 @@ func Test_CommentRepository_CreateComment(t *testing.T) {
 			}
 
 		})
+	}
+}
+
+func Test_CommentRepository_Get(t *testing.T) {
+	clocker := &clocker.FiexedClocker{}
+	ctx := context.Background()
+	db, err := testutil.NewDBPostgreSQLForTest(t, ctx)
+	if err != nil {
+		t.Fatalf("failed to create db: %v", err)
+	}
+	testutil.RepositoryTestPrepare(t, ctx, db)
+
+	sut := repository.NewCommentRepository(clocker)
+
+	tx := db.MustBegin()
+	defer tx.Rollback()
+
+	builder := goqu.
+		Insert("blogs").
+		Cols("id", "author_id", "title", "content", "description",
+			"thumbnail_image_file_name", "is_public", "created", "modified").
+		Rows(
+			goqu.Record{
+				"id":                        1,
+				"author_id":                 1,
+				"title":                     "title",
+				"content":                   "content",
+				"description":               "description",
+				"thumbnail_image_file_name": "thumbnail_image_file_name",
+				"is_public":                 true,
+				"created":                   clocker.Now().Unix(),
+				"modified":                  clocker.Now().Unix(),
+			},
+		)
+	query, params, err := builder.ToSQL()
+	if _, err := tx.ExecContext(ctx, query, params...); err != nil {
+		t.Fatalf("failed to insert blog: %v", err)
+	}
+
+	strPtr := func(s string) *string {
+		return &s
+	}
+
+	builder = goqu.
+		Insert("comments").
+		Cols("comment_id", "blog_id", "client_id", "user_id", "content", "is_deleted", "created", "modified").
+		Rows(
+			goqu.Record{
+				"comment_id": 1,
+				"blog_id":    1, "client_id": strPtr("a"), "user_id": nil, "content": "comment1",
+				"is_deleted": false,
+				"created":    clocker.Now().Unix() + 2, "modified": clocker.Now().Unix(),
+			},
+		)
+	query, params, err = builder.ToSQL()
+	if err != nil {
+		t.Fatalf("failed to build query: %v", err)
+	}
+	if _, err := tx.ExecContext(ctx, query, params...); err != nil {
+		t.Fatalf("failed to insert comments: %v", err)
+	}
+
+	got, err := sut.Get(ctx, tx, 1)
+	if err != nil {
+		t.Fatalf("failed to get comments: %v", err)
+	}
+	want := &models.Comment{
+		CommentId: 1,
+		BlogId:    1,
+		ClientId:  strPtr("a"),
+		UserId:    nil,
+		Content:   "comment1",
+		IsEdited:  false,
+		IsDeleted: false,
+		Created:   clocker.Now().Unix() + 2,
+		Modified:  clocker.Now().Unix(),
+	}
+	opt := cmpopts.IgnoreFields(models.Comment{})
+	if diff := cmp.Diff(want, got, opt); diff != "" {
+		t.Errorf("differs: (-want +got)\n%s", diff)
 	}
 }
 
@@ -333,6 +420,144 @@ func Test_CommentRepository_GetByBlogId(t *testing.T) {
 	}
 	opt := cmpopts.IgnoreFields(models.Comment{})
 	if diff := cmp.Diff(want, got, opt); diff != "" {
+		t.Errorf("differs: (-want +got)\n%s", diff)
+	}
+}
+
+func Test_CommentRepository_GetByBlogId_CommentIsEmpty(t *testing.T) {
+	clocker := &clocker.FiexedClocker{}
+	ctx := context.Background()
+	db, err := testutil.NewDBPostgreSQLForTest(t, ctx)
+	if err != nil {
+		t.Fatalf("failed to create db: %v", err)
+	}
+	testutil.RepositoryTestPrepare(t, ctx, db)
+
+	sut := repository.NewCommentRepository(clocker)
+
+	tx := db.MustBegin()
+	defer tx.Rollback()
+
+	builder := goqu.
+		Insert("blogs").
+		Cols("id", "author_id", "title", "content", "description",
+			"thumbnail_image_file_name", "is_public", "created", "modified").
+		Rows(
+			goqu.Record{
+				"id":                        1,
+				"author_id":                 1,
+				"title":                     "title",
+				"content":                   "content",
+				"description":               "description",
+				"thumbnail_image_file_name": "thumbnail_image_file_name",
+				"is_public":                 true,
+				"created":                   clocker.Now().Unix(),
+				"modified":                  clocker.Now().Unix(),
+			},
+		)
+	query, params, err := builder.ToSQL()
+	if _, err := tx.ExecContext(ctx, query, params...); err != nil {
+		t.Fatalf("failed to insert blog: %v", err)
+	}
+
+	excludeDeleted := true
+	got, err := sut.GetByBlogId(ctx, tx, 1, excludeDeleted)
+	if err != nil {
+		t.Fatalf("failed to get comments: %v", err)
+	}
+	want := []*models.Comment{}
+	opt := cmpopts.IgnoreFields(models.Comment{})
+	if diff := cmp.Diff(want, got, opt); diff != "" {
+		t.Errorf("differs: (-want +got)\n%s", diff)
+	}
+}
+
+func Test_CommentRepository_UpdateThreadId(t *testing.T) {
+	clocker := &clocker.FiexedClocker{}
+	ctx := context.Background()
+	db, err := testutil.NewDBPostgreSQLForTest(t, ctx)
+	if err != nil {
+		t.Fatalf("failed to create db: %v", err)
+	}
+	testutil.RepositoryTestPrepare(t, ctx, db)
+
+	sut := repository.NewCommentRepository(clocker)
+
+	tx := db.MustBegin()
+	defer tx.Rollback()
+
+	builder := goqu.
+		Insert("blogs").
+		Cols("id", "author_id", "title", "content", "description",
+			"thumbnail_image_file_name", "is_public", "created", "modified").
+		Rows(
+			goqu.Record{
+				"id":                        1,
+				"author_id":                 1,
+				"title":                     "title",
+				"content":                   "content",
+				"description":               "description",
+				"thumbnail_image_file_name": "thumbnail_image_file_name",
+				"is_public":                 true,
+				"created":                   clocker.Now().Unix(),
+				"modified":                  clocker.Now().Unix(),
+			},
+		)
+	query, params, err := builder.ToSQL()
+	if _, err := tx.ExecContext(ctx, query, params...); err != nil {
+		t.Fatalf("failed to insert blog: %v", err)
+	}
+
+	strPtr := func(s string) *string {
+		return &s
+	}
+
+	builder = goqu.
+		Insert("comments").
+		Cols("comment_id", "blog_id", "client_id", "user_id", "content", "is_deleted", "created", "modified").
+		Rows(
+			goqu.Record{
+				"comment_id": 1,
+				"blog_id":    1, "client_id": strPtr("a"), "user_id": nil, "content": "comment1",
+				"is_deleted": false,
+				"created":    clocker.Now().Unix() + 2, "modified": clocker.Now().Unix(),
+			},
+		)
+	query, params, err = builder.ToSQL()
+	if err != nil {
+		t.Fatalf("failed to build query: %v", err)
+	}
+	if _, err := tx.ExecContext(ctx, query, params...); err != nil {
+		t.Fatalf("failed to insert comments: %v", err)
+	}
+
+	err = sut.UpdateThreadId(ctx, tx, 1, "thread_xxx")
+	if err != nil {
+		t.Fatalf("failed to update thread id: %v", err)
+	}
+
+	var got models.Comment
+	query = "select * from comments where comment_id = 1"
+	if row := tx.QueryRowxContext(ctx, query); row.Err() != nil {
+		t.Fatalf("failed to get comment: %v", err)
+	} else if row.StructScan(&got) != nil {
+		t.Fatalf("failed to scan comment: %v", err)
+	}
+
+	want := &models.Comment{
+		CommentId: 1,
+		BlogId:    1,
+		ClientId:  strPtr("a"),
+		UserId:    nil,
+		Content:   "comment1",
+		IsEdited:  false,
+		IsDeleted: false,
+		ThreadId:  strPtr("thread_xxx"),
+		Created:   clocker.Now().Unix() + 2,
+		Modified:  clocker.Now().Unix(),
+	}
+	opt := cmpopts.IgnoreFields(models.Comment{})
+	if diff := cmp.Diff(want, &got, opt); diff != "" {
 		t.Errorf("differs: (-want +got)\n%s", diff)
 	}
 }
