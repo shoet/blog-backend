@@ -74,7 +74,7 @@ func (u *Usecase) Run(
 		}
 		commentId, err := u.CommentRepository.CreateComment(ctx, tx, blogId, userId, clientId, threadId, content)
 		if err != nil {
-			return 0, fmt.Errorf("failed to create comment")
+			return 0, fmt.Errorf("failed to create comment: %w", err)
 		}
 		return commentId, nil
 	})
