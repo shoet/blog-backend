@@ -21,7 +21,7 @@ func RespondJSON(w http.ResponseWriter, r *http.Request, statusCode int, body an
 	return nil
 }
 
-func ResponsdBadRequest(w http.ResponseWriter, r *http.Request, err error) {
+func RespondBadRequest(w http.ResponseWriter, r *http.Request, err error) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)
 	resp := ErrorResponse{Message: ErrMessageBadRequest}
@@ -30,7 +30,7 @@ func ResponsdBadRequest(w http.ResponseWriter, r *http.Request, err error) {
 	}
 }
 
-func ResponsdNotFound(w http.ResponseWriter, r *http.Request, err error) {
+func RespondNotFound(w http.ResponseWriter, r *http.Request, err error) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)
 	resp := ErrorResponse{Message: ErrMessageNotFound}
@@ -39,7 +39,7 @@ func ResponsdNotFound(w http.ResponseWriter, r *http.Request, err error) {
 	}
 }
 
-func ResponsdInternalServerError(w http.ResponseWriter, r *http.Request, err error) {
+func RespondInternalServerError(w http.ResponseWriter, r *http.Request, err error) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)
 	resp := ErrorResponse{Message: ErrMessageInternalServerError}

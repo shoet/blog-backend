@@ -35,20 +35,20 @@ func (g *GenerateThumbnailImageSignedURLHandler) ServeHTTP(w http.ResponseWriter
 	defer r.Body.Close()
 	if err := response.JsonToStruct(r, &reqBody); err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
-		response.ResponsdBadRequest(w, r, err)
+		response.RespondBadRequest(w, r, err)
 		return
 	}
 
 	if err := g.Validator.Struct(reqBody); err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
-		response.ResponsdBadRequest(w, r, err)
+		response.RespondBadRequest(w, r, err)
 		return
 	}
 
 	signedUrl, destinationUrl, err := g.Usecase.Run(ctx, reqBody.FileName)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
-		response.ResponsdInternalServerError(w, r, err)
+		response.RespondInternalServerError(w, r, err)
 		return
 	}
 
@@ -88,20 +88,20 @@ func (g *GenerateContentsImageSignedURLHandler) ServeHTTP(w http.ResponseWriter,
 	defer r.Body.Close()
 	if err := response.JsonToStruct(r, &reqBody); err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
-		response.ResponsdBadRequest(w, r, err)
+		response.RespondBadRequest(w, r, err)
 		return
 	}
 
 	if err := g.Validator.Struct(reqBody); err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
-		response.ResponsdBadRequest(w, r, err)
+		response.RespondBadRequest(w, r, err)
 		return
 	}
 
 	signedUrl, destinationUrl, err := g.Usecase.Run(ctx, reqBody.FileName)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
-		response.ResponsdInternalServerError(w, r, err)
+		response.RespondInternalServerError(w, r, err)
 		return
 	}
 

@@ -30,7 +30,7 @@ func (t *TagListHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	resp, err := t.Usecase.Run(ctx, option)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to list tags: %v", err))
-		response.ResponsdInternalServerError(w, r, err)
+		response.RespondInternalServerError(w, r, err)
 		return
 	}
 	if resp == nil {

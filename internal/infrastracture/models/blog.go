@@ -22,10 +22,8 @@ type Blog struct {
 }
 
 func (blog *Blog) HavingTag(tag string) bool {
-	for _, t := range blog.Tags {
-		if t == tag {
-			return true
-		}
+	if slices.Contains(blog.Tags, tag) {
+		return true
 	}
 	return false
 }
@@ -66,56 +64,4 @@ func (blogs Blogs) ToSlice() []*Blog {
 		result = append(result, blog)
 	}
 	return result
-}
-
-type UserId int64
-
-type User struct {
-	Id       UserId `json:"id,omitempty" db:"id"`
-	Name     string `json:"name" db:"name"`
-	Email    string `json:"email,omitempty" db:"email"`
-	Password string `json:"password,omitempty" db:"password"`
-	Created  uint   `json:"created,omitempty" db:"created"`
-	Modified uint   `json:"modified,omitempty" db:"modified"`
-}
-
-type TagId int64
-
-type Tag struct {
-	Id   TagId  `json:"id" db:"id"`
-	Name string `json:"name" db:"name"`
-}
-
-type Tags []*Tag
-
-type BlogsTags struct {
-	BlogId BlogId `json:"blogId" db:"blog_id"`
-	TagId  TagId  `json:"tagId" db:"tag_id"`
-	Name   string `json:"name" db:"name"`
-}
-
-// BlogsTagsArray は、ブログとタグのリレーションを保持する構造体のスライス
-type BlogsTagsArray []*BlogsTags
-
-// TagIds は、リレーションのスライスからタグIDのスライスを取得する関数
-func (arr BlogsTagsArray) TagIds() []TagId {
-	var tags []TagId
-	for _, bt := range arr {
-		tags = append(tags, bt.TagId)
-	}
-	return tags
-}
-
-// TagNames は、リレーションのスライスからタグ名のスライスを取得する関数
-func (arr BlogsTagsArray) TagNames() []string {
-	var tags []string
-	for _, t := range arr {
-		tags = append(tags, t.Name)
-	}
-	return tags
-}
-
-// Contains は、リレーションのスライスに指定したタグが含まれているかを判定する関数
-func (arr BlogsTagsArray) Contains(tag string) bool {
-	return slices.Contains(arr.TagNames(), tag)
 }

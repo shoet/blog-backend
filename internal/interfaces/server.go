@@ -85,6 +85,8 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 		return nil, fmt.Errorf("failed to create user repository: %w", err)
 	}
 
+	commentRepo := repository.NewCommentRepository(&c)
+
 	authService, err := auth_service.NewAuthService(db, userRepo, jwtService)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create auth service: %w", err)
@@ -107,6 +109,7 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 		DB:                   db,
 		BlogRepository:       blogRepo,
 		BlogRepositoryOffset: blogOffsetRepo,
+		CommentRepository:    commentRepo,
 		BlogService:          blogService,
 		AuthService:          authService,
 		ContentsService:      contentsService,
