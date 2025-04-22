@@ -1,13 +1,13 @@
 
 -- +migrate Up
 CREATE TABLE user_profile (
-  id                    BIGSERIAL PRIMARY KEY,
-  user_id               BIGINT           NOT NULL UNIQUE, -- PostgreSQLはUNIQUEをつけるとindexは作成される
-  avatar_image_filename TEXT             NULL,
-  nickname              TEXT             NULL,
-  bio                   TEXT             NULL,
-  created               TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  modified              TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP
+  id                      BIGSERIAL PRIMARY KEY,
+  user_id                 BIGINT           NOT NULL UNIQUE, -- PostgreSQLはUNIQUEをつけるとindexは作成される
+  avatar_image_file_name  TEXT             NULL,
+  nickname                TEXT             NULL,
+  bio                     TEXT             NULL,
+  created                 TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  modified                TIMESTAMP        NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 ALTER TABLE user_profile
