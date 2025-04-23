@@ -24,6 +24,7 @@ type Config struct {
 	AWSS3Bucket                 string `env:"BLOG_AWS_S3_BUCKET,required"`
 	AWSS3ThumbnailDirectory     string `env:"BLOG_AWS_S3_THUMBNAIL_DIRECTORY,required"`
 	AWSSS3ContentImageDirectory string `env:"BLOG_AWS_S3_CONTENT_IMAGE_DIRECTORY,required"`
+	AWSS3AvatarImageDirectory   string `env:"BLOG_AWS_S3_AVATAR_IMAGE_DIRECTORY,required"`
 	AWSS3PresignPutExpiresSec   int64  `env:"BLOG_AWS_S3_PRESIGN_PUT_EXPIRES_SEC" envDefault:"300"`
 	AdminName                   string `env:"ADMIN_NAME,required"`
 	AdminEmail                  string `env:"ADMIN_EMAIL,required"`

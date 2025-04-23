@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"time"
@@ -10,6 +11,7 @@ import (
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/smithy-go"
 	"github.com/shoet/blog/internal/config"
 )
 
@@ -30,6 +32,23 @@ func NewAWSS3StorageAdapter(cfg *config.Config) (*AWSS3StorageAdapter, error) {
 		S3Client:      s3Client,
 		PresignClient: s3.NewPresignClient(s3Client),
 	}, nil
+}
+
+func (s *AWSS3StorageAdapter) ExistObject(ctx context.Context, bucketName string, key string) (bool, error) {
+	input := &s3.HeadObjectInput{
+		Bucket: &bucketName,
+		Key:    &key,
+	}
+	if _, err := s.S3Client.HeadObject(ctx, input); err != nil {
+		var genericError *smithy.GenericAPIError
+		if errors.As(err, &genericError) {
+			if genericError.ErrorCode() == "404" {
+				return false, nil
+			}
+		}
+		return false, fmt.Errorf("failed to HeadObject: %w", err)
+	}
+	return true, nil
 }
 
 func (s *AWSS3StorageAdapter) GeneratePreSignedURL(destinationPath string, fileName string) (presignedUrl, objectUrl string, err error) {
