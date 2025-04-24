@@ -36,7 +36,7 @@ func (r *CommentRepository) CreateComment(
 		Rows(
 			goqu.Record{
 				"blog_id": blogId, "client_id": clientId, "thread_id": threadId, "user_id": userId, "content": content,
-				"created": r.Clocker.Now().Unix(), "modified": r.Clocker.Now().Unix(),
+				"created": r.Clocker.Now(), "modified": r.Clocker.Now(),
 			},
 		)
 	query, params, err := builder.ToSQL()

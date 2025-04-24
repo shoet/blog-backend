@@ -1,0 +1,17 @@
+
+-- +migrate Up
+
+ALTER TABLE comments
+DROP COLUMN created;
+
+ALTER TABLE comments
+ADD COLUMN created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+-- +migrate Down
+
+ALTER TABLE comments
+DROP COLUMN created;
+
+ALTER TABLE comments
+ADD COLUMN created BIGINT NOT NULL DEFAULT 0;
+

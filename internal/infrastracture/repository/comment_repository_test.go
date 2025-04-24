@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/go-cmp/cmp"
@@ -76,8 +77,8 @@ func Test_CommentRepository_CreateComment(t *testing.T) {
 					ThreadId:  nil,
 					IsEdited:  false,
 					IsDeleted: false,
-					Created:   clocker.Now().Unix(),
-					Modified:  clocker.Now().Unix(),
+					Created:   clocker.Now(),
+					Modified:  clocker.Now(),
 				},
 				err: nil,
 			},
@@ -108,8 +109,8 @@ func Test_CommentRepository_CreateComment(t *testing.T) {
 					Content:   "comment",
 					IsEdited:  false,
 					IsDeleted: false,
-					Created:   clocker.Now().Unix(),
-					Modified:  clocker.Now().Unix(),
+					Created:   clocker.Now(),
+					Modified:  clocker.Now(),
 				},
 				err: errors.New("blog not found"),
 			},
@@ -141,8 +142,8 @@ func Test_CommentRepository_CreateComment(t *testing.T) {
 					IsEdited:  false,
 					IsDeleted: false,
 					ThreadId:  nil,
-					Created:   clocker.Now().Unix(),
-					Modified:  clocker.Now().Unix(),
+					Created:   clocker.Now(),
+					Modified:  clocker.Now(),
 				},
 				err: errors.New("user_id and client_id cannot be both nil"),
 			},
@@ -269,7 +270,7 @@ func Test_CommentRepository_Get(t *testing.T) {
 				"comment_id": 1,
 				"blog_id":    1, "client_id": strPtr("a"), "user_id": nil, "content": "comment1",
 				"is_deleted": false,
-				"created":    clocker.Now().Unix() + 2, "modified": clocker.Now().Unix(),
+				"created":    clocker.Now().Add(time.Second * 2), "modified": clocker.Now(),
 			},
 		)
 	query, params, err = builder.ToSQL()
@@ -292,8 +293,8 @@ func Test_CommentRepository_Get(t *testing.T) {
 		Content:   "comment1",
 		IsEdited:  false,
 		IsDeleted: false,
-		Created:   clocker.Now().Unix() + 2,
-		Modified:  clocker.Now().Unix(),
+		Created:   clocker.Now().Add(time.Second * 2),
+		Modified:  clocker.Now(),
 	}
 	opt := cmpopts.IgnoreFields(models.Comment{})
 	if diff := cmp.Diff(want, got, opt); diff != "" {
@@ -360,25 +361,25 @@ func Test_CommentRepository_GetByBlogId(t *testing.T) {
 				"comment_id": 1,
 				"blog_id":    1, "client_id": strPtr("a"), "user_id": nil, "content": "comment1",
 				"is_deleted": false,
-				"created":    clocker.Now().Unix() + 2, "modified": clocker.Now().Unix(),
+				"created":    clocker.Now().Add(time.Second * 2), "modified": clocker.Now(),
 			},
 			goqu.Record{
 				"comment_id": 2,
 				"blog_id":    1, "client_id": strPtr("a"), "user_id": nil, "content": "comment2",
 				"is_deleted": false,
-				"created":    clocker.Now().Unix() + 1, "modified": clocker.Now().Unix(),
+				"created":    clocker.Now().Add(time.Second * 1), "modified": clocker.Now(),
 			},
 			goqu.Record{
 				"comment_id": 3,
 				"blog_id":    2, "client_id": strPtr("a"), "user_id": nil, "content": "comment3",
 				"is_deleted": false,
-				"created":    clocker.Now().Unix() + 3, "modified": clocker.Now().Unix(),
+				"created":    clocker.Now().Add(time.Second * 3), "modified": clocker.Now(),
 			},
 			goqu.Record{
 				"comment_id": 4,
 				"blog_id":    1, "client_id": strPtr("a"), "user_id": nil, "content": "comment4",
 				"is_deleted": true,
-				"created":    clocker.Now().Unix() + 3, "modified": clocker.Now().Unix(),
+				"created":    clocker.Now().Add(time.Second * 3), "modified": clocker.Now(),
 			},
 		)
 	query, params, err = builder.ToSQL()
@@ -403,8 +404,8 @@ func Test_CommentRepository_GetByBlogId(t *testing.T) {
 			Content:   "comment2",
 			IsEdited:  false,
 			IsDeleted: false,
-			Created:   clocker.Now().Unix() + 1,
-			Modified:  clocker.Now().Unix(),
+			Created:   clocker.Now().Add(time.Second * 1),
+			Modified:  clocker.Now(),
 		},
 		{
 			CommentId: 1,
@@ -414,8 +415,8 @@ func Test_CommentRepository_GetByBlogId(t *testing.T) {
 			Content:   "comment1",
 			IsEdited:  false,
 			IsDeleted: false,
-			Created:   clocker.Now().Unix() + 2,
-			Modified:  clocker.Now().Unix(),
+			Created:   clocker.Now().Add(time.Second * 2),
+			Modified:  clocker.Now(),
 		},
 	}
 	opt := cmpopts.IgnoreFields(models.Comment{})
@@ -520,7 +521,7 @@ func Test_CommentRepository_UpdateThreadId(t *testing.T) {
 				"comment_id": 1,
 				"blog_id":    1, "client_id": strPtr("a"), "user_id": nil, "content": "comment1",
 				"is_deleted": false,
-				"created":    clocker.Now().Unix() + 2, "modified": clocker.Now().Unix(),
+				"created":    clocker.Now().Add(time.Second * 2), "modified": clocker.Now(),
 			},
 		)
 	query, params, err = builder.ToSQL()
@@ -553,10 +554,10 @@ func Test_CommentRepository_UpdateThreadId(t *testing.T) {
 		IsEdited:  false,
 		IsDeleted: false,
 		ThreadId:  strPtr("thread_xxx"),
-		Created:   clocker.Now().Unix() + 2,
-		Modified:  clocker.Now().Unix(),
+		Created:   clocker.Now().Add(time.Second * 2),
+		Modified:  clocker.Now(),
 	}
-	opt := cmpopts.IgnoreFields(models.Comment{})
+	opt := cmpopts.IgnoreFields(models.Comment{}, "Modified")
 	if diff := cmp.Diff(want, &got, opt); diff != "" {
 		t.Errorf("differs: (-want +got)\n%s", diff)
 	}
