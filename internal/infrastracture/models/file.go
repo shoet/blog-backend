@@ -2,6 +2,8 @@ package models
 
 import (
 	"fmt"
+	"net/url"
+	"strings"
 
 	"github.com/shoet/blog/internal/config"
 )
@@ -29,6 +31,43 @@ func NewFile(fileType FileType, name string) (*File, error) {
 	return &File{
 		Type: fileType, FileName: name,
 	}, nil
+}
+
+func NewFileFromURL(config *config.Config, rawURL string) (*File, error) {
+	url, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse url: %w", err)
+	}
+	if url.Scheme != "https" {
+		return nil, fmt.Errorf("invalid url scheme: %s", url.Scheme)
+	}
+	if strings.HasPrefix(url.Host, config.AWSS3Bucket) {
+		return nil, fmt.Errorf("invalid url host: %s", url.Host)
+	}
+	var file *File
+	if strings.HasPrefix(url.Path, config.AWSS3AvatarImageDirectory) {
+		file = &File{
+			Type:     FileTypeAvatarImage,
+			FileName: strings.TrimPrefix(url.Path, config.AWSS3AvatarImageDirectory),
+		}
+	} else if strings.HasPrefix(url.Path, config.AWSS3ThumbnailDirectory) {
+		file = &File{
+			Type:     FileTypeThumbnailImage,
+			FileName: strings.TrimPrefix(url.Path, config.AWSS3ThumbnailDirectory),
+		}
+	} else if strings.HasPrefix(url.Path, config.AWSSS3ContentImageDirectory) {
+		file = &File{
+			Type:     FileTypeBlogContentImage,
+			FileName: strings.TrimPrefix(url.Path, config.AWSSS3ContentImageDirectory),
+		}
+	} else {
+		return nil, fmt.Errorf("invalid url path: %s", url.Path)
+
+	}
+	if strings.Contains(file.FileName, "/") {
+		return nil, fmt.Errorf("invalid file name: %s", file.FileName)
+	}
+	return file, nil
 }
 
 func (f *File) GetBucketName(config *config.Config) (string, error) {
