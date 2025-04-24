@@ -33,6 +33,7 @@ import (
 	"github.com/shoet/blog/internal/usecase/put_blog"
 	"github.com/shoet/blog/internal/usecase/storage_presigned_content"
 	"github.com/shoet/blog/internal/usecase/storage_presigned_thumbnail"
+	"github.com/shoet/blog/internal/usecase/upload_file"
 )
 
 type MuxDependencies struct {
@@ -41,6 +42,7 @@ type MuxDependencies struct {
 	BlogRepository       *repository.BlogRepository
 	BlogRepositoryOffset *repository.BlogRepositoryOffset
 	CommentRepository    *repository.CommentRepository
+	FileRepository       *repository.FileRepository
 	BlogService          *blog_service.BlogService
 	AuthService          *auth_service.AuthService
 	ContentsService      *contents_service.ContentsService
@@ -140,6 +142,11 @@ func setFilesRoute(
 			storage_presigned_content.NewUsecase(deps.ContentsService),
 			deps.Validator)
 		r.With(authMiddleWare.Middleware).Post("/content/new", gc.ServeHTTP)
+
+		uf := handler.NewUploadFileHandler(
+			upload_file.NewUsecase(deps.FileRepository),
+			deps.Validator)
+		r.With(authMiddleWare.Middleware).Post("/upload", uf.ServeHTTP)
 	})
 }
 

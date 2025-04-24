@@ -17,8 +17,8 @@ import (
 
 type S3Adapter struct {
 	config        *config.Config
-	S3Client      *s3.Client
-	PresignClient *s3.PresignClient
+	s3Client      *s3.Client
+	presignClient *s3.PresignClient
 }
 
 func NewS3Adapter(cfg *config.Config) (*S3Adapter, error) {
@@ -29,8 +29,8 @@ func NewS3Adapter(cfg *config.Config) (*S3Adapter, error) {
 	s3Client := s3.NewFromConfig(sdkConfig)
 	return &S3Adapter{
 		config:        cfg,
-		S3Client:      s3Client,
-		PresignClient: s3.NewPresignClient(s3Client),
+		s3Client:      s3Client,
+		presignClient: s3.NewPresignClient(s3Client),
 	}, nil
 }
 
@@ -39,7 +39,7 @@ func (s *S3Adapter) ExistObject(ctx context.Context, bucketName string, key stri
 		Bucket: &bucketName,
 		Key:    &key,
 	}
-	if _, err := s.S3Client.HeadObject(ctx, input); err != nil {
+	if _, err := s.s3Client.HeadObject(ctx, input); err != nil {
 		var genericError *smithy.GenericAPIError
 		if errors.As(err, &genericError) {
 			if genericError.ErrorCode() == "404" {
@@ -51,6 +51,7 @@ func (s *S3Adapter) ExistObject(ctx context.Context, bucketName string, key stri
 	return true, nil
 }
 
+// deprecated
 func (s *S3Adapter) GeneratePreSignedURL(destinationPath string, fileName string) (presignedUrl, objectUrl string, err error) {
 	bucketName := s.config.AWSS3Bucket
 	objectKey := filepath.Join(destinationPath, fileName)
@@ -67,10 +68,25 @@ func (s *S3Adapter) GeneratePreSignedURL(destinationPath string, fileName string
 	return request.URL, objectURL, nil
 }
 
+func (s *S3Adapter) GetPresignedURL(bucketName string, key string, fileName string) (presignedUrl, objectUrl string, err error) {
+	objectKey := filepath.Join(key, fileName)
+	request, err := s.generateSignedURL(bucketName, objectKey)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to generate signed url: %w", err)
+	}
+	objectURL := fmt.Sprintf(
+		"https://%s/%s/%s",
+		s.config.CdnDomain,
+		key,
+		fileName,
+	)
+	return request.URL, objectURL, nil
+}
+
 func (s *S3Adapter) generateSignedURL(
 	bucketName string, objectKey string,
 ) (presignedRequest *v4.PresignedHTTPRequest, err error) {
-	request, err := s.PresignClient.PresignPutObject(
+	request, err := s.presignClient.PresignPutObject(
 		context.TODO(),
 		&s3.PutObjectInput{
 			Bucket: aws.String(bucketName),

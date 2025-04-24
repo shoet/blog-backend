@@ -30,3 +30,15 @@ func (r *FileRepository) ExistsFile(ctx context.Context, file *models.File) (boo
 	}
 	return exists, nil
 }
+
+func (r *FileRepository) GetUploadURL(ctx context.Context, file *models.File) (uploadURL string, destinationURL string, err error) {
+	bucketName, err := file.GetBucketName(r.Config)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to get bucket name")
+	}
+	key, err := file.GetBucketKey(r.Config)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to get file key")
+	}
+	return r.S3Adapter.GetPresignedURL(bucketName, key, file.FileName)
+}
