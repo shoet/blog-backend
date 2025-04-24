@@ -11,7 +11,7 @@ import (
 
 type FileRepository struct {
 	Config    *config.Config
-	S3Adapter adapter.AWSS3StorageAdapter
+	S3Adapter adapter.S3Adapter
 }
 
 func (r *FileRepository) ExistsFile(ctx context.Context, file *models.File) (bool, error) {

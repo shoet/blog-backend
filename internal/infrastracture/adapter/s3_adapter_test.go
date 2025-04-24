@@ -16,7 +16,7 @@ func Test_AWSStorageService_GenerateThumbnailPutURL(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create config: %v", err)
 	}
-	s, err := adapter.NewAWSS3StorageAdapter(cfg)
+	s, err := adapter.NewS3Adapter(cfg)
 	if err != nil {
 		t.Fatalf("failed to create aws storage service: %v", err)
 	}

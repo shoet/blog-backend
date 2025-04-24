@@ -15,26 +15,26 @@ import (
 	"github.com/shoet/blog/internal/config"
 )
 
-type AWSS3StorageAdapter struct {
+type S3Adapter struct {
 	config        *config.Config
 	S3Client      *s3.Client
 	PresignClient *s3.PresignClient
 }
 
-func NewAWSS3StorageAdapter(cfg *config.Config) (*AWSS3StorageAdapter, error) {
+func NewS3Adapter(cfg *config.Config) (*S3Adapter, error) {
 	sdkConfig, err := awsConfig.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return nil, fmt.Errorf("failed to load aws config: %w", err)
 	}
 	s3Client := s3.NewFromConfig(sdkConfig)
-	return &AWSS3StorageAdapter{
+	return &S3Adapter{
 		config:        cfg,
 		S3Client:      s3Client,
 		PresignClient: s3.NewPresignClient(s3Client),
 	}, nil
 }
 
-func (s *AWSS3StorageAdapter) ExistObject(ctx context.Context, bucketName string, key string) (bool, error) {
+func (s *S3Adapter) ExistObject(ctx context.Context, bucketName string, key string) (bool, error) {
 	input := &s3.HeadObjectInput{
 		Bucket: &bucketName,
 		Key:    &key,
@@ -51,10 +51,10 @@ func (s *AWSS3StorageAdapter) ExistObject(ctx context.Context, bucketName string
 	return true, nil
 }
 
-func (s *AWSS3StorageAdapter) GeneratePreSignedURL(destinationPath string, fileName string) (presignedUrl, objectUrl string, err error) {
+func (s *S3Adapter) GeneratePreSignedURL(destinationPath string, fileName string) (presignedUrl, objectUrl string, err error) {
 	bucketName := s.config.AWSS3Bucket
 	objectKey := filepath.Join(destinationPath, fileName)
-	request, err := s.GenerateSignedURL(bucketName, objectKey)
+	request, err := s.generateSignedURL(bucketName, objectKey)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to generate signed url: %w", err)
 	}
@@ -67,7 +67,7 @@ func (s *AWSS3StorageAdapter) GeneratePreSignedURL(destinationPath string, fileN
 	return request.URL, objectURL, nil
 }
 
-func (s *AWSS3StorageAdapter) GenerateSignedURL(
+func (s *S3Adapter) generateSignedURL(
 	bucketName string, objectKey string,
 ) (presignedRequest *v4.PresignedHTTPRequest, err error) {
 	request, err := s.PresignClient.PresignPutObject(

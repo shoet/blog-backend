@@ -92,7 +92,7 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 		return nil, fmt.Errorf("failed to create auth service: %w", err)
 	}
 
-	s3Adapter, err := adapter.NewAWSS3StorageAdapter(cfg)
+	s3Adapter, err := adapter.NewS3Adapter(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create s3 adapter: %w", err)
 	}
