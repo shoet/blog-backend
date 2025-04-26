@@ -23,7 +23,7 @@ type File struct {
 
 func NewFile(fileType FileType, name string) (*File, error) {
 	switch fileType {
-	case FileTypeAvatarImage:
+	case FileTypeAvatarImage, FileTypeThumbnailImage, FileTypeBlogContentImage:
 		break
 	default:
 		return nil, fmt.Errorf("invalid FileType: %s", fileType)
