@@ -20,6 +20,7 @@ import (
 	"github.com/shoet/blog/internal/interfaces/middleware"
 	"github.com/shoet/blog/internal/logging"
 	"github.com/shoet/blog/internal/usecase/create_blog"
+	"github.com/shoet/blog/internal/usecase/create_user_profile"
 	"github.com/shoet/blog/internal/usecase/delete_blog"
 	"github.com/shoet/blog/internal/usecase/get_blog_detail"
 	"github.com/shoet/blog/internal/usecase/get_blogs"
@@ -33,25 +34,27 @@ import (
 	"github.com/shoet/blog/internal/usecase/put_blog"
 	"github.com/shoet/blog/internal/usecase/storage_presigned_content"
 	"github.com/shoet/blog/internal/usecase/storage_presigned_thumbnail"
+	"github.com/shoet/blog/internal/usecase/update_user_profile"
 	"github.com/shoet/blog/internal/usecase/upload_file"
 )
 
 type MuxDependencies struct {
-	Config               *config.Config
-	DB                   infrastracture.DB
-	BlogRepository       *repository.BlogRepository
-	BlogRepositoryOffset *repository.BlogRepositoryOffset
-	CommentRepository    *repository.CommentRepository
-	FileRepository       *repository.FileRepository
-	BlogService          *blog_service.BlogService
-	AuthService          *auth_service.AuthService
-	ContentsService      *contents_service.ContentsService
-	JWTer                *jwt_service.JWTService
-	Logger               *logging.Logger
-	Validator            *validator.Validate
-	Cookie               *cookie.CookieController
-	GitHubAPIAdapter     *adapter.GitHubV4APIClient
-	Clocker              clocker.Clocker
+	Config                *config.Config
+	DB                    infrastracture.DB
+	BlogRepository        *repository.BlogRepository
+	BlogRepositoryOffset  *repository.BlogRepositoryOffset
+	CommentRepository     *repository.CommentRepository
+	FileRepository        *repository.FileRepository
+	UserProfileRepository *repository.UserProfileRepository
+	BlogService           *blog_service.BlogService
+	AuthService           *auth_service.AuthService
+	ContentsService       *contents_service.ContentsService
+	JWTer                 *jwt_service.JWTService
+	Logger                *logging.Logger
+	Validator             *validator.Validate
+	Cookie                *cookie.CookieController
+	GitHubAPIAdapter      *adapter.GitHubV4APIClient
+	Clocker               clocker.Clocker
 }
 
 func NewMux(
@@ -71,6 +74,7 @@ func NewMux(
 	setAuthRoute(router, deps)
 	setAdminRoute(router, deps, authMiddleWare)
 	setGitHubRoute(router, deps)
+	setUserProfileRoute(router, deps, authMiddleWare)
 	return router, nil
 }
 
@@ -192,5 +196,21 @@ func setGitHubRoute(
 		)
 		r.Get("/contributions_latest_week", ghgchw.ServeHTTP)
 
+	})
+}
+
+// user profile
+func setUserProfileRoute(
+	r chi.Router, deps *MuxDependencies, authMiddleWare *middleware.AuthorizationMiddleware,
+) {
+	r.With(authMiddleWare.Middleware).Route("/user_profile", func(r chi.Router) {
+
+		createUserProfileUsecase := create_user_profile.NewUsecase(deps.Config, deps.DB, deps.FileRepository, deps.UserProfileRepository)
+		createUserProfileHandler := handler.NewCreateUserProfileHandler(deps.Validator, deps.JWTer, createUserProfileUsecase)
+		r.Post("/", createUserProfileHandler.ServeHTTP)
+
+		updateUserProfileUsecase := update_user_profile.NewUsecase(deps.Config, deps.DB, deps.FileRepository, deps.UserProfileRepository)
+		updateUserProfileHandler := handler.NewUpdateUserProfileHandler(deps.Validator, deps.JWTer, updateUserProfileUsecase)
+		r.Put("/", updateUserProfileHandler.ServeHTTP)
 	})
 }

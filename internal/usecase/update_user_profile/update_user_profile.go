@@ -43,21 +43,21 @@ func NewUsecase(
 }
 
 type UpdateUserProfileInput struct {
-	UserId             models.UserId
-	nickname           *string
-	avatarImageFileURL *string
-	bioGraphy          *string
+	UserId         models.UserId
+	Nickname       *string
+	AvatarImageURL *string
+	BioGraphy      *string
 }
 
 const MAX_NICKNAME_LENGTH = 30
 
 func (u *Usecase) Run(ctx context.Context, input UpdateUserProfileInput) (*models.UserProfile, error) {
-	if input.nickname != nil && len(*input.nickname) >= MAX_NICKNAME_LENGTH {
-		return nil, fmt.Errorf("nickname is too long: %s", *input.nickname)
+	if input.Nickname != nil && len(*input.Nickname) >= MAX_NICKNAME_LENGTH {
+		return nil, fmt.Errorf("nickname is too long: %s", *input.Nickname)
 	}
 	var avatarImageFileName *string
-	if input.avatarImageFileURL != nil {
-		file, err := models.NewFileFromURL(u.config, *input.avatarImageFileURL)
+	if input.AvatarImageURL != nil {
+		file, err := models.NewFileFromURL(u.config, *input.AvatarImageURL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create file from url: %w", err)
 		}
@@ -70,7 +70,7 @@ func (u *Usecase) Run(ctx context.Context, input UpdateUserProfileInput) (*model
 	}
 
 	userProfile, err := u.UserProfileRepository.Update(
-		ctx, u.DB, input.UserId, input.nickname, avatarImageFileName, input.bioGraphy,
+		ctx, u.DB, input.UserId, input.Nickname, avatarImageFileName, input.BioGraphy,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update user profile: %w", err)

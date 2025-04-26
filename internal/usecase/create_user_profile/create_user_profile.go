@@ -29,11 +29,13 @@ type Usecase struct {
 }
 
 func NewUsecase(
+	config *config.Config,
 	db infrastracture.DB,
 	fileRepository FileRepository,
 	userProfileRepository UserProfileRepository,
 ) *Usecase {
 	return &Usecase{
+		Config:                config,
 		DB:                    db,
 		FileRepository:        fileRepository,
 		UserProfileRepository: userProfileRepository,
@@ -44,18 +46,18 @@ const MAX_NICKNAME_LENGTH = 30
 
 type CreateUserProfileInput struct {
 	UserId         models.UserId
-	nickname       string
-	avatarImageURL *string
-	bioGraphy      *string
+	Nickname       string
+	AvatarImageURL *string
+	BioGraphy      *string
 }
 
 func (u *Usecase) Run(ctx context.Context, input CreateUserProfileInput) (*models.UserProfile, error) {
-	if len(input.nickname) >= MAX_NICKNAME_LENGTH {
-		return nil, fmt.Errorf("nickname is too long: %s", input.nickname)
+	if len(input.Nickname) >= MAX_NICKNAME_LENGTH {
+		return nil, fmt.Errorf("nickname is too long: %s", input.Nickname)
 	}
 	var avatarImageFileName *string
-	if input.avatarImageURL != nil {
-		file, err := models.NewFileFromURL(u.Config, *input.avatarImageURL)
+	if input.AvatarImageURL != nil {
+		file, err := models.NewFileFromURL(u.Config, *input.AvatarImageURL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create file: %w", err)
 		}
@@ -68,7 +70,7 @@ func (u *Usecase) Run(ctx context.Context, input CreateUserProfileInput) (*model
 	}
 
 	userProfile, err := u.UserProfileRepository.Create(
-		ctx, u.DB, input.UserId, input.nickname, avatarImageFileName, input.bioGraphy,
+		ctx, u.DB, input.UserId, input.Nickname, avatarImageFileName, input.BioGraphy,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user profile: %w", err)

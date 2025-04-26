@@ -86,6 +86,7 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 	}
 
 	commentRepo := repository.NewCommentRepository(&c)
+	userProfileRepo := repository.NewUserProfileRepository()
 
 	authService, err := auth_service.NewAuthService(db, userRepo, jwtService)
 	if err != nil {
@@ -96,6 +97,7 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 	if err != nil {
 		return nil, fmt.Errorf("failed to create s3 adapter: %w", err)
 	}
+	fileRepo := repository.NewFileRepository(cfg, s3Adapter)
 
 	contentsService, err := contents_service.NewContentsService(s3Adapter, cfg.AWSS3ThumbnailDirectory, cfg.AWSSS3ContentImageDirectory)
 	if err != nil {
@@ -105,20 +107,22 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 	gitHubAPIAdapter := adapter.NewGitHubV4APIClient(cfg.GitHubPersonalAccessToken)
 
 	return &MuxDependencies{
-		Config:               cfg,
-		DB:                   db,
-		BlogRepository:       blogRepo,
-		BlogRepositoryOffset: blogOffsetRepo,
-		CommentRepository:    commentRepo,
-		BlogService:          blogService,
-		AuthService:          authService,
-		ContentsService:      contentsService,
-		JWTer:                jwtService,
-		Logger:               logger,
-		Validator:            validator,
-		Cookie:               cookie,
-		GitHubAPIAdapter:     gitHubAPIAdapter,
-		Clocker:              &c,
+		Config:                cfg,
+		DB:                    db,
+		BlogRepository:        blogRepo,
+		BlogRepositoryOffset:  blogOffsetRepo,
+		CommentRepository:     commentRepo,
+		FileRepository:        fileRepo,
+		UserProfileRepository: userProfileRepo,
+		BlogService:           blogService,
+		AuthService:           authService,
+		ContentsService:       contentsService,
+		JWTer:                 jwtService,
+		Logger:                logger,
+		Validator:             validator,
+		Cookie:                cookie,
+		GitHubAPIAdapter:      gitHubAPIAdapter,
+		Clocker:               &c,
 	}, nil
 }
 
