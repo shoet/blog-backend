@@ -95,3 +95,12 @@ func (f *File) GetBucketKey(config *config.Config) (string, error) {
 		return "", fmt.Errorf("not found key")
 	}
 }
+
+func (f *File) GetFileURL(config *config.Config) (string, error) {
+	key, err := f.GetBucketKey(config)
+	if err != nil {
+		return "", fmt.Errorf("failed to get bucket key: %w", err)
+	}
+	return fmt.Sprintf("https://%s.s3.amazonaws.com/%s/%s", config.CdnDomain, key, f.FileName), nil
+
+}

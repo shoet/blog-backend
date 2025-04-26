@@ -28,6 +28,7 @@ import (
 	"github.com/shoet/blog/internal/usecase/get_github_contributions"
 	"github.com/shoet/blog/internal/usecase/get_github_contributions_latest_week"
 	"github.com/shoet/blog/internal/usecase/get_tags"
+	"github.com/shoet/blog/internal/usecase/get_user_profile"
 	"github.com/shoet/blog/internal/usecase/login_user"
 	"github.com/shoet/blog/internal/usecase/login_user_session"
 	"github.com/shoet/blog/internal/usecase/post_comment"
@@ -203,14 +204,16 @@ func setGitHubRoute(
 func setUserProfileRoute(
 	r chi.Router, deps *MuxDependencies, authMiddleWare *middleware.AuthorizationMiddleware,
 ) {
-	r.With(authMiddleWare.Middleware).Route("/user_profile", func(r chi.Router) {
+	r.Route("/user_profile", func(r chi.Router) {
+		getUserProfileHandler := handler.NewGetUserProfileHandler(deps.JWTer, get_user_profile.NewUsecase(deps.Config, deps.DB, deps.UserProfileRepository))
+		r.Get("/", getUserProfileHandler.ServeHTTP)
 
 		createUserProfileUsecase := create_user_profile.NewUsecase(deps.Config, deps.DB, deps.FileRepository, deps.UserProfileRepository)
 		createUserProfileHandler := handler.NewCreateUserProfileHandler(deps.Validator, deps.JWTer, createUserProfileUsecase)
-		r.Post("/", createUserProfileHandler.ServeHTTP)
+		r.With(authMiddleWare.Middleware).Post("/", createUserProfileHandler.ServeHTTP)
 
 		updateUserProfileUsecase := update_user_profile.NewUsecase(deps.Config, deps.DB, deps.FileRepository, deps.UserProfileRepository)
 		updateUserProfileHandler := handler.NewUpdateUserProfileHandler(deps.Validator, deps.JWTer, updateUserProfileUsecase)
-		r.Put("/", updateUserProfileHandler.ServeHTTP)
+		r.With(authMiddleWare.Middleware).Put("/", updateUserProfileHandler.ServeHTTP)
 	})
 }

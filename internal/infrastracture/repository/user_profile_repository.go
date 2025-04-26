@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"reflect"
 
@@ -15,6 +16,40 @@ type UserProfileRepository struct {
 
 func NewUserProfileRepository() *UserProfileRepository {
 	return &UserProfileRepository{}
+}
+
+/*
+Get は、userIdに一致するユーザープロフィールを取得する。
+
+レコードが存在しない場合は、nilを返す。
+*/
+func (r *UserProfileRepository) Get(
+	ctx context.Context,
+	tx infrastracture.TX,
+	userId models.UserId,
+) (*models.UserProfile, error) {
+
+	builder := goqu.
+		Select("user_id", "nickname", "avatar_image_file_name", "bio").
+		From("user_profile").
+		Where(goqu.Ex{"user_id": userId})
+
+	query, params, err := builder.ToSQL()
+
+	row := tx.QueryRowxContext(ctx, query, params...)
+	if row.Err() != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
+	}
+
+	var userProfile models.UserProfile
+	if err := row.StructScan(&userProfile); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to scan struct: %w", err)
+	}
+
+	return &userProfile, nil
 }
 
 func (r *UserProfileRepository) Create(

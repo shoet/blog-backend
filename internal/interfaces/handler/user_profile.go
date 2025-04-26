@@ -1,8 +1,11 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/shoet/blog/internal/infrastracture/models"
@@ -10,8 +13,67 @@ import (
 	"github.com/shoet/blog/internal/logging"
 	"github.com/shoet/blog/internal/session"
 	"github.com/shoet/blog/internal/usecase/create_user_profile"
+	"github.com/shoet/blog/internal/usecase/get_user_profile"
 	"github.com/shoet/blog/internal/usecase/update_user_profile"
 )
+
+type GetUserProfileHandler struct {
+	jwtService JWTService
+	usecase    *get_user_profile.Usecase
+}
+
+func NewGetUserProfileHandler(
+	jwtService JWTService,
+	usecase *get_user_profile.Usecase,
+) *GetUserProfileHandler {
+	return &GetUserProfileHandler{
+		jwtService: jwtService,
+		usecase:    usecase,
+	}
+}
+
+/*
+RequuestBody:
+
+	QueryParameter:
+		user_id: int
+
+Response:
+
+	user_profile: UserProfile
+*/
+func (h *GetUserProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	logger := logging.GetLogger(ctx)
+	q := r.URL.Query()
+	userId := q.Get("user_id")
+	if userId == "" {
+		logger.Error("user_id is required")
+		response.RespondBadRequest(w, r, nil)
+		return
+	}
+	userIdInt, err := strconv.Atoi(strings.TrimSpace(userId))
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to convert id to int: %v", err))
+		response.RespondBadRequest(w, r, err)
+		return
+	}
+
+	userProfile, err := h.usecase.Run(ctx, models.UserId(userIdInt))
+	if err != nil {
+		if errors.Is(err, get_user_profile.ErrNotFound) {
+			logger.Error(fmt.Sprintf("user profile not found: %v", err))
+			response.RespondNotFound(w, r, err)
+			return
+		}
+		logger.Error(fmt.Sprintf("failed to get user profile: %v", err))
+		response.RespondInternalServerError(w, r, err)
+		return
+	}
+	if err := response.RespondJSON(w, r, http.StatusOK, userProfile); err != nil {
+		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
+	}
+}
 
 type CreateUserProfileHandler struct {
 	validator  *validator.Validate
@@ -129,8 +191,8 @@ func (h *UpdateUserProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	logger := logging.GetLogger(ctx)
 	var reqBody struct {
 		UserID         models.UserId `json:"userId" validate:"required"`
-		Nickname       string        `json:"nickname"`
-		AvatarImageURL *string       `json:"avatarImageUrl"`
+		Nickname       *string       `json:"nickname"`
+		AvatarImageURL *string       `json:"avatarImageUrl,omitempty"`
 		BioGraphy      *string       `json:"biography"`
 	}
 	defer r.Body.Close()
@@ -160,7 +222,7 @@ func (h *UpdateUserProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 
 	input := update_user_profile.UpdateUserProfileInput{
 		UserId:         reqBody.UserID,
-		Nickname:       &reqBody.Nickname,
+		Nickname:       reqBody.Nickname,
 		AvatarImageURL: reqBody.AvatarImageURL,
 		BioGraphy:      reqBody.BioGraphy,
 	}

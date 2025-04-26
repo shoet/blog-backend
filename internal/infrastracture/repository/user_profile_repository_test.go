@@ -14,6 +14,140 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func Test_UserProfileRepository_Get(t *testing.T) {
+	type args struct {
+		user        models.User
+		userProfile models.UserProfile
+		userId      models.UserId
+	}
+	type wants struct {
+		err         error
+		userProfile *models.UserProfile
+	}
+	tests := []struct {
+		name  string
+		args  args
+		wants wants
+	}{
+		{
+			name: "success",
+			args: args{
+				user: models.User{
+					Id:       models.UserId(1),
+					Name:     "test",
+					Email:    "test@example.com",
+					Password: "test",
+				},
+				userProfile: models.UserProfile{
+					UserId:   models.UserId(1),
+					Nickname: "nickname",
+				},
+				userId: models.UserId(1),
+			},
+			wants: wants{
+				err: nil,
+				userProfile: &models.UserProfile{
+					UserId:   models.UserId(1),
+					Nickname: "nickname",
+				},
+			},
+		},
+		{
+			name: "not found",
+			args: args{
+				user: models.User{
+					Id:       models.UserId(1),
+					Name:     "test",
+					Email:    "test@example.com",
+					Password: "test",
+				},
+				userProfile: models.UserProfile{
+					UserId:   models.UserId(1),
+					Nickname: "nickname",
+				},
+				userId: models.UserId(2),
+			},
+			wants: wants{
+				err:         nil,
+				userProfile: nil,
+			},
+		},
+	}
+
+	db, err := testutil.NewDBPostgreSQLForTest(t, context.Background())
+	if err != nil {
+		t.Fatalf("failed to create test db: %v", err)
+	}
+
+	sut := repository.NewUserProfileRepository()
+
+	for _, tt := range tests {
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctx := context.Background()
+			tx, err := db.BeginTxx(ctx, nil)
+			if err != nil {
+				t.Fatalf("failed to create transaction: %v", err)
+			}
+			defer tx.Rollback()
+
+			query, params, err := goqu.
+				Insert("users").
+				Rows(
+					goqu.Record{
+						"id":       tt.args.user.Id,
+						"name":     tt.args.user.Name,
+						"email":    tt.args.user.Email,
+						"password": tt.args.user.Password,
+					},
+				).ToSQL()
+			if err != nil {
+				t.Fatalf("failed to build query: %v", err)
+			}
+
+			if _, err := tx.ExecContext(ctx, query, params...); err != nil {
+				t.Fatalf("failed to insert user: %v", err)
+			}
+
+			query, params, err = goqu.
+				Insert("user_profile").
+				Rows(
+					goqu.Record{
+						"user_id":                tt.args.userProfile.UserId,
+						"nickname":               tt.args.userProfile.Nickname,
+						"avatar_image_file_name": tt.args.userProfile.AvatarImageFileName,
+						"bio":                    tt.args.userProfile.Biography,
+					},
+				).ToSQL()
+
+			if err != nil {
+				t.Fatalf("failed to build query: %v", err)
+			}
+
+			if _, err := tx.ExecContext(ctx, query, params...); err != nil {
+				t.Fatalf("failed to insert user profile: %v", err)
+			}
+
+			got, gotErr := sut.Get(ctx, tx, tt.args.userId)
+
+			if diff := cmp.Diff(
+				tt.wants.err,
+				gotErr,
+			); diff != "" {
+				t.Errorf("error mismatch (-want +got):\n%s", diff)
+			}
+
+			if diff := cmp.Diff(
+				tt.wants.userProfile,
+				got,
+			); diff != "" {
+				t.Errorf("userProfile mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
 func Test_UserProfileRepository_Create(t *testing.T) {
 	ptrStr := func(s string) *string {
 		return &s
