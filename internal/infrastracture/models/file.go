@@ -26,7 +26,7 @@ func NewFile(fileType FileType, name string) (*File, error) {
 	case FileTypeAvatarImage:
 		break
 	default:
-		return nil, fmt.Errorf("invalida FileType: %s", fileType)
+		return nil, fmt.Errorf("invalid FileType: %s", fileType)
 	}
 	return &File{
 		Type: fileType, FileName: name,

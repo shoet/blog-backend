@@ -52,7 +52,7 @@ func (g *UploadFileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		FileName: reqBody.FileName,
 	})
 	if err != nil {
-		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
+		logger.Error(fmt.Sprintf("failed to upload file: %v", err))
 		response.RespondInternalServerError(w, r, err)
 		return
 	}
