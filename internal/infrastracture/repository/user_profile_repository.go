@@ -9,6 +9,7 @@ import (
 	"github.com/doug-martin/goqu/v9"
 	"github.com/shoet/blog/internal/infrastracture"
 	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/logging"
 )
 
 type UserProfileRepository struct {
@@ -89,8 +90,11 @@ func (r *UserProfileRepository) Update(
 	userId models.UserId, nickname *string, avatarImageFileName *string, bioGraphy *string,
 ) (*models.UserProfile, error) {
 
+	logger := logging.GetLogger(ctx)
+
 	builder := goqu.Update("user_profile")
 
+	noUpdate := true
 	for k, v := range map[string]any{
 		"nickname":               nickname,
 		"avatar_image_file_name": avatarImageFileName,
@@ -101,6 +105,11 @@ func (r *UserProfileRepository) Update(
 			continue
 		}
 		builder = builder.Set(goqu.Record{k: v})
+		noUpdate = false
+	}
+	if noUpdate {
+		logger.Info("no update")
+		return nil, nil
 	}
 	builder = builder.Where(goqu.Ex{"user_id": userId})
 	builder = builder.Returning("*")

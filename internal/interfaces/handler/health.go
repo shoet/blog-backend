@@ -19,7 +19,7 @@ func (hh *HealthCheckHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	logger.Info("health check")
 	resp := &ResponseHealthCheck{Message: "OK"}
 	if err := response.RespondJSON(w, r, http.StatusOK, resp); err != nil {
-		errResp := &response.ErrorResponse{Message: "NG"}
+		errResp := &response.Response{Message: "NG"}
 		if err := response.RespondJSON(w, r, http.StatusInternalServerError, errResp); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}

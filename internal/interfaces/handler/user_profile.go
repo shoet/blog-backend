@@ -233,6 +233,13 @@ func (h *UpdateUserProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 		response.RespondInternalServerError(w, r, err)
 		return
 	}
+
+	if userProfile == nil {
+		logger.Error("update not occurred")
+		response.RespondNoContent(w, r)
+		return
+	}
+
 	if err := response.RespondJSON(w, r, http.StatusOK, userProfile); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
