@@ -92,7 +92,7 @@ func (s *S3Adapter) generateSignedURL(
 			Bucket: aws.String(bucketName),
 			Key:    aws.String(objectKey),
 		}, func(opts *s3.PresignOptions) {
-			opts.Expires = time.Duration(s.config.AWSS3PresignPutExpiresSec * int64(time.Second))
+			opts.Expires = time.Duration(s.config.AWSS3PresignPutExpiresSec) * time.Second
 		})
 	if err != nil {
 		return nil, fmt.Errorf(
