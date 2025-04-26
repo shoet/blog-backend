@@ -10,9 +10,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/shoet/blog/internal/clocker"
-	"github.com/shoet/blog/internal/infrastracture"
-	"github.com/shoet/blog/internal/infrastracture/models"
-	"github.com/shoet/blog/internal/infrastracture/repository"
+	"github.com/shoet/blog/internal/infrastructure"
+	"github.com/shoet/blog/internal/infrastructure/models"
+	"github.com/shoet/blog/internal/infrastructure/repository"
 	"github.com/shoet/blog/internal/options"
 	"github.com/shoet/blog/internal/testutil"
 )
@@ -148,7 +148,7 @@ func Test_BlogRepository_List(t *testing.T) {
 		limit    *int64
 		offset   *models.BlogId
 		isPublic bool
-		prepare  func(ctx context.Context, tx infrastracture.TX) error
+		prepare  func(ctx context.Context, tx infrastructure.TX) error
 	}
 
 	type want struct {
@@ -166,7 +166,7 @@ func Test_BlogRepository_List(t *testing.T) {
 				isPublic: true,
 				limit:    func() *int64 { var v int64 = 20; return &v }(),
 				offset:   nil,
-				prepare: func(ctx context.Context, tx infrastracture.TX) error {
+				prepare: func(ctx context.Context, tx infrastructure.TX) error {
 					// blogを20個作成する
 					blogs := generateTestBlogs(t, 20, clocker.Now())
 					for _, b := range blogs {
@@ -199,7 +199,7 @@ func Test_BlogRepository_List(t *testing.T) {
 			args: args{
 				limit:  func() *int64 { var v int64 = 10; return &v }(),
 				offset: nil,
-				prepare: func(ctx context.Context, tx infrastracture.TX) error {
+				prepare: func(ctx context.Context, tx infrastructure.TX) error {
 					// blogを20個作成する
 					blogs := generateTestBlogs(t, 20, clocker.Now())
 					for _, b := range blogs {
@@ -233,7 +233,7 @@ func Test_BlogRepository_List(t *testing.T) {
 				limit:    func() *int64 { var v int64 = 20; return &v }(),
 				offset:   nil,
 				isPublic: true,
-				prepare: func(ctx context.Context, tx infrastracture.TX) error {
+				prepare: func(ctx context.Context, tx infrastructure.TX) error {
 					// publicなblogを10個、privateなblogを10個作成する
 					blogs := generateTestBlogsWithPublic(t, 20, clocker.Now())
 					for _, b := range blogs {
@@ -267,7 +267,7 @@ func Test_BlogRepository_List(t *testing.T) {
 				limit:    func() *int64 { var v int64 = 20; return &v }(),
 				offset:   nil,
 				isPublic: false,
-				prepare: func(ctx context.Context, tx infrastracture.TX) error {
+				prepare: func(ctx context.Context, tx infrastructure.TX) error {
 					// publicなblogを10個、privateなblogを10個作成する
 					blogs := generateTestBlogsWithPublic(t, 20, clocker.Now())
 					for _, b := range blogs {
@@ -755,7 +755,7 @@ func Test_BlogRepository_ListByTags(t *testing.T) {
 
 	sut := repository.NewBlogRepository(clocker)
 	type args struct {
-		prepare      func(ctx context.Context, tx infrastracture.TX) error
+		prepare      func(ctx context.Context, tx infrastructure.TX) error
 		tag          string
 		isPublicOnly bool
 	}
@@ -771,7 +771,7 @@ func Test_BlogRepository_ListByTags(t *testing.T) {
 		{
 			name: "通常パターン",
 			args: args{
-				prepare: func(ctx context.Context, tx infrastracture.TX) error {
+				prepare: func(ctx context.Context, tx infrastructure.TX) error {
 					blog := &models.Blog{
 						AuthorId:               1,
 						Title:                  "title",
@@ -833,7 +833,7 @@ func Test_BlogRepository_ListByTags(t *testing.T) {
 		{
 			name: "公開記事のみ検索する",
 			args: args{
-				prepare: func(ctx context.Context, tx infrastracture.TX) error {
+				prepare: func(ctx context.Context, tx infrastructure.TX) error {
 					blog := &models.Blog{
 						AuthorId:               1,
 						Title:                  "title",
@@ -898,7 +898,7 @@ func Test_BlogRepository_ListByTags(t *testing.T) {
 		{
 			name: "存在しないタグを検索する",
 			args: args{
-				prepare: func(ctx context.Context, tx infrastracture.TX) error {
+				prepare: func(ctx context.Context, tx infrastructure.TX) error {
 					blog := &models.Blog{
 						AuthorId:               1,
 						Title:                  "title",
@@ -982,7 +982,7 @@ func Test_BlogRepository_ListByKeyword(t *testing.T) {
 
 	sut := repository.NewBlogRepository(clocker)
 	type args struct {
-		prepare      func(ctx context.Context, tx infrastracture.TX) error
+		prepare      func(ctx context.Context, tx infrastructure.TX) error
 		keyword      string
 		isPublicOnly bool
 	}
@@ -998,7 +998,7 @@ func Test_BlogRepository_ListByKeyword(t *testing.T) {
 		{
 			name: "本文に`keyword`が含まれている",
 			args: args{
-				prepare: func(ctx context.Context, tx infrastracture.TX) error {
+				prepare: func(ctx context.Context, tx infrastructure.TX) error {
 					// 検索対象のblogを作成
 					blog := &models.Blog{
 						AuthorId:               1,
@@ -1041,7 +1041,7 @@ func Test_BlogRepository_ListByKeyword(t *testing.T) {
 		{
 			name: "概要に`description`が含まれている",
 			args: args{
-				prepare: func(ctx context.Context, tx infrastracture.TX) error {
+				prepare: func(ctx context.Context, tx infrastructure.TX) error {
 					// 検索対象のblogを作成
 					blog := &models.Blog{
 						AuthorId:               1,
@@ -1083,7 +1083,7 @@ func Test_BlogRepository_ListByKeyword(t *testing.T) {
 		{
 			name: "公開記事のみ検索する",
 			args: args{
-				prepare: func(ctx context.Context, tx infrastracture.TX) error {
+				prepare: func(ctx context.Context, tx infrastructure.TX) error {
 					blog := &models.Blog{
 						AuthorId:               1,
 						Title:                  "aaakeywordaaa",
@@ -1125,7 +1125,7 @@ func Test_BlogRepository_ListByKeyword(t *testing.T) {
 		{
 			name: "存在しないkeywordを検索する",
 			args: args{
-				prepare: func(ctx context.Context, tx infrastracture.TX) error {
+				prepare: func(ctx context.Context, tx infrastructure.TX) error {
 					blog := &models.Blog{
 						AuthorId:               1,
 						Title:                  "title",

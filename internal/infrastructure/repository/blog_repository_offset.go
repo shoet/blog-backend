@@ -9,8 +9,8 @@ import (
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/shoet/blog/internal/clocker"
-	"github.com/shoet/blog/internal/infrastracture"
-	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/infrastructure"
+	"github.com/shoet/blog/internal/infrastructure/models"
 	"github.com/shoet/blog/internal/options"
 )
 
@@ -34,7 +34,7 @@ func (r *BlogRepositoryOffset) buildOffset(page int64, limit int64) int64 {
 }
 
 func (r *BlogRepositoryOffset) List(
-	ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions,
+	ctx context.Context, tx infrastructure.TX, option *options.ListBlogOptions,
 ) (models.Blogs, error) {
 	builder := goqu.
 		Select(
@@ -94,7 +94,7 @@ func (r *BlogRepositoryOffset) List(
 }
 
 func (r *BlogRepositoryOffset) ListByTag(
-	ctx context.Context, tx infrastracture.TX, tag string, option *options.ListBlogOptions,
+	ctx context.Context, tx infrastructure.TX, tag string, option *options.ListBlogOptions,
 ) (models.Blogs, error) {
 	builder := goqu.
 		From("blogs_tags").
@@ -138,7 +138,7 @@ func (r *BlogRepositoryOffset) ListByTag(
 }
 
 func (r *BlogRepositoryOffset) ListByKeyword(
-	ctx context.Context, tx infrastracture.TX, keyword string, option *options.ListBlogOptions,
+	ctx context.Context, tx infrastructure.TX, keyword string, option *options.ListBlogOptions,
 ) (models.Blogs, error) {
 	builder := goqu.
 		From("blogs").
@@ -173,7 +173,7 @@ func (r *BlogRepositoryOffset) ListByKeyword(
 }
 
 func (r *BlogRepositoryOffset) CountBlogs(
-	ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions,
+	ctx context.Context, tx infrastructure.TX, option *options.ListBlogOptions,
 ) (int64, error) {
 	builder := goqu.Select(goqu.COUNT("*").As("count")).From("blogs")
 	if option.IsPublic {
@@ -194,7 +194,7 @@ func (r *BlogRepositoryOffset) CountBlogs(
 }
 
 func (r *BlogRepositoryOffset) CountBlogsByTag(
-	ctx context.Context, tx infrastracture.TX, tag string, option *options.ListBlogOptions,
+	ctx context.Context, tx infrastructure.TX, tag string, option *options.ListBlogOptions,
 ) (int64, error) {
 	builder := goqu.
 		From("blogs_tags").
@@ -230,7 +230,7 @@ func (r *BlogRepositoryOffset) CountBlogsByTag(
 }
 
 func (r *BlogRepositoryOffset) CountBlogsByKeyword(
-	ctx context.Context, tx infrastracture.TX, keyword string, option *options.ListBlogOptions,
+	ctx context.Context, tx infrastructure.TX, keyword string, option *options.ListBlogOptions,
 ) (int64, error) {
 	builder := goqu.
 		From("blogs").
@@ -258,7 +258,7 @@ func (r *BlogRepositoryOffset) CountBlogsByKeyword(
 
 // scanQueryRowStruct はクエリの結果を構造体にスキャンします。
 // v はポインタ型である必要があります。
-func (r *BlogRepositoryOffset) scanQueryRowStruct(ctx context.Context, tx infrastracture.TX, v interface{}, sql string, params ...interface{}) error {
+func (r *BlogRepositoryOffset) scanQueryRowStruct(ctx context.Context, tx infrastructure.TX, v interface{}, sql string, params ...interface{}) error {
 	// v がポインタ型でない場合はエラーを返す
 	if reflect.ValueOf(v).Kind() != reflect.Ptr {
 		return fmt.Errorf("v must be a pointer")

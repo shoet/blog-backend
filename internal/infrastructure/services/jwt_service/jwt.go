@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/shoet/blog/internal/clocker"
-	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/infrastructure/models"
 )
 
 type KVSer interface {

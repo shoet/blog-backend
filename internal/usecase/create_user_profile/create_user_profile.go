@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/shoet/blog/internal/config"
-	"github.com/shoet/blog/internal/infrastracture"
-	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/infrastructure"
+	"github.com/shoet/blog/internal/infrastructure/models"
 )
 
 type FileRepository interface {
@@ -16,21 +16,21 @@ type FileRepository interface {
 type UserProfileRepository interface {
 	Create(
 		ctx context.Context,
-		tx infrastracture.TX,
+		tx infrastructure.TX,
 		userId models.UserId, nickname string, avatarImageFileName *string, bioGraphy *string,
 	) (*models.UserProfile, error)
 }
 
 type Usecase struct {
 	Config                *config.Config
-	DB                    infrastracture.DB
+	DB                    infrastructure.DB
 	FileRepository        FileRepository
 	UserProfileRepository UserProfileRepository
 }
 
 func NewUsecase(
 	config *config.Config,
-	db infrastracture.DB,
+	db infrastructure.DB,
 	fileRepository FileRepository,
 	userProfileRepository UserProfileRepository,
 ) *Usecase {

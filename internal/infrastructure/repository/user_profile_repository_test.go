@@ -8,8 +8,8 @@ import (
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/shoet/blog/internal/infrastracture/models"
-	"github.com/shoet/blog/internal/infrastracture/repository"
+	"github.com/shoet/blog/internal/infrastructure/models"
+	"github.com/shoet/blog/internal/infrastructure/repository"
 	"github.com/shoet/blog/internal/testutil"
 	"github.com/stretchr/testify/assert"
 )

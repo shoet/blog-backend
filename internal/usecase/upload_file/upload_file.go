@@ -3,7 +3,7 @@ package upload_file
 import (
 	"context"
 
-	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/infrastructure/models"
 )
 
 type FileRepository interface {

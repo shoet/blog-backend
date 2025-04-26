@@ -1,15 +1,15 @@
-package infrastracture_test
+package infrastructure_test
 
 import (
 	"context"
 	"testing"
 
-	"github.com/shoet/blog/internal/infrastracture"
+	"github.com/shoet/blog/internal/infrastructure"
 )
 
 func Test_NewRedisKVS(t *testing.T) {
 	ctx := context.Background()
-	_, err := infrastracture.NewRedisKVS(ctx, "127.0.0.1", 6379, "default", "redispw", 10, false)
+	_, err := infrastructure.NewRedisKVS(ctx, "127.0.0.1", 6379, "default", "redispw", 10, false)
 	if err != nil {
 		t.Fatalf("failed to create redis kvs: %v", err)
 	}
@@ -17,7 +17,7 @@ func Test_NewRedisKVS(t *testing.T) {
 
 func Test_Save(t *testing.T) {
 	ctx := context.Background()
-	kvs, err := infrastracture.NewRedisKVS(ctx, "127.0.0.1", 6379, "default", "redispw", 10, false)
+	kvs, err := infrastructure.NewRedisKVS(ctx, "127.0.0.1", 6379, "default", "redispw", 10, false)
 	if err != nil {
 		t.Fatalf("failed to create redis kvs: %v", err)
 	}
@@ -29,7 +29,7 @@ func Test_Save(t *testing.T) {
 
 func Test_Load(t *testing.T) {
 	ctx := context.Background()
-	kvs, err := infrastracture.NewRedisKVS(ctx, "127.0.0.1", 6379, "default", "redispw", 300, false)
+	kvs, err := infrastructure.NewRedisKVS(ctx, "127.0.0.1", 6379, "default", "redispw", 300, false)
 	if err != nil {
 		t.Fatalf("failed to create redis kvs: %v", err)
 	}

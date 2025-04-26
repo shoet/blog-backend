@@ -4,34 +4,34 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/shoet/blog/internal/infrastracture"
-	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/infrastructure"
+	"github.com/shoet/blog/internal/infrastructure/models"
 	"github.com/shoet/blog/internal/options"
 )
 
 type BlogRepository interface {
 	List(
-		ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions,
+		ctx context.Context, tx infrastructure.TX, option *options.ListBlogOptions,
 	) ([]*models.Blog, error)
 
 	ListByTag(
-		ctx context.Context, tx infrastracture.TX, tag string, option *options.ListBlogOptions,
+		ctx context.Context, tx infrastructure.TX, tag string, option *options.ListBlogOptions,
 	) (models.Blogs, error)
 
 	ListByKeyword(
-		ctx context.Context, tx infrastracture.TX, keyword string, option *options.ListBlogOptions,
+		ctx context.Context, tx infrastructure.TX, keyword string, option *options.ListBlogOptions,
 	) (models.Blogs, error)
 }
 
 // get_blogs.Usecaseはブログ一覧を取得するユースケースです。
 // ページングはカーソル方式で実装しています。
 type Usecase struct {
-	DB             infrastracture.DB
+	DB             infrastructure.DB
 	BlogRepository BlogRepository
 }
 
 func NewUsecase(
-	DB infrastracture.DB,
+	DB infrastructure.DB,
 	blogRepository BlogRepository,
 ) *Usecase {
 	return &Usecase{
@@ -53,7 +53,7 @@ func (u *Usecase) Run(
 	ctx context.Context, input *GetBlogsInput,
 ) (blogs []*models.Blog, prevEOF bool, nextEOF bool, err error) {
 
-	transactor := infrastracture.NewTransactionProvider(u.DB)
+	transactor := infrastructure.NewTransactionProvider(u.DB)
 
 	option, err := options.NewListBlogOptions(input.IsPublicOnly, input.CursorId, input.Limit, input.PageDirection)
 	if err != nil {
@@ -62,7 +62,7 @@ func (u *Usecase) Run(
 	// 次のページが存在するか判定するためにLimit+1で取得する
 	option.Limit++
 
-	result, err := transactor.DoInTx(ctx, func(tx infrastracture.TX) (interface{}, error) {
+	result, err := transactor.DoInTx(ctx, func(tx infrastructure.TX) (interface{}, error) {
 		var blogs models.Blogs
 
 		if input.Tag != nil {

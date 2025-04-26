@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/shoet/blog/internal/config"
-	"github.com/shoet/blog/internal/infrastracture"
-	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/infrastructure"
+	"github.com/shoet/blog/internal/infrastructure/models"
 )
 
 var ErrNotFound = fmt.Errorf("user profile not found")
@@ -14,20 +14,20 @@ var ErrNotFound = fmt.Errorf("user profile not found")
 type UserProfileRepository interface {
 	Get(
 		ctx context.Context,
-		tx infrastracture.TX,
+		tx infrastructure.TX,
 		userId models.UserId,
 	) (*models.UserProfile, error)
 }
 
 type Usecase struct {
 	config                *config.Config
-	DB                    infrastracture.DB
+	DB                    infrastructure.DB
 	UserProfileRepository UserProfileRepository
 }
 
 func NewUsecase(
 	config *config.Config,
-	db infrastracture.DB,
+	db infrastructure.DB,
 	userProfileRepository UserProfileRepository,
 ) *Usecase {
 	return &Usecase{

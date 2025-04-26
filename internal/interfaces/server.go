@@ -13,13 +13,13 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/shoet/blog/internal/clocker"
 	"github.com/shoet/blog/internal/config"
-	"github.com/shoet/blog/internal/infrastracture"
-	"github.com/shoet/blog/internal/infrastracture/adapter"
-	"github.com/shoet/blog/internal/infrastracture/repository"
-	"github.com/shoet/blog/internal/infrastracture/services/auth_service"
-	"github.com/shoet/blog/internal/infrastracture/services/blog_service"
-	"github.com/shoet/blog/internal/infrastracture/services/contents_service"
-	"github.com/shoet/blog/internal/infrastracture/services/jwt_service"
+	"github.com/shoet/blog/internal/infrastructure"
+	"github.com/shoet/blog/internal/infrastructure/adapter"
+	"github.com/shoet/blog/internal/infrastructure/repository"
+	"github.com/shoet/blog/internal/infrastructure/services/auth_service"
+	"github.com/shoet/blog/internal/infrastructure/services/blog_service"
+	"github.com/shoet/blog/internal/infrastructure/services/contents_service"
+	"github.com/shoet/blog/internal/infrastructure/services/jwt_service"
 	"github.com/shoet/blog/internal/interfaces/cookie"
 	"github.com/shoet/blog/internal/logging"
 	"golang.org/x/sync/errgroup"
@@ -56,12 +56,12 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 	cookie := cookie.NewCookieController(cfg.Env, cfg.SiteDomain)
 
 	log.Println("start connection DB")
-	db, err := infrastracture.NewDBPostgres(ctx, cfg)
+	db, err := infrastructure.NewDBPostgres(ctx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create db: %w", err)
 	}
 	log.Println("start connection KVS")
-	kvs, err := infrastracture.NewRedisKVS(
+	kvs, err := infrastructure.NewRedisKVS(
 		ctx,
 		cfg.KVSHost,
 		cfg.KVSPort,

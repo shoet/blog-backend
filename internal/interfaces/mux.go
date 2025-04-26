@@ -8,13 +8,13 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/shoet/blog/internal/clocker"
 	"github.com/shoet/blog/internal/config"
-	"github.com/shoet/blog/internal/infrastracture"
-	"github.com/shoet/blog/internal/infrastracture/adapter"
-	"github.com/shoet/blog/internal/infrastracture/repository"
-	"github.com/shoet/blog/internal/infrastracture/services/auth_service"
-	"github.com/shoet/blog/internal/infrastracture/services/blog_service"
-	"github.com/shoet/blog/internal/infrastracture/services/contents_service"
-	"github.com/shoet/blog/internal/infrastracture/services/jwt_service"
+	"github.com/shoet/blog/internal/infrastructure"
+	"github.com/shoet/blog/internal/infrastructure/adapter"
+	"github.com/shoet/blog/internal/infrastructure/repository"
+	"github.com/shoet/blog/internal/infrastructure/services/auth_service"
+	"github.com/shoet/blog/internal/infrastructure/services/blog_service"
+	"github.com/shoet/blog/internal/infrastructure/services/contents_service"
+	"github.com/shoet/blog/internal/infrastructure/services/jwt_service"
 	"github.com/shoet/blog/internal/interfaces/cookie"
 	"github.com/shoet/blog/internal/interfaces/handler"
 	"github.com/shoet/blog/internal/interfaces/middleware"
@@ -41,7 +41,7 @@ import (
 
 type MuxDependencies struct {
 	Config                *config.Config
-	DB                    infrastracture.DB
+	DB                    infrastructure.DB
 	BlogRepository        *repository.BlogRepository
 	BlogRepositoryOffset  *repository.BlogRepositoryOffset
 	CommentRepository     *repository.CommentRepository

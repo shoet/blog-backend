@@ -8,8 +8,8 @@ import (
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/shoet/blog/internal/clocker"
-	"github.com/shoet/blog/internal/infrastracture"
-	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/infrastructure"
+	"github.com/shoet/blog/internal/infrastructure/models"
 	"github.com/shoet/blog/internal/options"
 )
 
@@ -23,7 +23,7 @@ func NewBlogRepository(clocker clocker.Clocker) *BlogRepository {
 	}
 }
 
-func (r *BlogRepository) Add(ctx context.Context, tx infrastracture.TX, blog *models.Blog) (models.BlogId, error) {
+func (r *BlogRepository) Add(ctx context.Context, tx infrastructure.TX, blog *models.Blog) (models.BlogId, error) {
 	sql, params, err := goqu.
 		Insert("blogs").
 		Cols("author_id", "title", "content", "description", "thumbnail_image_file_name", "is_public").
@@ -54,7 +54,7 @@ type BlogTag struct {
 
 // Blogに紐づくTagを取得する
 func (r *BlogRepository) WithBlogTags(
-	ctx context.Context, tx infrastracture.TX, blogId models.BlogId,
+	ctx context.Context, tx infrastructure.TX, blogId models.BlogId,
 ) ([]*BlogTag, error) {
 	sql, params, err := goqu.
 		Select("blog_id", goqu.C("name").As("tag")).
@@ -78,7 +78,7 @@ func (r *BlogRepository) WithBlogTags(
 // TODO: List()に１本化する
 // カーソルページング実装
 func (r *BlogRepository) List(
-	ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions,
+	ctx context.Context, tx infrastructure.TX, option *options.ListBlogOptions,
 ) ([]*models.Blog, error) {
 	builder := goqu.
 		Select(
@@ -144,7 +144,7 @@ func (r *BlogRepository) List(
 // ListByTagはタグ名を持つブログを検索する
 // カーソルページング実装
 func (r *BlogRepository) ListByTag(
-	ctx context.Context, tx infrastracture.TX, tag string, option *options.ListBlogOptions,
+	ctx context.Context, tx infrastructure.TX, tag string, option *options.ListBlogOptions,
 ) (models.Blogs, error) {
 	builder := goqu.
 		From("blogs_tags").
@@ -196,7 +196,7 @@ func (r *BlogRepository) ListByTag(
 // TODO: ページング
 // カーソルページング実装
 func (r *BlogRepository) ListByKeyword(
-	ctx context.Context, tx infrastracture.TX, keyword string, option *options.ListBlogOptions,
+	ctx context.Context, tx infrastructure.TX, keyword string, option *options.ListBlogOptions,
 ) (models.Blogs, error) {
 	builder := goqu.
 		From("blogs").
@@ -237,7 +237,7 @@ func (r *BlogRepository) ListByKeyword(
 }
 
 func (r *BlogRepository) Get(
-	ctx context.Context, tx infrastracture.TX, id models.BlogId,
+	ctx context.Context, tx infrastructure.TX, id models.BlogId,
 ) (*models.Blog, error) {
 	sql, params, err := goqu.
 		Select("id", "author_id", "title", "content", "description",
@@ -276,7 +276,7 @@ func (r *BlogRepository) Get(
 	return blogs[0], nil
 }
 
-func (r *BlogRepository) Delete(ctx context.Context, tx infrastracture.TX, id models.BlogId) error {
+func (r *BlogRepository) Delete(ctx context.Context, tx infrastructure.TX, id models.BlogId) error {
 	sql, params, err := goqu.
 		Delete("blogs").
 		Where(goqu.Ex{"id": id}).
@@ -291,7 +291,7 @@ func (r *BlogRepository) Delete(ctx context.Context, tx infrastracture.TX, id mo
 }
 
 func (r *BlogRepository) Put(
-	ctx context.Context, tx infrastracture.TX, blog *models.Blog,
+	ctx context.Context, tx infrastructure.TX, blog *models.Blog,
 ) (models.BlogId, error) {
 	now := r.Clocker.Now()
 	blog.Modified = uint(now.Unix())
@@ -318,7 +318,7 @@ func (r *BlogRepository) Put(
 }
 
 func (r *BlogRepository) AddBlogTag(
-	ctx context.Context, tx infrastracture.TX, blogId models.BlogId, tagId models.TagId,
+	ctx context.Context, tx infrastructure.TX, blogId models.BlogId, tagId models.TagId,
 ) (int64, error) {
 	sql, params, err := goqu.
 		Insert("blogs_tags").
@@ -349,7 +349,7 @@ func (r *BlogRepository) AddBlogTag(
 そのブログと同じタグを使っている他のブログを取得する
 */
 func (r *BlogRepository) SelectBlogsTagsByOtherUsingBlog(
-	ctx context.Context, tx infrastracture.TX, blogId models.BlogId,
+	ctx context.Context, tx infrastructure.TX, blogId models.BlogId,
 ) ([]*models.BlogsTags, error) {
 	var result []*models.BlogsTags
 	sql := `
@@ -382,7 +382,7 @@ func (r *BlogRepository) SelectBlogsTagsByOtherUsingBlog(
 }
 
 func (r *BlogRepository) SelectBlogsTags(
-	ctx context.Context, tx infrastracture.TX, blogId models.BlogId,
+	ctx context.Context, tx infrastructure.TX, blogId models.BlogId,
 ) ([]*models.BlogsTags, error) {
 	var result []*models.BlogsTags
 	sql := `
@@ -405,7 +405,7 @@ func (r *BlogRepository) SelectBlogsTags(
 }
 
 func (r *BlogRepository) DeleteBlogsTags(
-	ctx context.Context, tx infrastracture.TX, blogId models.BlogId, tagId models.TagId,
+	ctx context.Context, tx infrastructure.TX, blogId models.BlogId, tagId models.TagId,
 ) error {
 	sql := `
 	DELETE FROM
@@ -422,7 +422,7 @@ func (r *BlogRepository) DeleteBlogsTags(
 }
 
 func (r *BlogRepository) SelectTags(
-	ctx context.Context, tx infrastracture.TX, tag string,
+	ctx context.Context, tx infrastructure.TX, tag string,
 ) ([]*models.Tag, error) {
 	sql := `
 	SELECT
@@ -440,7 +440,7 @@ func (r *BlogRepository) SelectTags(
 	return tags, nil
 }
 
-func (r *BlogRepository) AddTag(ctx context.Context, tx infrastracture.TX, tag string) (models.TagId, error) {
+func (r *BlogRepository) AddTag(ctx context.Context, tx infrastructure.TX, tag string) (models.TagId, error) {
 	sql := `
 	INSERT INTO tags
 		(name)
@@ -461,7 +461,7 @@ func (r *BlogRepository) AddTag(ctx context.Context, tx infrastracture.TX, tag s
 }
 
 func (r *BlogRepository) DeleteTag(
-	ctx context.Context, tx infrastracture.TX, tagId models.TagId,
+	ctx context.Context, tx infrastructure.TX, tagId models.TagId,
 ) error {
 	sql := `
 	DELETE FROM	
@@ -477,7 +477,7 @@ func (r *BlogRepository) DeleteTag(
 }
 
 func (r *BlogRepository) ListTags(
-	ctx context.Context, tx infrastracture.TX, option options.ListTagsOptions,
+	ctx context.Context, tx infrastructure.TX, option options.ListTagsOptions,
 ) ([]*models.Tag, error) {
 	sql := `
 	SELECT

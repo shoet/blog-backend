@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/doug-martin/goqu/v9"
-	"github.com/shoet/blog/internal/infrastracture"
-	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/infrastructure"
+	"github.com/shoet/blog/internal/infrastructure/models"
 )
 
 type UserProfileRepository struct {
@@ -24,7 +24,7 @@ Get は、userIdに一致するユーザープロフィールを取得する。
 */
 func (r *UserProfileRepository) Get(
 	ctx context.Context,
-	tx infrastracture.TX,
+	tx infrastructure.TX,
 	userId models.UserId,
 ) (*models.UserProfile, error) {
 
@@ -56,7 +56,7 @@ func (r *UserProfileRepository) Get(
 
 func (r *UserProfileRepository) Create(
 	ctx context.Context,
-	tx infrastracture.TX,
+	tx infrastructure.TX,
 	userId models.UserId, nickname string, avatarImageFileName *string, bioGraphy *string,
 ) (*models.UserProfile, error) {
 	builder := goqu.
@@ -87,7 +87,7 @@ func (r *UserProfileRepository) Create(
 
 func (r *UserProfileRepository) Update(
 	ctx context.Context,
-	tx infrastracture.TX,
+	tx infrastructure.TX,
 	userId models.UserId, nickname string, avatarImageFileName *string, bioGraphy *string,
 ) (*models.UserProfile, error) {
 

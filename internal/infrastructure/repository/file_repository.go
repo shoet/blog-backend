@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/shoet/blog/internal/config"
-	"github.com/shoet/blog/internal/infrastracture/adapter"
-	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/infrastructure/adapter"
+	"github.com/shoet/blog/internal/infrastructure/models"
 )
 
 type FileRepository struct {

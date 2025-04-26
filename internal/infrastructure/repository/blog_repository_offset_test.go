@@ -9,8 +9,8 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/jmoiron/sqlx"
 	"github.com/shoet/blog/internal/clocker"
-	"github.com/shoet/blog/internal/infrastracture/models"
-	"github.com/shoet/blog/internal/infrastracture/repository"
+	"github.com/shoet/blog/internal/infrastructure/models"
+	"github.com/shoet/blog/internal/infrastructure/repository"
 	"github.com/shoet/blog/internal/options"
 	"github.com/shoet/blog/internal/testutil"
 )

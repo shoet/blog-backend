@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/shoet/blog/internal/infrastracture/adapter"
+	"github.com/shoet/blog/internal/infrastructure/adapter"
 )
 
 type GitHubV4APIAdapter interface {

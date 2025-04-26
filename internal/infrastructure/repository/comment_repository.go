@@ -6,8 +6,8 @@ import (
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/shoet/blog/internal/clocker"
-	"github.com/shoet/blog/internal/infrastracture"
-	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/infrastructure"
+	"github.com/shoet/blog/internal/infrastructure/models"
 )
 
 type CommentRepository struct {
@@ -22,7 +22,7 @@ func NewCommentRepository(clocker clocker.Clocker) *CommentRepository {
 
 func (r *CommentRepository) CreateComment(
 	ctx context.Context,
-	tx infrastracture.TX,
+	tx infrastructure.TX,
 	blogId models.BlogId,
 	userId *models.UserId,
 	clientId *string,
@@ -56,7 +56,7 @@ func (r *CommentRepository) CreateComment(
 
 func (r *CommentRepository) Get(
 	ctx context.Context,
-	tx infrastracture.TX,
+	tx infrastructure.TX,
 	commentId models.CommentId,
 ) (*models.Comment, error) {
 	builder := goqu.
@@ -80,7 +80,7 @@ func (r *CommentRepository) Get(
 
 func (r *CommentRepository) UpdateThreadId(
 	ctx context.Context,
-	tx infrastracture.TX,
+	tx infrastructure.TX,
 	commentId models.CommentId,
 	threadId string,
 ) error {
@@ -100,7 +100,7 @@ func (r *CommentRepository) UpdateThreadId(
 
 func (r *CommentRepository) GetByBlogId(
 	ctx context.Context,
-	tx infrastracture.TX,
+	tx infrastructure.TX,
 	blogId models.BlogId,
 	excludeDeleted bool,
 ) ([]*models.Comment, error) {

@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/shoet/blog/internal/clocker"
-	"github.com/shoet/blog/internal/infrastracture/models"
-	"github.com/shoet/blog/internal/infrastracture/services/jwt_service"
+	"github.com/shoet/blog/internal/infrastructure/models"
+	"github.com/shoet/blog/internal/infrastructure/services/jwt_service"
 	"github.com/stretchr/testify/mock"
 )
 

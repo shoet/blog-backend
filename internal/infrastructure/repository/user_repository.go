@@ -6,8 +6,8 @@ import (
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/shoet/blog/internal/clocker"
-	"github.com/shoet/blog/internal/infrastracture"
-	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/infrastructure"
+	"github.com/shoet/blog/internal/infrastructure/models"
 )
 
 type UserRepository struct {
@@ -19,7 +19,7 @@ func NewUserRepository(clocker clocker.Clocker) (*UserRepository, error) {
 }
 
 func (t *UserRepository) Get(
-	ctx context.Context, tx infrastracture.TX, id models.UserId,
+	ctx context.Context, tx infrastructure.TX, id models.UserId,
 ) (*models.User, error) {
 	sql, params, err := goqu.
 		From("users").
@@ -44,7 +44,7 @@ func (t *UserRepository) Get(
 var ErrUserNotFound = fmt.Errorf("user not found")
 
 func (u *UserRepository) GetByEmail(
-	ctx context.Context, tx infrastracture.TX, email string,
+	ctx context.Context, tx infrastructure.TX, email string,
 ) (*models.User, error) {
 	sql, params, err := goqu.
 		From("users").
@@ -67,7 +67,7 @@ func (u *UserRepository) GetByEmail(
 }
 
 func (u *UserRepository) Add(
-	ctx context.Context, tx infrastracture.TX, user *models.User,
+	ctx context.Context, tx infrastructure.TX, user *models.User,
 ) (*models.User, error) {
 	sql, params, err := goqu.
 		Insert("users").
