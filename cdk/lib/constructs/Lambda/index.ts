@@ -121,6 +121,7 @@ export class Lambda extends Construct {
       "BLOG_AWS_S3_BUCKET",
       "BLOG_AWS_S3_THUMBNAIL_DIRECTORY",
       "BLOG_AWS_S3_CONTENT_IMAGE_DIRECTORY",
+      "BLOG_AWS_S3_AVATAR_IMAGE_DIRECTORY",
       "ADMIN_NAME",
       "ADMIN_EMAIL",
       "ADMIN_PASSWORD",
