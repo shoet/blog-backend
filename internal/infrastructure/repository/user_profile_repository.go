@@ -91,17 +91,15 @@ func (r *UserProfileRepository) Update(
 	userId models.UserId, nickname string, avatarImageFileName *string, bioGraphy *string,
 ) (*models.UserProfile, error) {
 
-	builder := goqu.Update("user_profile")
-
-	for k, v := range map[string]any{
-		"nickname":               nickname,
-		"avatar_image_file_name": avatarImageFileName,
-		"bio":                    bioGraphy,
-	} {
-		builder = builder.Set(goqu.Record{k: v})
-	}
-	builder = builder.Where(goqu.Ex{"user_id": userId})
-	builder = builder.Returning("*")
+	builder := goqu.
+		Update("user_profile").
+		Set(goqu.Record{
+			"nickname":               nickname,
+			"avatar_image_file_name": avatarImageFileName,
+			"bio":                    bioGraphy,
+		}).
+		Where(goqu.Ex{"user_id": userId}).
+		Returning("*")
 
 	query, params, err := builder.ToSQL()
 	if err != nil {

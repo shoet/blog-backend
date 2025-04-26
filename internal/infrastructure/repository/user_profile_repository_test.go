@@ -334,8 +334,8 @@ func Test_UserProfileRepository_Update(t *testing.T) {
 				},
 				userId:              models.UserId(1),
 				nickname:            "shoet",
-				bioGraphy:           ptrStr("bio"),
 				avatarImageFileName: nil,
+				bioGraphy:           ptrStr("bio"),
 			},
 			wants: wants{
 				err: nil,
