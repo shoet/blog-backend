@@ -191,8 +191,8 @@ func (h *UpdateUserProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Requ
 	logger := logging.GetLogger(ctx)
 	var reqBody struct {
 		UserID         models.UserId `json:"userId" validate:"required"`
-		Nickname       *string       `json:"nickname"`
-		AvatarImageURL *string       `json:"avatarImageUrl,omitempty"`
+		Nickname       string        `json:"nickname" validate:"required"`
+		AvatarImageURL *string       `json:"avatarImageUrl"`
 		BioGraphy      *string       `json:"biography"`
 	}
 	defer r.Body.Close()

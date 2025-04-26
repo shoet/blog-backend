@@ -4,12 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"reflect"
 
 	"github.com/doug-martin/goqu/v9"
 	"github.com/shoet/blog/internal/infrastracture"
 	"github.com/shoet/blog/internal/infrastracture/models"
-	"github.com/shoet/blog/internal/logging"
 )
 
 type UserProfileRepository struct {
@@ -31,7 +29,7 @@ func (r *UserProfileRepository) Get(
 ) (*models.UserProfile, error) {
 
 	builder := goqu.
-		Select("user_id", "nickname", "avatar_image_file_name", "bio").
+		Select("id", "user_id", "nickname", "avatar_image_file_name", "bio", "created", "modified").
 		From("user_profile").
 		Where(goqu.Ex{"user_id": userId})
 
@@ -87,29 +85,17 @@ func (r *UserProfileRepository) Create(
 func (r *UserProfileRepository) Update(
 	ctx context.Context,
 	tx infrastracture.TX,
-	userId models.UserId, nickname *string, avatarImageFileName *string, bioGraphy *string,
+	userId models.UserId, nickname string, avatarImageFileName *string, bioGraphy *string,
 ) (*models.UserProfile, error) {
-
-	logger := logging.GetLogger(ctx)
 
 	builder := goqu.Update("user_profile")
 
-	noUpdate := true
 	for k, v := range map[string]any{
 		"nickname":               nickname,
 		"avatar_image_file_name": avatarImageFileName,
 		"bio":                    bioGraphy,
 	} {
-		rf := reflect.ValueOf(v)
-		if rf.Kind() == reflect.Ptr && rf.IsNil() {
-			continue
-		}
 		builder = builder.Set(goqu.Record{k: v})
-		noUpdate = false
-	}
-	if noUpdate {
-		logger.Info("no update")
-		return nil, nil
 	}
 	builder = builder.Where(goqu.Ex{"user_id": userId})
 	builder = builder.Returning("*")

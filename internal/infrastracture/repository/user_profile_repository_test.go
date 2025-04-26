@@ -141,6 +141,7 @@ func Test_UserProfileRepository_Get(t *testing.T) {
 			if diff := cmp.Diff(
 				tt.wants.userProfile,
 				got,
+				cmpopts.IgnoreFields(models.UserProfile{}, "UserProfileId", "Created", "Modified"),
 			); diff != "" {
 				t.Errorf("userProfile mismatch (-want +got):\n%s", diff)
 			}
@@ -285,7 +286,7 @@ func Test_UserProfileRepository_Update(t *testing.T) {
 	type args struct {
 		userProfile         models.UserProfile
 		userId              models.UserId
-		nickname            *string
+		nickname            string
 		avatarImageFileName *string
 		bioGraphy           *string
 	}
@@ -308,13 +309,18 @@ func Test_UserProfileRepository_Update(t *testing.T) {
 					Biography:           nil,
 				},
 				userId:              models.UserId(1),
-				nickname:            nil,
+				nickname:            "shoet",
 				bioGraphy:           nil,
 				avatarImageFileName: nil,
 			},
 			wants: wants{
-				err:         errors.New("no update columns"),
-				userProfile: nil,
+				err: errors.New("no update columns"),
+				userProfile: &models.UserProfile{
+					UserId:              models.UserId(1),
+					Nickname:            "shoet",
+					AvatarImageFileName: nil,
+					Biography:           nil,
+				},
 			},
 		},
 		{
@@ -327,7 +333,7 @@ func Test_UserProfileRepository_Update(t *testing.T) {
 					Biography:           nil,
 				},
 				userId:              models.UserId(1),
-				nickname:            nil,
+				nickname:            "shoet",
 				bioGraphy:           ptrStr("bio"),
 				avatarImageFileName: nil,
 			},
@@ -408,7 +414,7 @@ func Test_UserProfileRepository_Update(t *testing.T) {
 				userProfile,
 				cmpopts.IgnoreFields(models.UserProfile{}, "UserProfileId", "Created", "Modified"),
 			); diff != "" {
-				t.Errorf("xxx mismatch (-want +got):\n%s", diff)
+				t.Errorf("userProfile mismatch (-want +got):\n%s", diff)
 			}
 
 		})

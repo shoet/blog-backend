@@ -17,7 +17,7 @@ type UserProfileRepository interface {
 	Update(
 		ctx context.Context,
 		tx infrastracture.TX,
-		userId models.UserId, nickname *string, avatarImageFileName *string, bioGraphy *string,
+		userId models.UserId, nickname string, avatarImageFileName *string, bioGraphy *string,
 	) (*models.UserProfile, error)
 }
 
@@ -44,7 +44,7 @@ func NewUsecase(
 
 type UpdateUserProfileInput struct {
 	UserId         models.UserId
-	Nickname       *string
+	Nickname       string
 	AvatarImageURL *string
 	BioGraphy      *string
 }
@@ -52,8 +52,8 @@ type UpdateUserProfileInput struct {
 const MAX_NICKNAME_LENGTH = 30
 
 func (u *Usecase) Run(ctx context.Context, input UpdateUserProfileInput) (*models.UserProfile, error) {
-	if input.Nickname != nil && len(*input.Nickname) >= MAX_NICKNAME_LENGTH {
-		return nil, fmt.Errorf("nickname is too long: %s", *input.Nickname)
+	if len(input.Nickname) >= MAX_NICKNAME_LENGTH {
+		return nil, fmt.Errorf("nickname is too long: %s", input.Nickname)
 	}
 	var avatarImageFileName *string
 	if input.AvatarImageURL != nil {
