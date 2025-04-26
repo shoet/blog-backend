@@ -34,10 +34,13 @@ func (r *UserProfileRepository) Get(
 		Where(goqu.Ex{"user_id": userId})
 
 	query, params, err := builder.ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build query: %w", err)
+	}
 
 	row := tx.QueryRowxContext(ctx, query, params...)
 	if row.Err() != nil {
-		return nil, fmt.Errorf("failed to execute query: %w", err)
+		return nil, fmt.Errorf("failed to execute query: %w", row.Err())
 	}
 
 	var userProfile models.UserProfile
