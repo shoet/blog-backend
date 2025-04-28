@@ -78,7 +78,7 @@ export class Lambda extends Construct {
       this,
       "CloudWatchLogGroup",
       {
-        logGroupName: `/aws/lambda/${stack.stackName}-function`,
+        logGroupName: `/aws/lambda/blog-backend-api-${this.stage}`,
         removalPolicy: cdk.RemovalPolicy.DESTROY,
         retention: cdk.aws_logs.RetentionDays.TWO_WEEKS,
       }
