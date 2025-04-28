@@ -3,7 +3,7 @@ package login_user_session
 import (
 	"context"
 
-	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/infrastructure/models"
 )
 
 type AuthService interface {

@@ -5,15 +5,15 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/shoet/blog/internal/infrastracture"
-	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/infrastructure"
+	"github.com/shoet/blog/internal/infrastructure/models"
 )
 
 type CommentRepository interface {
-	Get(ctx context.Context, tx infrastracture.TX, commentId models.CommentId) (*models.Comment, error)
+	Get(ctx context.Context, tx infrastructure.TX, commentId models.CommentId) (*models.Comment, error)
 	CreateComment(
 		ctx context.Context,
-		tx infrastracture.TX,
+		tx infrastructure.TX,
 		blogId models.BlogId,
 		userId *models.UserId,
 		clientId *string,
@@ -21,16 +21,16 @@ type CommentRepository interface {
 		content string,
 	) (models.CommentId, error)
 
-	UpdateThreadId(ctx context.Context, tx infrastracture.TX, commentId models.CommentId, threadId string) error
+	UpdateThreadId(ctx context.Context, tx infrastructure.TX, commentId models.CommentId, threadId string) error
 }
 
 type Usecase struct {
-	DB                infrastracture.DB
+	DB                infrastructure.DB
 	CommentRepository CommentRepository
 }
 
 func NewUsecase(
-	db infrastracture.DB,
+	db infrastructure.DB,
 	commentRepository CommentRepository,
 ) *Usecase {
 	return &Usecase{
@@ -51,8 +51,8 @@ func (u *Usecase) Run(
 		return 0, fmt.Errorf("UserID or ClientID is required")
 	}
 
-	transactionProvider := infrastracture.NewTransactionProvider(u.DB)
-	result, err := transactionProvider.DoInTx(ctx, func(tx infrastracture.TX) (any, error) {
+	transactionProvider := infrastructure.NewTransactionProvider(u.DB)
+	result, err := transactionProvider.DoInTx(ctx, func(tx infrastructure.TX) (any, error) {
 		var threadId *string
 		// コメントをスレッドにする場合、threadCommentIdとしてスレッド化対象のコメントIDが指定される
 		// スレッドIDを発行し、関連するコメントを一つのスレッドIDに紐づける

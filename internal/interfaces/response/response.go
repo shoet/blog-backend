@@ -11,12 +11,14 @@ import (
 func RespondJSON(w http.ResponseWriter, r *http.Request, statusCode int, body any) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	b, err := json.Marshal(body)
-	if err != nil {
-		return fmt.Errorf("failed to marshal body in RespondJSON(): %w", err)
-	}
-	if _, err := w.Write(b); err != nil {
-		return fmt.Errorf("failed to write body in RespondJSON(): %w", err)
+	if body != nil {
+		b, err := json.Marshal(body)
+		if err != nil {
+			return fmt.Errorf("failed to marshal body in RespondJSON(): %w", err)
+		}
+		if _, err := w.Write(b); err != nil {
+			return fmt.Errorf("failed to write body in RespondJSON(): %w", err)
+		}
 	}
 	return nil
 }
@@ -24,7 +26,7 @@ func RespondJSON(w http.ResponseWriter, r *http.Request, statusCode int, body an
 func RespondBadRequest(w http.ResponseWriter, r *http.Request, err error) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)
-	resp := ErrorResponse{Message: ErrMessageBadRequest}
+	resp := Response{Message: ErrMessageBadRequest}
 	if err := RespondJSON(w, r, http.StatusBadRequest, resp); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json error: %v", err))
 	}
@@ -33,7 +35,7 @@ func RespondBadRequest(w http.ResponseWriter, r *http.Request, err error) {
 func RespondNotFound(w http.ResponseWriter, r *http.Request, err error) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)
-	resp := ErrorResponse{Message: ErrMessageNotFound}
+	resp := Response{Message: ErrMessageNotFound}
 	if err := RespondJSON(w, r, http.StatusNotFound, resp); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json error: %v", err))
 	}
@@ -42,7 +44,7 @@ func RespondNotFound(w http.ResponseWriter, r *http.Request, err error) {
 func RespondInternalServerError(w http.ResponseWriter, r *http.Request, err error) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)
-	resp := ErrorResponse{Message: ErrMessageInternalServerError}
+	resp := Response{Message: ErrMessageInternalServerError}
 	if err := RespondJSON(w, r, http.StatusInternalServerError, resp); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json error: %v", err))
 	}
@@ -51,8 +53,16 @@ func RespondInternalServerError(w http.ResponseWriter, r *http.Request, err erro
 func RespondUnauthorized(w http.ResponseWriter, r *http.Request, err error) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)
-	resp := ErrorResponse{Message: ErrMessageUnauthorized}
+	resp := Response{Message: ErrMessageUnauthorized}
 	if err := RespondJSON(w, r, http.StatusUnauthorized, resp); err != nil {
+		logger.Error(fmt.Sprintf("failed to respond json error: %v", err))
+	}
+}
+
+func RespondNoContent(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	logger := logging.GetLogger(ctx)
+	if err := RespondJSON(w, r, http.StatusNoContent, nil); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json error: %v", err))
 	}
 }
@@ -65,7 +75,7 @@ func JsonToStruct(r *http.Request, v any) error {
 	return nil
 }
 
-type ErrorResponse struct {
+type Response struct {
 	Message string `json:"message"`
 }
 
@@ -74,4 +84,5 @@ const (
 	ErrMessageNotFound            = "NotFound"
 	ErrMessageInternalServerError = "InternalServerError"
 	ErrMessageUnauthorized        = "Unauthorized"
+	MessageNoContent              = "NoContent"
 )

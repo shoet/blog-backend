@@ -7,9 +7,9 @@ import (
 
 	"github.com/shoet/blog/internal/clocker"
 	"github.com/shoet/blog/internal/config"
-	"github.com/shoet/blog/internal/infrastracture"
-	"github.com/shoet/blog/internal/infrastracture/repository"
-	"github.com/shoet/blog/internal/infrastracture/services/admin_service"
+	"github.com/shoet/blog/internal/infrastructure"
+	"github.com/shoet/blog/internal/infrastructure/repository"
+	"github.com/shoet/blog/internal/infrastructure/services/admin_service"
 	"github.com/spf13/cobra"
 )
 
@@ -22,7 +22,7 @@ var seedAdminUserCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("failed to create config: %v", err)
 		}
-		db, err := infrastracture.NewDBPostgres(ctx, cfg)
+		db, err := infrastructure.NewDBPostgres(ctx, cfg)
 		if err != nil {
 			fmt.Printf("failed to create db: %v", err)
 			os.Exit(1)

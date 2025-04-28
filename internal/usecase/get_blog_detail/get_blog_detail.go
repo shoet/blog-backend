@@ -4,27 +4,27 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/shoet/blog/internal/infrastracture"
-	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/infrastructure"
+	"github.com/shoet/blog/internal/infrastructure/models"
 )
 
 type BlogRepository interface {
-	Get(ctx context.Context, tx infrastracture.TX, id models.BlogId) (*models.Blog, error)
+	Get(ctx context.Context, tx infrastructure.TX, id models.BlogId) (*models.Blog, error)
 }
 
 type CommentRepository interface {
 	GetByBlogId(
-		ctx context.Context, tx infrastracture.TX, blogId models.BlogId, excludeDeleted bool,
+		ctx context.Context, tx infrastructure.TX, blogId models.BlogId, excludeDeleted bool,
 	) ([]*models.Comment, error)
 }
 
 type Usecase struct {
-	DB                infrastracture.DB
+	DB                infrastructure.DB
 	BlogRepository    BlogRepository
 	CommentRepository CommentRepository
 }
 
-func NewUsecase(db infrastracture.DB, blogRepository BlogRepository, commentRepository CommentRepository) *Usecase {
+func NewUsecase(db infrastructure.DB, blogRepository BlogRepository, commentRepository CommentRepository) *Usecase {
 	return &Usecase{
 		DB:                db,
 		BlogRepository:    blogRepository,

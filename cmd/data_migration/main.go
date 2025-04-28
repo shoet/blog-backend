@@ -9,8 +9,8 @@ import (
 
 	"github.com/caarlos0/env/v10"
 	"github.com/jmoiron/sqlx"
-	"github.com/shoet/blog/internal/infrastracture"
-	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/infrastructure"
+	"github.com/shoet/blog/internal/infrastructure/models"
 )
 
 type MigrateConfig struct {
@@ -54,7 +54,7 @@ type MigrationInput struct {
 	dst       *sqlx.DB
 	tableName string
 	scanQuery string
-	writeFunc func(ctx context.Context, tx infrastracture.TX, rows *sqlx.Rows) error
+	writeFunc func(ctx context.Context, tx infrastructure.TX, rows *sqlx.Rows) error
 }
 
 func Migration(input *MigrationInput, tableName string, dryrun bool) error {
@@ -133,7 +133,7 @@ func main() {
 			src:       srcx,
 			dst:       dstx,
 			scanQuery: `SELECT * FROM blogs ORDER BY id;`,
-			writeFunc: func(ctx context.Context, tx infrastracture.TX, rows *sqlx.Rows) error {
+			writeFunc: func(ctx context.Context, tx infrastructure.TX, rows *sqlx.Rows) error {
 				var blog BeforeBlog
 				if err := rows.StructScan(&blog); err != nil {
 					return fmt.Errorf("failed to scan to destination database: %w", err)
@@ -168,7 +168,7 @@ func main() {
 			src:       srcx,
 			dst:       dstx,
 			scanQuery: `SELECT * FROM tags ORDER BY id;`,
-			writeFunc: func(ctx context.Context, tx infrastracture.TX, rows *sqlx.Rows) error {
+			writeFunc: func(ctx context.Context, tx infrastructure.TX, rows *sqlx.Rows) error {
 				var tag models.Tag
 				if err := rows.StructScan(&tag); err != nil {
 					return fmt.Errorf("failed to scan to destination database: %w", err)
@@ -198,7 +198,7 @@ func main() {
 			src:       srcx,
 			dst:       dstx,
 			scanQuery: `SELECT blog_id, tag_id FROM blogs_tags ORDER BY id;`,
-			writeFunc: func(ctx context.Context, tx infrastracture.TX, rows *sqlx.Rows) error {
+			writeFunc: func(ctx context.Context, tx infrastructure.TX, rows *sqlx.Rows) error {
 				var blogsTags models.BlogsTags
 				if err := rows.StructScan(&blogsTags); err != nil {
 					return fmt.Errorf("failed to scan to destination database: %w", err)

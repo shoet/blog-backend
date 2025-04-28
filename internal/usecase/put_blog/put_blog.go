@@ -4,31 +4,31 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/shoet/blog/internal/infrastracture"
-	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/infrastructure"
+	"github.com/shoet/blog/internal/infrastructure/models"
 	"github.com/shoet/blog/internal/session"
 	"golang.org/x/exp/slices"
 )
 
 type BlogRepository interface {
-	SelectBlogsTags(ctx context.Context, tx infrastracture.TX, blogId models.BlogId) ([]*models.BlogsTags, error)
-	SelectBlogsTagsByOtherUsingBlog(ctx context.Context, tx infrastracture.TX, blogId models.BlogId) ([]*models.BlogsTags, error)
-	SelectTags(ctx context.Context, tx infrastracture.TX, tag string) ([]*models.Tag, error)
-	AddTag(ctx context.Context, tx infrastracture.TX, tag string) (models.TagId, error)
-	AddBlogTag(ctx context.Context, tx infrastracture.TX, blogId models.BlogId, tagId models.TagId) (int64, error)
-	DeleteTag(ctx context.Context, tx infrastracture.TX, tagId models.TagId) error
-	DeleteBlogsTags(ctx context.Context, tx infrastracture.TX, blogId models.BlogId, tagId models.TagId) error
-	Put(ctx context.Context, tx infrastracture.TX, blog *models.Blog) (models.BlogId, error)
-	Get(ctx context.Context, tx infrastracture.TX, id models.BlogId) (*models.Blog, error)
+	SelectBlogsTags(ctx context.Context, tx infrastructure.TX, blogId models.BlogId) ([]*models.BlogsTags, error)
+	SelectBlogsTagsByOtherUsingBlog(ctx context.Context, tx infrastructure.TX, blogId models.BlogId) ([]*models.BlogsTags, error)
+	SelectTags(ctx context.Context, tx infrastructure.TX, tag string) ([]*models.Tag, error)
+	AddTag(ctx context.Context, tx infrastructure.TX, tag string) (models.TagId, error)
+	AddBlogTag(ctx context.Context, tx infrastructure.TX, blogId models.BlogId, tagId models.TagId) (int64, error)
+	DeleteTag(ctx context.Context, tx infrastructure.TX, tagId models.TagId) error
+	DeleteBlogsTags(ctx context.Context, tx infrastructure.TX, blogId models.BlogId, tagId models.TagId) error
+	Put(ctx context.Context, tx infrastructure.TX, blog *models.Blog) (models.BlogId, error)
+	Get(ctx context.Context, tx infrastructure.TX, id models.BlogId) (*models.Blog, error)
 }
 
 type Usecase struct {
-	DB             infrastracture.DB
+	DB             infrastructure.DB
 	BlogRepository BlogRepository
 }
 
 func NewUsecase(
-	db infrastracture.DB,
+	db infrastructure.DB,
 	blogRepository BlogRepository,
 ) *Usecase {
 	return &Usecase{
@@ -46,8 +46,8 @@ func (u *Usecase) Run(ctx context.Context, blog *models.Blog) (*models.Blog, err
 		return nil, fmt.Errorf("can't update other user's blog")
 	}
 
-	transactor := infrastracture.NewTransactionProvider(u.DB)
-	result, err := transactor.DoInTx(ctx, func(tx infrastracture.TX) (interface{}, error) {
+	transactor := infrastructure.NewTransactionProvider(u.DB)
+	result, err := transactor.DoInTx(ctx, func(tx infrastructure.TX) (interface{}, error) {
 		// このブログに紐づいているタグで、他のブログで使用されているタグを取得する
 		var usingTagsByOtherBlog models.BlogsTagsArray
 		usingTagsByOtherBlog, err = u.BlogRepository.SelectBlogsTagsByOtherUsingBlog(ctx, tx, blog.Id)

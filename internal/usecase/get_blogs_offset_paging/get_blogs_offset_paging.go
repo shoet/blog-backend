@@ -4,46 +4,46 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/shoet/blog/internal/infrastracture"
-	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/infrastructure"
+	"github.com/shoet/blog/internal/infrastructure/models"
 	"github.com/shoet/blog/internal/options"
 )
 
 type BlogRepositoryOffset interface {
 	List(
-		ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions,
+		ctx context.Context, tx infrastructure.TX, option *options.ListBlogOptions,
 	) (models.Blogs, error)
 
 	ListByTag(
-		ctx context.Context, tx infrastracture.TX, tag string, option *options.ListBlogOptions,
+		ctx context.Context, tx infrastructure.TX, tag string, option *options.ListBlogOptions,
 	) (models.Blogs, error)
 
 	ListByKeyword(
-		ctx context.Context, tx infrastracture.TX, keyword string, option *options.ListBlogOptions,
+		ctx context.Context, tx infrastructure.TX, keyword string, option *options.ListBlogOptions,
 	) (models.Blogs, error)
 
 	CountBlogs(
-		ctx context.Context, tx infrastracture.TX, option *options.ListBlogOptions,
+		ctx context.Context, tx infrastructure.TX, option *options.ListBlogOptions,
 	) (int64, error)
 
 	CountBlogsByTag(
-		ctx context.Context, tx infrastracture.TX, tag string, option *options.ListBlogOptions,
+		ctx context.Context, tx infrastructure.TX, tag string, option *options.ListBlogOptions,
 	) (int64, error)
 
 	CountBlogsByKeyword(
-		ctx context.Context, tx infrastracture.TX, keyword string, option *options.ListBlogOptions,
+		ctx context.Context, tx infrastructure.TX, keyword string, option *options.ListBlogOptions,
 	) (int64, error)
 }
 
 // get_blogs_offset_paging.Usecaseはブログ一覧を取得するユースケースです。
 // ページングはオフセット方式で実装しています。
 type Usecase struct {
-	DB                   infrastracture.DB
+	DB                   infrastructure.DB
 	BlogRepositoryOffset BlogRepositoryOffset
 }
 
 func NewUsecase(
-	DB infrastracture.DB,
+	DB infrastructure.DB,
 	blogRepositoryOffset BlogRepositoryOffset,
 ) *Usecase {
 	return &Usecase{
@@ -66,13 +66,13 @@ type TransactionResult struct {
 }
 
 func (u *Usecase) Run(ctx context.Context, input *Input) ([]*models.Blog, int64, error) {
-	transactor := infrastracture.NewTransactionProvider(u.DB)
+	transactor := infrastructure.NewTransactionProvider(u.DB)
 
 	option, err := options.NewListBlogOffsetOptions(input.IsPublicOnly, input.Limit, input.Page)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to create list option: %v", err)
 	}
-	result, err := transactor.DoInTx(ctx, func(tx infrastracture.TX) (interface{}, error) {
+	result, err := transactor.DoInTx(ctx, func(tx infrastructure.TX) (interface{}, error) {
 		var blogs models.Blogs
 		var blogsCount int64
 

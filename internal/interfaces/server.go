@@ -13,13 +13,13 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/shoet/blog/internal/clocker"
 	"github.com/shoet/blog/internal/config"
-	"github.com/shoet/blog/internal/infrastracture"
-	"github.com/shoet/blog/internal/infrastracture/adapter"
-	"github.com/shoet/blog/internal/infrastracture/repository"
-	"github.com/shoet/blog/internal/infrastracture/services/auth_service"
-	"github.com/shoet/blog/internal/infrastracture/services/blog_service"
-	"github.com/shoet/blog/internal/infrastracture/services/contents_service"
-	"github.com/shoet/blog/internal/infrastracture/services/jwt_service"
+	"github.com/shoet/blog/internal/infrastructure"
+	"github.com/shoet/blog/internal/infrastructure/adapter"
+	"github.com/shoet/blog/internal/infrastructure/repository"
+	"github.com/shoet/blog/internal/infrastructure/services/auth_service"
+	"github.com/shoet/blog/internal/infrastructure/services/blog_service"
+	"github.com/shoet/blog/internal/infrastructure/services/contents_service"
+	"github.com/shoet/blog/internal/infrastructure/services/jwt_service"
 	"github.com/shoet/blog/internal/interfaces/cookie"
 	"github.com/shoet/blog/internal/logging"
 	"golang.org/x/sync/errgroup"
@@ -56,12 +56,12 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 	cookie := cookie.NewCookieController(cfg.Env, cfg.SiteDomain)
 
 	log.Println("start connection DB")
-	db, err := infrastracture.NewDBPostgres(ctx, cfg)
+	db, err := infrastructure.NewDBPostgres(ctx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create db: %w", err)
 	}
 	log.Println("start connection KVS")
-	kvs, err := infrastracture.NewRedisKVS(
+	kvs, err := infrastructure.NewRedisKVS(
 		ctx,
 		cfg.KVSHost,
 		cfg.KVSPort,
@@ -86,16 +86,18 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 	}
 
 	commentRepo := repository.NewCommentRepository(&c)
+	userProfileRepo := repository.NewUserProfileRepository()
 
 	authService, err := auth_service.NewAuthService(db, userRepo, jwtService)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create auth service: %w", err)
 	}
 
-	s3Adapter, err := adapter.NewAWSS3StorageAdapter(cfg)
+	s3Adapter, err := adapter.NewS3Adapter(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create s3 adapter: %w", err)
 	}
+	fileRepo := repository.NewFileRepository(cfg, s3Adapter)
 
 	contentsService, err := contents_service.NewContentsService(s3Adapter, cfg.AWSS3ThumbnailDirectory, cfg.AWSSS3ContentImageDirectory)
 	if err != nil {
@@ -105,20 +107,22 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 	gitHubAPIAdapter := adapter.NewGitHubV4APIClient(cfg.GitHubPersonalAccessToken)
 
 	return &MuxDependencies{
-		Config:               cfg,
-		DB:                   db,
-		BlogRepository:       blogRepo,
-		BlogRepositoryOffset: blogOffsetRepo,
-		CommentRepository:    commentRepo,
-		BlogService:          blogService,
-		AuthService:          authService,
-		ContentsService:      contentsService,
-		JWTer:                jwtService,
-		Logger:               logger,
-		Validator:            validator,
-		Cookie:               cookie,
-		GitHubAPIAdapter:     gitHubAPIAdapter,
-		Clocker:              &c,
+		Config:                cfg,
+		DB:                    db,
+		BlogRepository:        blogRepo,
+		BlogRepositoryOffset:  blogOffsetRepo,
+		CommentRepository:     commentRepo,
+		FileRepository:        fileRepo,
+		UserProfileRepository: userProfileRepo,
+		BlogService:           blogService,
+		AuthService:           authService,
+		ContentsService:       contentsService,
+		JWTer:                 jwtService,
+		Logger:                logger,
+		Validator:             validator,
+		Cookie:                cookie,
+		GitHubAPIAdapter:      gitHubAPIAdapter,
+		Clocker:               &c,
 	}, nil
 }
 

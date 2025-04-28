@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/infrastructure/models"
 )
 
 var UserIdContextKey = struct{}{}

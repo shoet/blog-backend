@@ -4,28 +4,28 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/shoet/blog/internal/infrastracture"
-	"github.com/shoet/blog/internal/infrastracture/models"
+	"github.com/shoet/blog/internal/infrastructure"
+	"github.com/shoet/blog/internal/infrastructure/models"
 	"github.com/shoet/blog/internal/session"
 	"golang.org/x/exp/slices"
 )
 
 type BlogRepository interface {
-	Get(ctx context.Context, tx infrastracture.TX, id models.BlogId) (*models.Blog, error)
-	Delete(ctx context.Context, tx infrastracture.TX, id models.BlogId) error
-	SelectBlogsTagsByOtherUsingBlog(ctx context.Context, tx infrastracture.TX, blogId models.BlogId) ([]*models.BlogsTags, error)
-	SelectBlogsTags(ctx context.Context, tx infrastracture.TX, blogId models.BlogId) ([]*models.BlogsTags, error)
-	DeleteTag(ctx context.Context, tx infrastracture.TX, tagId models.TagId) error
-	DeleteBlogsTags(ctx context.Context, tx infrastracture.TX, blogId models.BlogId, tagId models.TagId) error
+	Get(ctx context.Context, tx infrastructure.TX, id models.BlogId) (*models.Blog, error)
+	Delete(ctx context.Context, tx infrastructure.TX, id models.BlogId) error
+	SelectBlogsTagsByOtherUsingBlog(ctx context.Context, tx infrastructure.TX, blogId models.BlogId) ([]*models.BlogsTags, error)
+	SelectBlogsTags(ctx context.Context, tx infrastructure.TX, blogId models.BlogId) ([]*models.BlogsTags, error)
+	DeleteTag(ctx context.Context, tx infrastructure.TX, tagId models.TagId) error
+	DeleteBlogsTags(ctx context.Context, tx infrastructure.TX, blogId models.BlogId, tagId models.TagId) error
 }
 
 type Usecase struct {
-	DB             infrastracture.DB
+	DB             infrastructure.DB
 	BlogRepository BlogRepository
 }
 
 func NewUsecase(
-	db infrastracture.DB,
+	db infrastructure.DB,
 	blogRepository BlogRepository,
 ) *Usecase {
 	return &Usecase{
@@ -40,9 +40,9 @@ func (u *Usecase) Run(ctx context.Context, blogId models.BlogId) (models.BlogId,
 		return 0, fmt.Errorf("failed to session.GetUserId: %w", err)
 	}
 
-	transactor := infrastracture.NewTransactionProvider(u.DB)
+	transactor := infrastructure.NewTransactionProvider(u.DB)
 
-	result, err := transactor.DoInTx(ctx, func(tx infrastracture.TX) (interface{}, error) {
+	result, err := transactor.DoInTx(ctx, func(tx infrastructure.TX) (interface{}, error) {
 		blog, err := u.BlogRepository.Get(ctx, tx, blogId)
 		if err != nil {
 			return 0, fmt.Errorf("failed to BlogRepository.Get: %w", err)
