@@ -45,24 +45,23 @@ func NewFileFromURL(config *config.Config, rawURL string) (*File, error) {
 		return nil, fmt.Errorf("invalid url host: %s", url.Host)
 	}
 	var file *File
-	if strings.HasPrefix(url.Path, config.AWSS3AvatarImageDirectory) {
+	if strings.HasPrefix(url.Path, fmt.Sprintf("/%s/", config.AWSS3AvatarImageDirectory)) {
 		file = &File{
 			Type:     FileTypeAvatarImage,
-			FileName: strings.TrimPrefix(url.Path, config.AWSS3AvatarImageDirectory),
+			FileName: strings.TrimPrefix(url.Path, fmt.Sprintf("/%s/", config.AWSS3AvatarImageDirectory)),
 		}
-	} else if strings.HasPrefix(url.Path, config.AWSS3ThumbnailDirectory) {
+	} else if strings.HasPrefix(url.Path, fmt.Sprintf("/%s/", config.AWSS3ThumbnailDirectory)) {
 		file = &File{
 			Type:     FileTypeThumbnailImage,
-			FileName: strings.TrimPrefix(url.Path, config.AWSS3ThumbnailDirectory),
+			FileName: strings.TrimPrefix(url.Path, fmt.Sprintf("/%s/", config.AWSS3ThumbnailDirectory)),
 		}
-	} else if strings.HasPrefix(url.Path, config.AWSSS3ContentImageDirectory) {
+	} else if strings.HasPrefix(url.Path, fmt.Sprintf("/%s/", config.AWSSS3ContentImageDirectory)) {
 		file = &File{
 			Type:     FileTypeBlogContentImage,
-			FileName: strings.TrimPrefix(url.Path, config.AWSSS3ContentImageDirectory),
+			FileName: strings.TrimPrefix(url.Path, fmt.Sprintf("/%s/", config.AWSSS3ContentImageDirectory)),
 		}
 	} else {
 		return nil, fmt.Errorf("invalid url path: %s", url.Path)
-
 	}
 	if strings.Contains(file.FileName, "/") {
 		return nil, fmt.Errorf("invalid file name: %s", file.FileName)
@@ -101,6 +100,5 @@ func (f *File) GetFileURL(config *config.Config) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get bucket key: %w", err)
 	}
-	return fmt.Sprintf("https://%s.s3.amazonaws.com/%s/%s", config.CdnDomain, key, f.FileName), nil
-
+	return fmt.Sprintf("https://%s/%s/%s", config.CdnDomain, key, f.FileName), nil
 }

@@ -49,7 +49,7 @@ func (u *Usecase) Run(ctx context.Context, userId models.UserId) (*models.UserPr
 	}
 
 	if userProfile.AvatarImageFileName != nil {
-		file, err := models.NewFile(models.FileType("avatar"), *userProfile.AvatarImageFileName)
+		file, err := models.NewFile(models.FileType("avatar_image"), *userProfile.AvatarImageFileName)
 		if err != nil {
 			return nil, fmt.Errorf("invalid avatar image url: %w", err)
 		}

@@ -27,6 +27,17 @@ func NewUploadFileHandler(
 	}
 }
 
+/*
+RequuestBody:
+
+	fileName: string
+	fileType: string
+
+Response:
+
+	uploadUrl: string
+	destinationUrl: string
+*/
 func (g *UploadFileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)

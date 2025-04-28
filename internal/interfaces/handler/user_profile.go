@@ -96,9 +96,9 @@ func NewCreateUserProfileHandler(
 /*
 RequuestBody:
 
-	user_id: int
+	userId: int
 	nickname: string
-	avatar_image_url: string | null
+	avatarImageUrl: string | null
 	biography: string | null
 
 Response:
