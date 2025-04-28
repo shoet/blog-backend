@@ -40,7 +40,14 @@ RequuestBody:
 
 Response:
 
-	user_profile: UserProfile
+	user_profile:
+		userProfileId: int
+		userId: int
+		nickname: string
+		avatarImageFileURL: string | null
+		biography: string | null
+		created: datetime
+		updated: datetime
 */
 func (h *GetUserProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
