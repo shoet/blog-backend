@@ -41,6 +41,18 @@ type PostCommentResponse struct {
 	CommentId models.CommentId `json:"comment_id"`
 }
 
+/*
+RequuestBody:
+
+	user_id: int
+	client_id: string | null
+	content: string
+	thread_comment_id: int | null
+
+Response:
+
+	comment_id: int
+*/
 func (h *PostCommentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)
