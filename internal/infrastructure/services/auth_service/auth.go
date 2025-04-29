@@ -7,6 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/shoet/blog/internal/infrastructure"
 	"github.com/shoet/blog/internal/infrastructure/models"
+	"github.com/shoet/blog/internal/logging"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -16,24 +17,30 @@ type UserRepository interface {
 	GetByEmail(ctx context.Context, tx infrastructure.TX, email string) (*models.User, error)
 }
 
+type UserProfileRepository interface {
+	Get(ctx context.Context, tx infrastructure.TX, userId models.UserId) (*models.UserProfile, error)
+}
+
 type JWTer interface {
 	GenerateToken(ctx context.Context, u *models.User) (string, error)
 	VerifyToken(ctx context.Context, token string) (models.UserId, error)
 }
 
 type AuthService struct {
-	db    *sqlx.DB
-	user  UserRepository
-	jwter JWTer
+	db      *sqlx.DB
+	user    UserRepository
+	profile UserProfileRepository
+	jwter   JWTer
 }
 
 func NewAuthService(
-	db *sqlx.DB, user UserRepository, jwter JWTer,
+	db *sqlx.DB, user UserRepository, profile UserProfileRepository, jwter JWTer,
 ) (*AuthService, error) {
 	return &AuthService{
-		db:    db,
-		user:  user,
-		jwter: jwter,
+		db:      db,
+		user:    user,
+		profile: profile,
+		jwter:   jwter,
 	}, nil
 }
 
@@ -64,6 +71,7 @@ func (a *AuthService) Login(
 func (a *AuthService) LoginSession(
 	ctx context.Context, token string,
 ) (*models.User, error) {
+	logger := logging.GetLogger(ctx)
 	// verify token and load session kvs
 	userId, err := a.jwter.VerifyToken(ctx, token)
 	if err != nil {
@@ -73,5 +81,11 @@ func (a *AuthService) LoginSession(
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
+	p, err := a.profile.Get(ctx, a.db, userId)
+	if err != nil {
+		// UserProfileが見つからない場合はエラーにしない
+		logger.Info(fmt.Sprintf("failed to get profile: %v", err))
+	}
+	u.Profile = p
 	return u, nil
 }

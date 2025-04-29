@@ -85,6 +85,22 @@ func NewAuthSessionLoginHandler(
 	}
 }
 
+/*
+RequuestBody:
+
+	RequestHeader:
+		Authorization: string
+
+Response:
+
+	id int
+	name string
+	email string
+	password string
+	profile: UserProfile | null
+	created: timestamp
+	updated: timestamp
+*/
 func (a *AuthSessionLoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	logger := logging.GetLogger(ctx)

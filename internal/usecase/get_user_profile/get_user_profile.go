@@ -47,17 +47,5 @@ func (u *Usecase) Run(ctx context.Context, userId models.UserId) (*models.UserPr
 	if userProfile == nil {
 		return nil, ErrNotFound
 	}
-
-	if userProfile.AvatarImageFileName != nil {
-		file, err := models.NewFile(models.FileType("avatar_image"), *userProfile.AvatarImageFileName)
-		if err != nil {
-			return nil, fmt.Errorf("invalid avatar image url: %w", err)
-		}
-		avatarImageURL, err := file.GetFileURL(u.config)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get avatar image url: %w", err)
-		}
-		userProfile.AvatarImageFileURL = &avatarImageURL
-	}
 	return userProfile, nil
 }
