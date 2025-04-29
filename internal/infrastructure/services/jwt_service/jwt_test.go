@@ -113,7 +113,7 @@ func Test_JWTService_VerifyToken(t *testing.T) {
 			kvsMock := &KVSerMock{}
 			userIdStr := strconv.Itoa(int(tt.want.user.Id))
 			kvsMock.On("Save", mock.Anything, mock.AnythingOfType("string"), userIdStr).Return(nil)
-			kvsMock.On("Load", mock.Anything, mock.AnythingOfType("string")).Return(userIdStr, nil)
+			kvsMock.On("Load", mock.Anything, mock.AnythingOfType("string")).Return(&userIdStr, nil)
 
 			clockerMock := &clocker.RealClocker{}
 			testSecret := "12345678"
