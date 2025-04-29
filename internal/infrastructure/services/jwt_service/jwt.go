@@ -9,14 +9,13 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 	"github.com/shoet/blog/internal/clocker"
 	"github.com/shoet/blog/internal/infrastructure/models"
 )
 
 type KVSer interface {
 	Save(ctx context.Context, key string, value string) error
-	Load(ctx context.Context, key string) (string, error)
+	Load(ctx context.Context, key string) (*string, error)
 }
 
 type JWTService struct {
@@ -80,12 +79,12 @@ func (j *JWTService) VerifyToken(ctx context.Context, token string) (models.User
 	// check session kvs
 	v, err := j.kvs.Load(ctx, claims.ID)
 	if err != nil {
-		if errors.Is(err, redis.Nil) {
-			return 0, ErrSessionNotFound
-		}
 		return 0, fmt.Errorf("failed to load token: %w", err)
 	}
-	userId, err := strconv.Atoi(v)
+	if v == nil {
+		return 0, ErrSessionNotFound
+	}
+	userId, err := strconv.Atoi(*v)
 	if err != nil {
 		return 0, fmt.Errorf("failed to convert user id: %w", err)
 	}

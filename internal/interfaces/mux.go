@@ -27,6 +27,7 @@ import (
 	"github.com/shoet/blog/internal/usecase/get_blogs_offset_paging"
 	"github.com/shoet/blog/internal/usecase/get_github_contributions"
 	"github.com/shoet/blog/internal/usecase/get_github_contributions_latest_week"
+	"github.com/shoet/blog/internal/usecase/get_handlename"
 	"github.com/shoet/blog/internal/usecase/get_tags"
 	"github.com/shoet/blog/internal/usecase/get_user_profile"
 	"github.com/shoet/blog/internal/usecase/login_user"
@@ -42,6 +43,7 @@ import (
 type MuxDependencies struct {
 	Config                *config.Config
 	DB                    infrastructure.DB
+	KVS                   *infrastructure.RedisKVS
 	BlogRepository        *repository.BlogRepository
 	BlogRepositoryOffset  *repository.BlogRepositoryOffset
 	CommentRepository     *repository.CommentRepository
@@ -76,6 +78,7 @@ func NewMux(
 	setAdminRoute(router, deps, authMiddleWare)
 	setGitHubRoute(router, deps)
 	setUserProfileRoute(router, deps, authMiddleWare)
+	setHandlenameRoute(router, deps)
 	return router, nil
 }
 
@@ -216,4 +219,14 @@ func setUserProfileRoute(
 		updateUserProfileHandler := handler.NewUpdateUserProfileHandler(deps.Validator, deps.JWTer, updateUserProfileUsecase)
 		r.With(authMiddleWare.Middleware).Put("/", updateUserProfileHandler.ServeHTTP)
 	})
+}
+
+// handlename
+func setHandlenameRoute(
+	r chi.Router, deps *MuxDependencies,
+) {
+	getUserProfileHandler := handler.NewGetHandlenameHandler(
+		get_handlename.NewUsecase(deps.KVS),
+	)
+	r.Get("/get_handlename", getUserProfileHandler.ServeHTTP)
 }

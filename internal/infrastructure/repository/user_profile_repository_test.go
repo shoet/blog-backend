@@ -8,6 +8,7 @@ import (
 	"github.com/doug-martin/goqu/v9"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/shoet/blog/internal/config"
 	"github.com/shoet/blog/internal/infrastructure/models"
 	"github.com/shoet/blog/internal/infrastructure/repository"
 	"github.com/shoet/blog/internal/testutil"
@@ -79,7 +80,8 @@ func Test_UserProfileRepository_Get(t *testing.T) {
 		t.Fatalf("failed to create test db: %v", err)
 	}
 
-	sut := repository.NewUserProfileRepository()
+	cfg := &config.Config{}
+	sut := repository.NewUserProfileRepository(cfg)
 
 	for _, tt := range tests {
 
@@ -227,7 +229,8 @@ func Test_UserProfileRepository_Create(t *testing.T) {
 			t.Fatalf("failed to create test db: %v", err)
 		}
 
-		sut := repository.NewUserProfileRepository()
+		cfg := &config.Config{}
+		sut := repository.NewUserProfileRepository(cfg)
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -354,7 +357,8 @@ func Test_UserProfileRepository_Update(t *testing.T) {
 		t.Fatalf("failed to create test db: %v", err)
 	}
 
-	sut := repository.NewUserProfileRepository()
+	cfg := &config.Config{}
+	sut := repository.NewUserProfileRepository(cfg)
 
 	for _, tt := range tests {
 

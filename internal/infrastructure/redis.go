@@ -3,6 +3,7 @@ package infrastructure
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"time"
 
@@ -13,8 +14,6 @@ type RedisKVS struct {
 	cli           *redis.Client
 	expirationSec int
 }
-
-type RedisOption func(*redis.Options)
 
 func NewRedisKVS(
 	ctx context.Context,
@@ -57,10 +56,14 @@ func (r *RedisKVS) Save(ctx context.Context, key string, value string) error {
 	return nil
 }
 
-func (r *RedisKVS) Load(ctx context.Context, key string) (string, error) {
+func (r *RedisKVS) Load(ctx context.Context, key string) (*string, error) {
 	ret := r.cli.Get(ctx, key)
 	if ret.Err() != nil {
-		return "", fmt.Errorf("failed to get key: %w", ret.Err())
+		if errors.Is(ret.Err(), redis.Nil) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get key: %w", ret.Err())
 	}
-	return ret.Val(), nil
+	val := ret.Val()
+	return &val, nil
 }

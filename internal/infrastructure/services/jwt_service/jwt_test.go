@@ -22,9 +22,9 @@ func (m *KVSerMock) Save(ctx context.Context, key string, value string) error {
 	return args.Error(0)
 }
 
-func (m *KVSerMock) Load(ctx context.Context, key string) (string, error) {
+func (m *KVSerMock) Load(ctx context.Context, key string) (*string, error) {
 	args := m.Called(ctx, key)
-	return args.String(0), args.Error(1)
+	return args.Get(0).(*string), args.Error(1)
 }
 
 func Test_JWTService_GenerateToken(t *testing.T) {

@@ -109,6 +109,7 @@ func BuildMuxDependencies(ctx context.Context, cfg *config.Config) (*MuxDependen
 	return &MuxDependencies{
 		Config:                cfg,
 		DB:                    db,
+		KVS:                   kvs,
 		BlogRepository:        blogRepo,
 		BlogRepositoryOffset:  blogOffsetRepo,
 		CommentRepository:     commentRepo,
