@@ -37,7 +37,7 @@ func (u *Usecase) Run(ctx context.Context, blogId models.BlogId, ip string) (str
 		}
 		salt = &newSalt
 	}
-	source := fmt.Sprintf("%d.%s.%s", blogId, ip, *salt)
+	source := fmt.Sprintf("%d.%s", blogId, *salt)
 	h := sha256.New()
 	h.Write([]byte(source))
 	hash := fmt.Sprintf("%x", h.Sum(nil))[:10]
