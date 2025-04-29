@@ -55,15 +55,17 @@ func (r *UserProfileRepository) Get(
 		return nil, fmt.Errorf("failed to scan struct: %w", err)
 	}
 
-	file, err := models.NewFile("avatar_image", *userProfile.AvatarImageFileName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get file: %w", err)
+	if userProfile.AvatarImageFileName != nil {
+		file, err := models.NewFile("avatar_image", *userProfile.AvatarImageFileName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get file: %w", err)
+		}
+		avatarImageFileURL, err := file.GetFileURL(r.config)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get file url: %w", err)
+		}
+		userProfile.AvatarImageFileURL = &avatarImageFileURL
 	}
-	avatarImageFileURL, err := file.GetFileURL(r.config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get file url: %w", err)
-	}
-	userProfile.AvatarImageFileURL = &avatarImageFileURL
 	return &userProfile, nil
 }
 
