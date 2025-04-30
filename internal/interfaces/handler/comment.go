@@ -39,6 +39,16 @@ RequestBody:
 Response:
 
 	comments: []Comment
+		commentId: int
+		blogId: int
+		clientId: string | null
+		userId: int | null
+		content: string
+		isEdited: bool
+		isDeleted: bool
+		threadId: string | null
+		created: time.Time
+		modified: time.Time
 */
 func (h *GetCommentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -84,10 +94,10 @@ func NewPostCommentHandler(usecase *post_comment.Usecase, jwter JWTService, vali
 }
 
 type PostCommentRequest struct {
-	UserId          *models.UserId `json:"user_id"`
-	ClientId        *string        `json:"client_id"`
+	UserId          *models.UserId `json:"userId"`
+	ClientId        *string        `json:"clientId"`
 	Content         string         `json:"content" validate:"required"`
-	ThreadCommentId *int64         `json:"thread_comment_id,omitempty"`
+	ThreadCommentId *int64         `json:"threadCommentId,omitempty"`
 }
 
 type PostCommentResponse struct {
