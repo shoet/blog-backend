@@ -1,0 +1,53 @@
+name: SlackNotifier
+inputs:
+  SLACK_WEBHOOK_URL:
+    description: "Slack webhook URL"
+    required: true
+  STATUS:
+    description: "Status of the job"
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Send notification to Slack
+      uses: slackapi/slack-github-action@v2.0.0
+      with:
+        webhook: ${{ inputs.SLACK_WEBHOOK_URL }}
+        webhook-type: incoming-webhook
+        payload: |
+          {
+            "username": "GitHub Actions",
+            "author_name": "${{ github.actor }}",
+            "author_icon": "${{ github.actor_avatar_url }}",
+            "author_link": "${{ github.actor_url }}",
+            "text": "[${{ github.event.repository.name }}] - ${{github.actor}} ${{ inputs.STATUS == 'success' && ':white_check_mark: Success' || ':x: Failure' }}",
+            "attachments": 
+            [
+                {
+                  "color": "${{ inputs.STATUS == 'success' && '#36a64f' || '#ff0000' }}",
+                  "fields": 
+                  [
+                    {
+                      "title": "Repository",
+                      "value": "<${{ github.event.repository.html_url }}|${{ github.event.repository.name }}>",
+                      "short": false
+                    },
+                    {
+                      "title": "Branch",
+                      "value": "<${{ github.event.repository.html_url }}/tree/${{ github.ref_name }}|${{ github.ref_name }}>",
+                      "short": false
+                    },
+                    {
+                      "title": "Commit",
+                      "value": "<${{ github.event.head_commit.url }}|${{ github.event.head_commit.id }}>",
+                      "short": false
+                    },
+                    {
+                      "title": "Run ID",
+                      "value": "<${{ github.event.repository.url }}/actions/runs/${{ github.run_id }}|${{ github.workflow }}/${{ github.run_id }}>",
+                      "short": false
+                    }
+                  ]
+                }
+              ]
+            }
