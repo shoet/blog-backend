@@ -119,7 +119,7 @@ func setBlogsRoute(
 		// comments
 		r.Route("/{id}/comments", func(r chi.Router) {
 			gch := handler.NewGetCommentsHandler(
-				get_comments.NewUsecase(deps.DB, deps.CommentRepository),
+				get_comments.NewUsecase(deps.DB, deps.CommentRepository, deps.UserProfileRepository),
 			)
 			r.Get("/", gch.ServeHTTP)
 

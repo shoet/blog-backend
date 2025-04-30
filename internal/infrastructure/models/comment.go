@@ -15,4 +15,7 @@ type Comment struct {
 	ThreadId  *string   `json:"threadId,omitempty" db:"thread_id"`
 	Created   time.Time `json:"created" db:"created"`
 	Modified  time.Time `json:"modified" db:"modified"`
+
+	Nickname           *string `json:"nickname,omitempty"`
+	AvatarImageFileURL *string `json:"avatarImageFileUrl,omitempty"`
 }

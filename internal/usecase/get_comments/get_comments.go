@@ -17,18 +17,25 @@ type CommmentRepository interface {
 	) ([]*models.Comment, error)
 }
 
+type UserProfileRepository interface {
+	Get(ctx context.Context, tx infrastructure.TX, userId models.UserId) (*models.UserProfile, error)
+}
+
 type Usecase struct {
-	DB                infrastructure.DB
-	commentRepository CommmentRepository
+	DB                    infrastructure.DB
+	commentRepository     CommmentRepository
+	userProfileRepository UserProfileRepository
 }
 
 func NewUsecase(
 	db infrastructure.DB,
 	commentRepository CommmentRepository,
+	userProfileRepository UserProfileRepository,
 ) *Usecase {
 	return &Usecase{
-		DB:                db,
-		commentRepository: commentRepository,
+		DB:                    db,
+		commentRepository:     commentRepository,
+		userProfileRepository: userProfileRepository,
 	}
 }
 
@@ -36,6 +43,16 @@ func (u *Usecase) Run(ctx context.Context, blogId models.BlogId) ([]*models.Comm
 	comments, err := u.commentRepository.GetByBlogId(ctx, u.DB, blogId, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get comments: %w", err)
+	}
+	for _, comment := range comments {
+		if comment.UserId != nil {
+			profile, err := u.userProfileRepository.Get(ctx, u.DB, *comment.UserId)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get user profile: %w", err)
+			}
+			comment.AvatarImageFileURL = profile.AvatarImageFileURL
+			comment.Nickname = &profile.Nickname
+		}
 	}
 	return comments, nil
 }
