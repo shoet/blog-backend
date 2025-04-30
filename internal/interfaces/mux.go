@@ -25,6 +25,7 @@ import (
 	"github.com/shoet/blog/internal/usecase/get_blog_detail"
 	"github.com/shoet/blog/internal/usecase/get_blogs"
 	"github.com/shoet/blog/internal/usecase/get_blogs_offset_paging"
+	"github.com/shoet/blog/internal/usecase/get_comments"
 	"github.com/shoet/blog/internal/usecase/get_github_contributions"
 	"github.com/shoet/blog/internal/usecase/get_github_contributions_latest_week"
 	"github.com/shoet/blog/internal/usecase/get_handlename"
@@ -115,9 +116,17 @@ func setBlogsRoute(
 			put_blog.NewUsecase(deps.DB, deps.BlogRepository), deps.Validator)
 		r.With(authMiddleWare.Middleware).Put("/{id}", buh.ServeHTTP)
 
-		pch := handler.NewPostCommentHandler(
-			post_comment.NewUsecase(deps.DB, deps.CommentRepository), deps.JWTer, deps.Validator)
-		r.Post("/{id}/comment", pch.ServeHTTP)
+		// comments
+		r.Route("/{id}/comments", func(r chi.Router) {
+			gch := handler.NewGetCommentsHandler(
+				get_comments.NewUsecase(deps.DB, deps.CommentRepository),
+			)
+			r.Get("/", gch.ServeHTTP)
+
+			pch := handler.NewPostCommentHandler(
+				post_comment.NewUsecase(deps.DB, deps.CommentRepository), deps.JWTer, deps.Validator)
+			r.Post("/", pch.ServeHTTP)
+		})
 	})
 
 	r.Route("/v2/blogs", func(r chi.Router) {

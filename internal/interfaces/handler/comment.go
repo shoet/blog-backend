@@ -13,8 +13,61 @@ import (
 	"github.com/shoet/blog/internal/infrastructure/models"
 	"github.com/shoet/blog/internal/interfaces/response"
 	"github.com/shoet/blog/internal/logging"
+	"github.com/shoet/blog/internal/usecase/get_comments"
 	"github.com/shoet/blog/internal/usecase/post_comment"
 )
+
+type GetCommentsHandler struct {
+	Usecase *get_comments.Usecase
+}
+
+func NewGetCommentsHandler(usecase *get_comments.Usecase) *GetCommentsHandler {
+	return &GetCommentsHandler{
+		Usecase: usecase,
+	}
+}
+
+type GetCommentsResponse struct {
+	Comments []*models.Comment `json:"comments"`
+}
+
+/*
+RequestBody:
+
+	path: /blogs/{id}/comments
+
+Response:
+
+	comments: []Comment
+*/
+func (h *GetCommentsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	logger := logging.GetLogger(ctx)
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		logger.Error("failed to get id from url")
+		response.RespondBadRequest(w, r, nil)
+		return
+	}
+	idInt, err := strconv.Atoi(strings.TrimSpace(id))
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to convert id to int: %v", err))
+		response.RespondBadRequest(w, r, err)
+		return
+	}
+	comments, err := h.Usecase.Run(ctx, models.BlogId(idInt))
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to get comments: %v", err))
+		response.RespondInternalServerError(w, r, err)
+		return
+	}
+	res := GetCommentsResponse{
+		Comments: comments,
+	}
+	if err := response.RespondJSON(w, r, http.StatusOK, res); err != nil {
+		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
+	}
+}
 
 type PostCommentHandler struct {
 	Usecase   *post_comment.Usecase
@@ -42,12 +95,15 @@ type PostCommentResponse struct {
 }
 
 /*
-RequuestBody:
+RequestBody:
 
-	user_id: int
-	client_id: string | null
-	content: string
-	thread_comment_id: int | null
+	path: /blogs/{id}/comments
+
+	application/json:
+		user_id: int
+		client_id: string | null
+		content: string
+		thread_comment_id: int | null
 
 Response:
 
