@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/shoet/blog/internal/config"
 	"github.com/shoet/blog/internal/infrastructure/models"
 )
 
@@ -24,7 +25,7 @@ func NewUsecase(kvs KVS) *Usecase {
 }
 
 func (u *Usecase) Run(ctx context.Context, blogId models.BlogId, ip string) (string, error) {
-	saltKey := fmt.Sprintf("handlename.salt.%d", blogId)
+	saltKey := fmt.Sprintf(config.KVS_HANDLENAME_SALT, blogId)
 
 	salt, err := u.kvs.Load(ctx, saltKey)
 	if err != nil {
@@ -37,7 +38,9 @@ func (u *Usecase) Run(ctx context.Context, blogId models.BlogId, ip string) (str
 		}
 		salt = &newSalt
 	}
-	source := fmt.Sprintf("%d.%s", blogId, *salt)
+	ips := strings.Split(ip, ",")
+	originalIP := strings.Trim(ips[0], " ")
+	source := fmt.Sprintf("%d.%s.%s", blogId, originalIP, *salt)
 	h := sha256.New()
 	h.Write([]byte(source))
 	hash := fmt.Sprintf("%x", h.Sum(nil))[:10]
