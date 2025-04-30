@@ -20,7 +20,7 @@ runs:
             "author_name": "${{ github.actor }}",
             "author_icon": "${{ github.actor_avatar_url }}",
             "author_link": "${{ github.actor_url }}",
-            "text": "[${{ github.event.repository.name }}] ${{ github.workflow }} by ${{github.actor}} ${{ inputs.STATUS == 'success' && ':white_check_mark: Success' || ':x: Failure' }}",
+            "text": "[${{ github.event.repository.name }}] ${{ github.workflow }}/${{ github.job }} by ${{github.actor}} ${{ inputs.STATUS == 'success' && ':white_check_mark: Success' || ':x: Failure' }}",
             "attachments": 
             [
                 {
