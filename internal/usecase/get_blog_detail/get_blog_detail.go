@@ -32,18 +32,14 @@ func NewUsecase(db infrastructure.DB, blogRepository BlogRepository, commentRepo
 	}
 }
 
-func (u *Usecase) Run(ctx context.Context, blogId models.BlogId) (*models.Blog, []*models.Comment, error) {
+func (u *Usecase) Run(ctx context.Context, blogId models.BlogId) (*models.Blog, error) {
 	blog, err := u.BlogRepository.Get(ctx, u.DB, blogId)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get blog: %v", err)
+		return nil, fmt.Errorf("failed to get blog: %v", err)
 	}
 	if blog == nil {
-		return nil, nil, nil
+		return nil, nil
 	}
-	comments, err := u.CommentRepository.GetByBlogId(ctx, u.DB, blogId, true)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get comments: %v", err)
-	}
-	return blog, comments, nil
+	return blog, nil
 
 }

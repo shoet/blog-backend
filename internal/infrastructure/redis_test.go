@@ -45,7 +45,7 @@ func Test_Load(t *testing.T) {
 		t.Fatalf("failed to load: %v", err)
 	}
 
-	if ret != want {
-		t.Errorf("want %s, got %s", want, ret)
+	if *ret != want {
+		t.Errorf("want %s, got %s", want, *ret)
 	}
 }

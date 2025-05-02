@@ -88,6 +88,11 @@ jobs:
       - run: go test ./... -coverprofile=coverage.out
       - name: report coverage
         uses: k1LoW/octocov-action@v1
+      - name: slack_notify
+        uses: ./.github/actions/slack_notify
+        with:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          STATUS: ${{ job.status }}
 
   deploy-development:
     runs-on: ubuntu-latest
@@ -113,6 +118,11 @@ jobs:
           mask-aws-account-id: true
       - name: deploy development
         run: cd cdk && npm install && npm run deploy
+      - name: slack_notify
+        uses: ./.github/actions/slack_notify
+        with:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          STATUS: ${{ job.status }}
 
   deploy-production:
     runs-on: ubuntu-latest
@@ -138,3 +148,8 @@ jobs:
           mask-aws-account-id: true
       - name: deploy
         run: cd cdk && npm install && npm run deploy:prod
+      - name: slack_notify
+        uses: ./.github/actions/slack_notify
+        with:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          STATUS: ${{ job.status }}

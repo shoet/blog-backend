@@ -6,15 +6,19 @@ import (
 	"fmt"
 
 	"github.com/doug-martin/goqu/v9"
+	"github.com/shoet/blog/internal/config"
 	"github.com/shoet/blog/internal/infrastructure"
 	"github.com/shoet/blog/internal/infrastructure/models"
 )
 
 type UserProfileRepository struct {
+	config *config.Config
 }
 
-func NewUserProfileRepository() *UserProfileRepository {
-	return &UserProfileRepository{}
+func NewUserProfileRepository(config *config.Config) *UserProfileRepository {
+	return &UserProfileRepository{
+		config: config,
+	}
 }
 
 /*
@@ -51,6 +55,17 @@ func (r *UserProfileRepository) Get(
 		return nil, fmt.Errorf("failed to scan struct: %w", err)
 	}
 
+	if userProfile.AvatarImageFileName != nil {
+		file, err := models.NewFile("avatar_image", *userProfile.AvatarImageFileName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get file: %w", err)
+		}
+		avatarImageFileURL, err := file.GetFileURL(r.config)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get file url: %w", err)
+		}
+		userProfile.AvatarImageFileURL = &avatarImageFileURL
+	}
 	return &userProfile, nil
 }
 
