@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/caarlos0/env/v10"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 	"github.com/shoet/blog/internal/infrastructure"
 	"github.com/shoet/blog/internal/infrastructure/models"
