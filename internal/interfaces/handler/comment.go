@@ -101,7 +101,7 @@ type PostCommentRequest struct {
 }
 
 type PostCommentResponse struct {
-	CommentId models.CommentId `json:"comment_id"`
+	CommentId models.CommentId `json:"commentId"`
 }
 
 /*
@@ -110,14 +110,14 @@ RequestBody:
 	path: /blogs/{id}/comments
 
 	application/json:
-		user_id: int
-		client_id: string | null
+		userId: int | null
+		clientId: string | null
 		content: string
-		thread_comment_id: int | null
+		threadCommentId: int | null
 
 Response:
 
-	comment_id: int
+	commentId: int
 */
 func (h *PostCommentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
