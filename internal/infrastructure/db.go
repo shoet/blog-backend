@@ -9,7 +9,7 @@ import (
 	sql_driver "database/sql/driver"
 
 	"github.com/go-sql-driver/mysql"
-	_ "github.com/jackc/pgx/stdlib"
+	_ "github.com/jackc/pgx/v5"
 	"github.com/lib/pq"
 	"github.com/shoet/blog/internal/config"
 	"github.com/shoet/blog/internal/logging"
