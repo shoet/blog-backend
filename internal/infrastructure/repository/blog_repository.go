@@ -317,6 +317,28 @@ func (r *BlogRepository) Put(
 	return blog.Id, nil
 }
 
+func (r *BlogRepository) UpdatePublicStatus(
+	ctx context.Context, tx infrastructure.TX, blogId models.BlogId, isPublic bool,
+) (*models.Blog, error) {
+	sql, params, err := goqu.
+		Update("blogs").
+		Set(goqu.Record{"is_public": isPublic}).
+		Where(goqu.Ex{"id": blogId}).
+		Returning("*").ToSQL()
+	if err != nil {
+		return nil, fmt.Errorf("faield to build query: %w", err)
+	}
+	row := tx.QueryRowxContext(ctx, sql, params...)
+	if row.Err() != nil {
+		return nil, fmt.Errorf("failed to query: %w", row.Err())
+	}
+	var blog models.Blog
+	if err := row.StructScan(&blog); err != nil {
+		return nil, fmt.Errorf("failed to scan struct: %w", err)
+	}
+	return &blog, nil
+}
+
 func (r *BlogRepository) AddBlogTag(
 	ctx context.Context, tx infrastructure.TX, blogId models.BlogId, tagId models.TagId,
 ) (int64, error) {

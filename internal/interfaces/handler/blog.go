@@ -19,6 +19,7 @@ import (
 	"github.com/shoet/blog/internal/usecase/get_blogs_offset_paging"
 	"github.com/shoet/blog/internal/usecase/get_tags"
 	"github.com/shoet/blog/internal/usecase/put_blog"
+	"github.com/shoet/blog/internal/usecase/update_public_status"
 )
 
 type BlogGetHandler struct {
@@ -463,6 +464,57 @@ func (p *BlogPutHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := response.RespondJSON(w, r, http.StatusOK, newBlog); err != nil {
+		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
+	}
+}
+
+type BlogUpdatePublicStatusHandler struct {
+	Validator *validator.Validate
+	Usecase   *update_public_status.Usecase
+}
+
+func NewBlogUpdatePublicStatusHandler(
+	validator *validator.Validate,
+	usecase *update_public_status.Usecase,
+) *BlogUpdatePublicStatusHandler {
+	return &BlogUpdatePublicStatusHandler{
+		Validator: validator,
+		Usecase:   usecase,
+	}
+}
+
+func (h *BlogUpdatePublicStatusHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	logger := logging.GetLogger(ctx)
+	var reqBody struct {
+		BlogId   models.BlogId `json:"blogId" validate:"required"`
+		IsPublic *bool         `json:"isPublic" validate:"required"`
+	}
+	defer r.Body.Close()
+	if err := response.JsonToStruct(r, &reqBody); err != nil {
+		logger.Error(fmt.Sprintf("failed to parse request body: %v", err))
+		response.RespondBadRequest(w, r, err)
+		return
+	}
+
+	logger.Debug(fmt.Sprintf("reqBody: %+v", reqBody))
+
+	if err := h.Validator.Struct(reqBody); err != nil {
+		logger.Error(fmt.Sprintf("failed to validate request body: %v", err))
+		response.RespondBadRequest(w, r, err)
+		return
+	}
+	blog, err := h.Usecase.Run(ctx, reqBody.BlogId, *reqBody.IsPublic)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to update blog public status: %v", err))
+		response.RespondInternalServerError(w, r, err)
+		return
+	}
+	if blog == nil {
+		response.RespondNotFound(w, r, fmt.Errorf("blog not found"))
+		return
+	}
+	if err := response.RespondJSON(w, r, http.StatusOK, blog); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
 }

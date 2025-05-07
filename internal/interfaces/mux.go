@@ -37,6 +37,7 @@ import (
 	"github.com/shoet/blog/internal/usecase/put_blog"
 	"github.com/shoet/blog/internal/usecase/storage_presigned_content"
 	"github.com/shoet/blog/internal/usecase/storage_presigned_thumbnail"
+	"github.com/shoet/blog/internal/usecase/update_public_status"
 	"github.com/shoet/blog/internal/usecase/update_user_profile"
 	"github.com/shoet/blog/internal/usecase/upload_file"
 )
@@ -135,6 +136,12 @@ func setBlogsRoute(
 		)
 		r.Get("/", blh.ServeHTTP)
 	})
+
+	upsh := handler.NewBlogUpdatePublicStatusHandler(
+		deps.Validator,
+		update_public_status.NewUsecase(deps.DB, deps.BlogRepository),
+	)
+	r.With(authMiddleWare.Middleware).Post("/update_public_status", upsh.ServeHTTP)
 }
 
 // tags
