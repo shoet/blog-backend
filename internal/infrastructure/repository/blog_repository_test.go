@@ -1188,6 +1188,112 @@ func Test_BlogRepository_ListByKeyword(t *testing.T) {
 	}
 }
 
+func Test_BlogRepository_UpdatePublicStatus(t *testing.T) {
+	clocker := &clocker.FiexedClocker{}
+	ctx := context.Background()
+	db, err := testutil.NewDBPostgreSQLForTest(t, ctx)
+	if err != nil {
+		t.Fatalf("failed to create db: %v", err)
+	}
+	testutil.RepositoryTestPrepare(t, ctx, db)
+
+	sut := repository.NewBlogRepository(clocker)
+
+	type args struct {
+		prepareCreateBlog []*models.Blog
+		blogId            models.BlogId
+		isPublic          bool
+	}
+
+	type want struct {
+		blog *models.Blog
+	}
+
+	tests := []struct {
+		id   string
+		args args
+		want want
+	}{
+		{
+			id: "success",
+			args: args{
+				prepareCreateBlog: []*models.Blog{
+					{
+						Id:                     1,
+						AuthorId:               1,
+						Title:                  "title",
+						Content:                "content",
+						Description:            "description",
+						ThumbnailImageFileName: "thumbnail_image_file_name",
+						IsPublic:               false,
+					},
+				},
+				blogId:   1,
+				isPublic: true,
+			},
+			want: want{
+				blog: &models.Blog{
+					Id:                     1,
+					AuthorId:               1,
+					Title:                  "title",
+					Content:                "content",
+					Description:            "description",
+					ThumbnailImageFileName: "thumbnail_image_file_name",
+					IsPublic:               true,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.id, func(t *testing.T) {
+			tx := db.MustBegin()
+			defer tx.Rollback()
+
+			for _, b := range tt.args.prepareCreateBlog {
+				prepareTask := `
+				INSERT INTO blogs
+					(
+						id,
+						author_id, title, content, description, 
+						thumbnail_image_file_name, is_public)
+				VALUES
+					($1, $2, $3, $4, $5, $6, $7)
+				`
+				_, err := tx.ExecContext(
+					ctx, prepareTask,
+					b.Id,
+					b.AuthorId, b.Title, b.Content, b.Description,
+					b.ThumbnailImageFileName, b.IsPublic)
+				if err != nil {
+					t.Fatalf("failed to prepare task: %v", err)
+				}
+			}
+
+			gotReturningBlog, err := sut.UpdatePublicStatus(ctx, tx, tt.args.blogId, tt.args.isPublic)
+			if err != nil {
+				t.Fatalf("failed to update public status: %v", err)
+			}
+
+			cmpOptions := cmpopts.IgnoreFields(models.Blog{}, "Id", "Created", "Modified")
+			if diff := cmp.Diff(tt.want.blog, gotReturningBlog, cmpOptions); diff != "" {
+				t.Errorf("differs: (-want +got)\n%s", diff)
+			}
+
+			selectQuery := `SELECT * FROM blogs WHERE id = $1`
+			var got []*models.Blog
+			if err := tx.SelectContext(ctx, &got, selectQuery, tt.args.blogId); err != nil {
+				t.Fatalf("failed to scan row: %v", err)
+			}
+
+			if diff := cmp.Diff(tt.want.blog, got[0], cmpOptions); diff != "" {
+				t.Errorf("differs: (-want +got)\n%s", diff)
+			}
+		})
+	}
+
+}
+
 // TODO
 func Test_BlogRepository_SelectBlogsTagsByOtherUsingBlog(t *testing.T) {}
 func Test_BlogRepository_SelectBlogsTags(t *testing.T)                 {}
