@@ -29,12 +29,14 @@ import (
 	"github.com/shoet/blog/internal/usecase/get_github_contributions"
 	"github.com/shoet/blog/internal/usecase/get_github_contributions_latest_week"
 	"github.com/shoet/blog/internal/usecase/get_handlename"
+	"github.com/shoet/blog/internal/usecase/get_privacy_policy"
 	"github.com/shoet/blog/internal/usecase/get_tags"
 	"github.com/shoet/blog/internal/usecase/get_user_profile"
 	"github.com/shoet/blog/internal/usecase/login_user"
 	"github.com/shoet/blog/internal/usecase/login_user_session"
 	"github.com/shoet/blog/internal/usecase/post_comment"
 	"github.com/shoet/blog/internal/usecase/put_blog"
+	"github.com/shoet/blog/internal/usecase/put_privacy_policy"
 	"github.com/shoet/blog/internal/usecase/storage_presigned_content"
 	"github.com/shoet/blog/internal/usecase/storage_presigned_thumbnail"
 	"github.com/shoet/blog/internal/usecase/update_public_status"
@@ -51,6 +53,7 @@ type MuxDependencies struct {
 	CommentRepository     *repository.CommentRepository
 	FileRepository        *repository.FileRepository
 	UserProfileRepository *repository.UserProfileRepository
+	PrivacyPolicyRepository *repository.PrivacyPolicyRepository
 	BlogService           *blog_service.BlogService
 	AuthService           *auth_service.AuthService
 	ContentsService       *contents_service.ContentsService
@@ -81,6 +84,7 @@ func NewMux(
 	setGitHubRoute(router, deps)
 	setUserProfileRoute(router, deps, authMiddleWare)
 	setHandlenameRoute(router, deps)
+	setPrivacyPolicyRoute(router, deps, authMiddleWare)
 	return router, nil
 }
 
@@ -234,6 +238,24 @@ func setUserProfileRoute(
 		updateUserProfileUsecase := update_user_profile.NewUsecase(deps.Config, deps.DB, deps.FileRepository, deps.UserProfileRepository)
 		updateUserProfileHandler := handler.NewUpdateUserProfileHandler(deps.Validator, deps.JWTer, updateUserProfileUsecase)
 		r.With(authMiddleWare.Middleware).Put("/", updateUserProfileHandler.ServeHTTP)
+	})
+}
+
+// privacy policy
+func setPrivacyPolicyRoute(
+	r chi.Router, deps *MuxDependencies, authMiddleWare *middleware.AuthorizationMiddleware,
+) {
+	r.Route("/privacy_policy", func(r chi.Router) {
+		getPrivacyPolicyHandler := handler.NewGetPrivacyPolicyHandler(
+				get_privacy_policy.NewUsecase(deps.DB, deps.PrivacyPolicyRepository),
+			)
+		r.Get("/{id}", getPrivacyPolicyHandler.ServeHTTP)
+
+		putPrivacyPolicyHandler := handler.NewPutPrivacyPolicyHandler(
+			put_privacy_policy.NewUsecase(deps.DB, deps.PrivacyPolicyRepository),
+			deps.Validator,
+			)
+		r.With(authMiddleWare.Middleware).Put("/{id}", putPrivacyPolicyHandler.ServeHTTP)
 	})
 }
 
