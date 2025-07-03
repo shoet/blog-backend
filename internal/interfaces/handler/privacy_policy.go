@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
-	"github.com/shoet/blog/internal/infrastructure/models"
 	"github.com/shoet/blog/internal/interfaces/response"
 	"github.com/shoet/blog/internal/logging"
 	"github.com/shoet/blog/internal/usecase/get_privacy_policy"
@@ -43,19 +42,13 @@ func (h *GetPrivacyPolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	res := struct {
-		PrivacyPolicy *models.PrivacyPolicy `json:"privacy_policy"`
-	} {
-		PrivacyPolicy: privacyPolicy,
-	}
-
-	if err := response.RespondJSON(w, r, http.StatusOK, res); err != nil {
+	if err := response.RespondJSON(w, r, http.StatusOK, privacyPolicy); err != nil {
 		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
 	}
 }
 
 type PutPrivacyPolicyHandler struct {
-	Usecase *put_privacy_policy.Usecase
+	Usecase   *put_privacy_policy.Usecase
 	Validator *validator.Validate
 }
 
@@ -64,7 +57,7 @@ func NewPutPrivacyPolicyHandler(
 	validator *validator.Validate,
 ) *PutPrivacyPolicyHandler {
 	return &PutPrivacyPolicyHandler{
-		Usecase: usecase,
+		Usecase:   usecase,
 		Validator: validator,
 	}
 }
@@ -75,7 +68,7 @@ func (h *PutPrivacyPolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 	id := chi.URLParam(r, "id")
 
 	var reqBody struct {
-		Content                string        `json:"content" validate:"required"`
+		Content string `json:"content" validate:"required"`
 	}
 	defer r.Body.Close()
 	if err := response.JsonToStruct(r, &reqBody); err != nil {
@@ -98,7 +91,7 @@ func (h *PutPrivacyPolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	res := struct {
 		Message string `json:"message"`
-	} {
+	}{
 		Message: "ok",
 	}
 
