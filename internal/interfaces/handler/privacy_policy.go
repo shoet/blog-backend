@@ -9,6 +9,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/shoet/blog/internal/interfaces/response"
 	"github.com/shoet/blog/internal/logging"
+	"github.com/shoet/blog/internal/usecase/delete_privacy_policy"
 	"github.com/shoet/blog/internal/usecase/get_privacy_policy"
 	"github.com/shoet/blog/internal/usecase/put_privacy_policy"
 )
@@ -89,6 +90,42 @@ func (h *PutPrivacyPolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	res := struct {
+		Message string `json:"message"`
+	}{
+		Message: "ok",
+	}
+
+	if err := response.RespondJSON(w, r, http.StatusOK, res); err != nil {
+		logger.Error(fmt.Sprintf("failed to respond json response: %v", err))
+	}
+}
+
+type DeletePrivacyPolicyHandler struct {
+	Usecase   *delete_privacy_policy.Usecase
+	Validator *validator.Validate
+}
+
+func NewDeletePrivacyPolicyHandler(
+	usecase *delete_privacy_policy.Usecase,
+	validator *validator.Validate,
+) *DeletePrivacyPolicyHandler {
+	return &DeletePrivacyPolicyHandler{
+		Usecase:   usecase,
+		Validator: validator,
+	}
+}
+
+func (h *DeletePrivacyPolicyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	logger := logging.GetLogger(ctx)
+	id := chi.URLParam(r, "id")
+
+	if err := h.Usecase.Run(ctx, id); err != nil {
+		logger.Error(fmt.Sprintf("failed to run usecase: %v", err))
+		response.RespondInternalServerError(w, r, err)
+		return
+	}
 	res := struct {
 		Message string `json:"message"`
 	}{

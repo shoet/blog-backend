@@ -69,3 +69,16 @@ func (r *PrivacyPolicyRepository) UpdateContent(ctx context.Context, tx infrastr
 	}
 	return nil
 }
+
+func (r *PrivacyPolicyRepository) Delete(ctx context.Context, tx infrastructure.TX, id string) error {
+	query, params, err := goqu.
+		Delete("privacy_policy").
+		Where(goqu.Ex{"id": id}).ToSQL()
+	if err != nil {
+		return fmt.Errorf("failed to build query: %w", err)
+	}
+	if _, err := tx.ExecContext(ctx, query, params...); err != nil {
+		return fmt.Errorf("failed to delete privacy_policies: %w", err)
+	}
+	return nil
+}

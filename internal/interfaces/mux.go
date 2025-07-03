@@ -22,6 +22,7 @@ import (
 	"github.com/shoet/blog/internal/usecase/create_blog"
 	"github.com/shoet/blog/internal/usecase/create_user_profile"
 	"github.com/shoet/blog/internal/usecase/delete_blog"
+	"github.com/shoet/blog/internal/usecase/delete_privacy_policy"
 	"github.com/shoet/blog/internal/usecase/get_blog_detail"
 	"github.com/shoet/blog/internal/usecase/get_blogs"
 	"github.com/shoet/blog/internal/usecase/get_blogs_offset_paging"
@@ -45,24 +46,24 @@ import (
 )
 
 type MuxDependencies struct {
-	Config                *config.Config
-	DB                    infrastructure.DB
-	KVS                   *infrastructure.RedisKVS
-	BlogRepository        *repository.BlogRepository
-	BlogRepositoryOffset  *repository.BlogRepositoryOffset
-	CommentRepository     *repository.CommentRepository
-	FileRepository        *repository.FileRepository
-	UserProfileRepository *repository.UserProfileRepository
+	Config                  *config.Config
+	DB                      infrastructure.DB
+	KVS                     *infrastructure.RedisKVS
+	BlogRepository          *repository.BlogRepository
+	BlogRepositoryOffset    *repository.BlogRepositoryOffset
+	CommentRepository       *repository.CommentRepository
+	FileRepository          *repository.FileRepository
+	UserProfileRepository   *repository.UserProfileRepository
 	PrivacyPolicyRepository *repository.PrivacyPolicyRepository
-	BlogService           *blog_service.BlogService
-	AuthService           *auth_service.AuthService
-	ContentsService       *contents_service.ContentsService
-	JWTer                 *jwt_service.JWTService
-	Logger                *logging.Logger
-	Validator             *validator.Validate
-	Cookie                *cookie.CookieController
-	GitHubAPIAdapter      *adapter.GitHubV4APIClient
-	Clocker               clocker.Clocker
+	BlogService             *blog_service.BlogService
+	AuthService             *auth_service.AuthService
+	ContentsService         *contents_service.ContentsService
+	JWTer                   *jwt_service.JWTService
+	Logger                  *logging.Logger
+	Validator               *validator.Validate
+	Cookie                  *cookie.CookieController
+	GitHubAPIAdapter        *adapter.GitHubV4APIClient
+	Clocker                 clocker.Clocker
 }
 
 func NewMux(
@@ -247,15 +248,21 @@ func setPrivacyPolicyRoute(
 ) {
 	r.Route("/privacy_policy", func(r chi.Router) {
 		getPrivacyPolicyHandler := handler.NewGetPrivacyPolicyHandler(
-				get_privacy_policy.NewUsecase(deps.DB, deps.PrivacyPolicyRepository),
-			)
+			get_privacy_policy.NewUsecase(deps.DB, deps.PrivacyPolicyRepository),
+		)
 		r.Get("/{id}", getPrivacyPolicyHandler.ServeHTTP)
 
 		putPrivacyPolicyHandler := handler.NewPutPrivacyPolicyHandler(
 			put_privacy_policy.NewUsecase(deps.DB, deps.PrivacyPolicyRepository),
 			deps.Validator,
-			)
+		)
 		r.With(authMiddleWare.Middleware).Put("/{id}", putPrivacyPolicyHandler.ServeHTTP)
+
+		deletePrivacyPolicyHandler := handler.NewDeletePrivacyPolicyHandler(
+			delete_privacy_policy.NewUsecase(deps.DB, deps.PrivacyPolicyRepository),
+			deps.Validator,
+		)
+		r.With(authMiddleWare.Middleware).Delete("/{id}", deletePrivacyPolicyHandler.ServeHTTP)
 	})
 }
 
